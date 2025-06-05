@@ -48,8 +48,12 @@ class DifyAPIClient:
             "user": user_id
         }
         
-        if files:
-            data["input_file"] = files
+        # 正确处理文件引用，按照API文档格式
+        if files and isinstance(files, list):
+            data["files"] = files
+        elif files:
+            # 如果传入的是单个文件信息，转换为列表格式
+            data["files"] = [files]
             
         try:
             response = requests.post(url, headers=self.chat_headers, json=data, stream=stream, timeout=self.timeout)
@@ -305,13 +309,13 @@ def send_message():
     data = request.get_json()
     query = data.get('query', '')
     conversation_id = data.get('conversation_id', '')
-    input_file = data.get('input_file', None)
+    files = data.get('files', None)  # 支持文件引用
     
     if not query.strip():
         return jsonify({'error': '消息不能为空'}), 400
     
     def generate():
-        response = dify_client.chat_message(query, conversation_id, files=input_file, stream=True)
+        response = dify_client.chat_message(query, conversation_id, files=files, stream=True)
         if not response:
             yield f"data: {json.dumps({'error': 'API请求失败'})}\n\n"
             return
@@ -369,7 +373,7 @@ def document():
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-    """上传文件API，支持多种文件格式"""
+    """上传文件到Dify API，支持图片格式"""
     if 'file' not in request.files:
         return jsonify({'error': '未选择文件'}), 400
     
@@ -377,94 +381,55 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': '未选择文件'}), 400
     
-    # 检查文件扩展名
+    # 检查文件扩展名 - 根据API文档，主要支持图片格式
     filename = secure_filename(file.filename)
-    if not allowed_file(filename):
-        return jsonify({'error': '不支持的文件类型'}), 400
+    allowed_image_extensions = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+    file_extension = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    
+    if file_extension not in allowed_image_extensions:
+        return jsonify({'error': f'不支持的文件类型。支持的格式: {", ".join(allowed_image_extensions)}'}), 400
     
     try:
         # 确保上传目录存在
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         
-        # 保存文件
+        # 暂时保存文件到本地
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        # 读取文件内容
-        content = ""
-        file_extension = filename.rsplit('.', 1)[1].lower()
+        # 上传到Dify API
+        result = dify_client.upload_file(filepath)
         
-        if file_extension in ['txt', 'md']:
-            # 文本文件直接读取
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
-        elif file_extension == 'pdf':
-            # PDF文件处理 (需要安装 PyPDF2 或 pdfplumber)
-            try:
-                import PyPDF2
-                with open(filepath, 'rb') as f:
-                    pdf_reader = PyPDF2.PdfReader(f)
-                    for page in pdf_reader.pages:
-                        content += page.extract_text() + "\n"
-            except ImportError:
-                # 如果没有安装PDF处理库，返回错误
-                content = "PDF文件处理需要安装额外的库。请安装 PyPDF2: pip install PyPDF2"
-        elif file_extension in ['doc', 'docx']:
-            # Word文档处理 (需要安装 python-docx)
-            try:
-                from docx import Document
-                doc = Document(filepath)
-                for paragraph in doc.paragraphs:
-                    content += paragraph.text + "\n"
-            except ImportError:
-                content = "Word文档处理需要安装额外的库。请安装 python-docx: pip install python-docx"
-        elif file_extension in ['xls', 'xlsx']:
-            # Excel文件处理 (需要安装 openpyxl)
-            try:
-                import pandas as pd
-                df = pd.read_excel(filepath)
-                content = df.to_string()
-            except ImportError:
-                content = "Excel文件处理需要安装额外的库。请安装 pandas 和 openpyxl: pip install pandas openpyxl"
-        elif file_extension == 'csv':
-            # CSV文件处理
-            try:
-                import pandas as pd
-                df = pd.read_csv(filepath)
-                content = df.to_string()
-            except ImportError:
-                content = "CSV文件处理需要安装额外的库。请安装 pandas: pip install pandas"
-        elif file_extension == 'html':
-            # HTML文件处理
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
-        else:
-            # 其他文件类型尝试文本读取
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
-        
-        # 删除临时文件
+        # 删除本地临时文件
         try:
             os.remove(filepath)
         except:
             pass
         
-        # 返回文件信息和内容
-        return jsonify({
-            'success': True,
-            'filename': filename,
-            'content': content,
-            'size': len(content.encode('utf-8')),
-            'type': file_extension
-        })
-        
+        if result:
+            # 返回Dify文件信息，包含文件ID
+            return jsonify({
+                'success': True,
+                'file': {
+                    'id': result.get('id'),
+                    'name': result.get('name'),
+                    'size': result.get('size'),
+                    'extension': result.get('extension'),
+                    'mime_type': result.get('mime_type'),
+                    'type': 'image',  # 根据API文档，当前主要支持image类型
+                    'transfer_method': 'local_file'  # 使用本地文件上传方式
+                }
+            })
+        else:
+            return jsonify({'error': '文件上传到Dify失败'}), 500
+            
     except Exception as e:
         # 删除临时文件
         try:
             os.remove(filepath)
         except:
             pass
-        return jsonify({'error': f'文件处理失败: {str(e)}'}), 500
+        return jsonify({'error': f'文件上传失败: {str(e)}'}), 500
 
 @app.route('/api/document/process', methods=['POST'])
 def process_document():
