@@ -2,7 +2,7 @@
 
 # Dify ChatFlow Web应用部署脚本
 # 作者: Wzhgeek
-# 用途: 自动配置Python环境、安装依赖、创建systemd服务
+# 用途: 从GitHub拉取代码到/srv，配置Python环境、安装依赖、创建systemd服务
 
 set -e  # 遇到错误立即退出
 
@@ -32,7 +32,8 @@ log_step() {
 
 # 配置变量
 APP_NAME="dify-chatflow-web"
-APP_DIR="$(pwd)"
+REPO_URL="https://github.com/Wzhgeek/run_diy_llm_web_app.git"
+APP_DIR="/srv/${APP_NAME}"
 USER_NAME="$(whoami)"
 PYTHON_VERSION="3.8"
 VENV_DIR="$APP_DIR/venv"
@@ -53,6 +54,15 @@ else
     log_info "使用sudo权限执行系统配置"
     SUDO="sudo"
 fi
+
+# 0. 检查并安装git
+log_step "检查Git环境..."
+if ! command -v git &> /dev/null; then
+    log_warn "Git 未安装，尝试安装..."
+    $SUDO apt-get update
+    $SUDO apt-get install -y git
+fi
+log_info "Git 已安装: $(git --version)"
 
 # 1. 检查并安装系统依赖
 log_step "检查系统依赖..."
@@ -80,7 +90,34 @@ if ! $PYTHON_CMD -m venv --help &> /dev/null; then
     $SUDO apt-get install -y python3-venv
 fi
 
-# 2. 创建和配置Python虚拟环境
+# 2. 创建/srv目录并拉取代码
+log_step "从GitHub拉取代码..."
+
+# 创建/srv目录（如果不存在）
+$SUDO mkdir -p /srv
+log_info "创建/srv目录"
+
+# 如果项目目录已存在，备份并重新拉取
+if [ -d "$APP_DIR" ]; then
+    log_warn "项目目录已存在，创建备份..."
+    BACKUP_DIR="${APP_DIR}_backup_$(date +%Y%m%d_%H%M%S)"
+    $SUDO mv "$APP_DIR" "$BACKUP_DIR"
+    log_info "已备份到: $BACKUP_DIR"
+fi
+
+# 拉取代码
+log_info "从GitHub拉取代码: $REPO_URL"
+$SUDO git clone "$REPO_URL" "$APP_DIR"
+
+# 设置目录权限
+log_info "设置目录权限"
+$SUDO chown -R "$USER_NAME:$USER_NAME" "$APP_DIR"
+
+# 进入项目目录
+cd "$APP_DIR"
+log_info "进入项目目录: $APP_DIR"
+
+# 3. 创建和配置Python虚拟环境
 log_step "配置Python虚拟环境..."
 
 if [ -d "$VENV_DIR" ]; then
@@ -99,7 +136,7 @@ source "$VENV_DIR/bin/activate"
 log_info "升级pip到最新版本"
 pip install --upgrade pip
 
-# 3. 安装Python依赖
+# 4. 安装Python依赖
 log_step "安装Python依赖包..."
 
 if [ -f "requirements.txt" ]; then
@@ -110,13 +147,13 @@ else
     pip install flask requests
 fi
 
-# 4. 创建日志目录
+# 5. 创建日志目录
 log_step "创建应用日志目录..."
 $SUDO mkdir -p "$LOG_DIR"
 $SUDO chown "$USER_NAME:$USER_NAME" "$LOG_DIR"
 log_info "日志目录创建完成: $LOG_DIR"
 
-# 5. 创建systemd服务文件
+# 6. 创建systemd服务文件
 log_step "创建systemd服务文件..."
 
 # 检查应用入口文件
@@ -136,20 +173,24 @@ Type=simple
 User=$USER_NAME
 Group=$USER_NAME
 WorkingDirectory=$APP_DIR
-Environment=PATH=$VENV_DIR/bin
-ExecStart=$VENV_DIR/bin/python run.py
+Environment=\"PATH=$VENV_DIR/bin:/usr/local/bin:/usr/bin:/bin\"
+Environment=\"PYTHONPATH=$APP_DIR\"
+Environment=\"PYTHONUNBUFFERED=1\"
+ExecStart=$VENV_DIR/bin/python $APP_DIR/run.py
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=always
 RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
 StandardOutput=append:$LOG_DIR/app.log
 StandardError=append:$LOG_DIR/error.log
 
-# 安全设置
+# 安全设置（适度放宽以确保正常运行）
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=$APP_DIR $LOG_DIR
+ProtectSystem=false
+ProtectHome=false
+ReadWritePaths=$APP_DIR $LOG_DIR /tmp
 
 [Install]
 WantedBy=multi-user.target"
@@ -158,12 +199,12 @@ WantedBy=multi-user.target"
 log_info "写入systemd服务文件: $SERVICE_FILE"
 echo "$SERVICE_CONTENT" | $SUDO tee "$SERVICE_FILE" > /dev/null
 
-# 6. 重新载入systemd配置
+# 7. 重新载入systemd配置
 log_step "重新载入systemd配置..."
 $SUDO systemctl daemon-reload
 log_info "systemd配置已重新载入"
 
-# 7. 启用并启动服务
+# 8. 启用并启动服务
 log_step "启用并启动服务..."
 $SUDO systemctl enable "$APP_NAME"
 log_info "服务已设置为开机自启动"
@@ -176,7 +217,7 @@ else
     $SUDO systemctl start "$APP_NAME"
 fi
 
-# 8. 检查服务状态
+# 9. 检查服务状态
 log_step "检查服务状态..."
 sleep 3
 
@@ -200,7 +241,7 @@ else
     exit 1
 fi
 
-# 9. 显示部署信息
+# 10. 显示部署信息
 echo ""
 echo "=========================="
 log_info "🎉 部署完成！"
@@ -208,6 +249,7 @@ echo "=========================="
 echo ""
 echo "📋 部署信息:"
 echo "   应用名称: $APP_NAME"
+echo "   GitHub仓库: $REPO_URL"
 echo "   应用目录: $APP_DIR"
 echo "   虚拟环境: $VENV_DIR"
 echo "   服务文件: $SERVICE_FILE"
@@ -221,6 +263,13 @@ echo "   停止服务: sudo systemctl stop $APP_NAME"
 echo "   重启服务: sudo systemctl restart $APP_NAME"
 echo "   查看日志: sudo journalctl -u $APP_NAME -f"
 echo "   禁用服务: sudo systemctl disable $APP_NAME"
+echo ""
+echo "🔄 更新应用:"
+echo "   cd $APP_DIR"
+echo "   sudo systemctl stop $APP_NAME"
+echo "   git pull origin main"
+echo "   source venv/bin/activate && pip install -r requirements.txt"
+echo "   sudo systemctl start $APP_NAME"
 echo ""
 echo "📁 日志文件:"
 echo "   应用日志: $LOG_DIR/app.log"
