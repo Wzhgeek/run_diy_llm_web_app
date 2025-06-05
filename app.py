@@ -48,11 +48,10 @@ class DifyAPIClient:
             "user": user_id
         }
         
-        # 正确处理文件引用，按照API文档格式
+        # 如果有文件，添加到files数组中
         if files and isinstance(files, list):
             data["files"] = files
-        elif files:
-            # 如果传入的是单个文件信息，转换为列表格式
+        elif files and isinstance(files, dict):
             data["files"] = [files]
             
         try:
@@ -69,8 +68,32 @@ class DifyAPIClient:
         user_id = user_id or DefaultSettings.DEFAULT_USER_ID
         
         try:
+            # 获取文件的MIME类型
+            import mimetypes
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if not mime_type:
+                # 根据文件扩展名设置默认MIME类型
+                file_ext = file_path.lower().split('.')[-1]
+                mime_map = {
+                    'png': 'image/png',
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'gif': 'image/gif',
+                    'webp': 'image/webp',
+                    'svg': 'image/svg+xml',
+                    'pdf': 'application/pdf',
+                    'txt': 'text/plain',
+                    'md': 'text/markdown',
+                    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'csv': 'text/csv',
+                    'html': 'text/html',
+                    'xml': 'application/xml'
+                }
+                mime_type = mime_map.get(file_ext, 'application/octet-stream')
+            
             with open(file_path, 'rb') as f:
-                files = {'file': f}
+                files = {'file': (os.path.basename(file_path), f, mime_type)}
                 data = {'user': user_id}
                 response = requests.post(url, headers=headers, files=files, data=data, timeout=self.timeout)
                 response.raise_for_status()
@@ -381,134 +404,76 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': '未选择文件'}), 400
     
-    # 暂时保存文件来检查大小
-    filename = secure_filename(file.filename)
-    temp_path = os.path.join('/tmp' if os.name != 'nt' else os.environ.get('TEMP', ''), filename)
-    file.save(temp_path)
-    
-    # 检查文件大小 (50MB限制)
-    file_size = os.path.getsize(temp_path)
-    if file_size > 50 * 1024 * 1024:
-        os.remove(temp_path)
-        return jsonify({'error': '文件大小不能超过50MB'}), 400
-    
     # 检查文件扩展名
+    filename = secure_filename(file.filename)
     if not allowed_file(filename):
-        os.remove(temp_path)
         return jsonify({'error': '不支持的文件类型'}), 400
     
     file_extension = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
     
-    # 图片格式：上传到Dify API进行图像识别
-    image_extensions = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
-    # 文档格式：读取内容作为文本上下文
-    document_extensions = {'txt', 'md', 'mdx', 'markdown', 'pdf', 'html', 'xlsx', 'xls', 'doc', 'docx', 'csv', 'xml'}
+    # 所有支持的文件类型都上传到Dify API
+    image_extensions = {'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'}
+    document_extensions = {'txt', 'md', 'mdx', 'markdown', 'pdf', 'html', 'xlsx', 'xls', 'doc', 'docx', 'csv', 'xml', 'eml', 'msg', 'pptx', 'ppt', 'epub'}
+    audio_extensions = {'mp3', 'm4a', 'wav', 'webm', 'amr'}
+    video_extensions = {'mp4', 'mov', 'mpeg', 'mpga'}
+    
+    # 确定文件类型
+    if file_extension in image_extensions:
+        file_type = 'image'
+    elif file_extension in document_extensions:
+        file_type = 'document'
+    elif file_extension in audio_extensions:
+        file_type = 'audio'
+    elif file_extension in video_extensions:
+        file_type = 'video'
+    else:
+        file_type = 'custom'
     
     try:
         # 确保上传目录存在
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         
-        # 将文件移动到正式的上传目录
+        # 保存文件到上传目录
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        os.rename(temp_path, filepath)
+        file.save(filepath)
         
-        if file_extension in image_extensions:
-            # 图片文件：上传到Dify API
-            result = dify_client.upload_file(filepath)
-            
-            # 删除本地临时文件
-            try:
-                os.remove(filepath)
-            except:
-                pass
-            
-            if result:
-                return jsonify({
-                    'success': True,
-                    'file_type': 'image',
-                    'file': {
-                        'id': result.get('id'),
-                        'name': result.get('name'),
-                        'size': result.get('size'),
-                        'extension': result.get('extension'),
-                        'mime_type': result.get('mime_type'),
-                        'type': 'image',
-                        'transfer_method': 'local_file'
-                    }
-                })
-            else:
-                return jsonify({'error': '图片上传到Dify失败'}), 500
-                
-        elif file_extension in document_extensions:
-            # 文档文件：读取内容
-            content = ""
-            
-            if file_extension in ['txt', 'md', 'mdx', 'markdown', 'html', 'xml']:
-                # 文本文件直接读取
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            elif file_extension == 'pdf':
-                # PDF文件处理
-                try:
-                    import PyPDF2
-                    with open(filepath, 'rb') as f:
-                        pdf_reader = PyPDF2.PdfReader(f)
-                        for page in pdf_reader.pages:
-                            content += page.extract_text() + "\n"
-                except ImportError:
-                    content = "PDF文件处理需要安装额外的库。请安装 PyPDF2: pip install PyPDF2"
-            elif file_extension in ['doc', 'docx']:
-                # Word文档处理
-                try:
-                    from docx import Document
-                    doc = Document(filepath)
-                    for paragraph in doc.paragraphs:
-                        content += paragraph.text + "\n"
-                except ImportError:
-                    content = "Word文档处理需要安装额外的库。请安装 python-docx: pip install python-docx"
-            elif file_extension in ['xls', 'xlsx']:
-                # Excel文件处理
-                try:
-                    import pandas as pd
-                    df = pd.read_excel(filepath)
-                    content = df.to_string()
-                except ImportError:
-                    content = "Excel文件处理需要安装额外的库。请安装 pandas 和 openpyxl: pip install pandas openpyxl"
-            elif file_extension == 'csv':
-                # CSV文件处理
-                try:
-                    import pandas as pd
-                    df = pd.read_csv(filepath)
-                    content = df.to_string()
-                except ImportError:
-                    content = "CSV文件处理需要安装额外的库。请安装 pandas: pip install pandas"
-            else:
-                # 其他文件类型尝试文本读取
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            
-            # 删除临时文件
-            try:
-                os.remove(filepath)
-            except:
-                pass
-            
-            # 返回文档信息和内容
+        # 检查文件大小 (50MB限制)
+        file_size = os.path.getsize(filepath)
+        if file_size > 50 * 1024 * 1024:
+            os.remove(filepath)
+            return jsonify({'error': '文件大小不能超过50MB'}), 400
+        
+        # 所有文件都上传到Dify API
+        result = dify_client.upload_file(filepath)
+        
+        # 删除本地临时文件
+        try:
+            os.remove(filepath)
+        except:
+            pass
+        
+        if result:
             return jsonify({
                 'success': True,
-                'file_type': 'document',
-                'filename': filename,
-                'content': content,
-                'size': len(content.encode('utf-8')),
-                'extension': file_extension
+                'file_type': file_type,
+                'file': {
+                    'id': result.get('id'),
+                    'name': result.get('name'),
+                    'size': result.get('size'),
+                    'extension': result.get('extension'),
+                    'mime_type': result.get('mime_type'),
+                    'type': file_type,
+                    'transfer_method': 'local_file'
+                }
             })
         else:
-            return jsonify({'error': '不支持的文件类型'}), 400
+            return jsonify({'error': '文件上传到Dify失败'}), 500
             
     except Exception as e:
         # 删除临时文件
         try:
-            os.remove(filepath)
+            if 'filepath' in locals():
+                os.remove(filepath)
         except:
             pass
         return jsonify({'error': f'文件处理失败: {str(e)}'}), 500

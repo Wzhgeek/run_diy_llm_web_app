@@ -55,6 +55,12 @@ class DifyAPIConfig:
         'message_feedback': '/messages/{message_id}/feedbacks',
         'message_suggested': '/messages/{message_id}/suggested',
         
+        # 工作流相关
+        'workflows_run': '/workflows/run',
+        'workflows_run_detail': '/workflows/run/{workflow_id}',
+        'workflows_stop': '/workflows/{task_id}/stop',
+        'workflows_logs': '/workflows/logs',
+        
         # 知识库相关
         'datasets': '/datasets',
         'dataset_detail': '/datasets/{dataset_id}',

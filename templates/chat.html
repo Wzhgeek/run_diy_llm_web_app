@@ -3,13 +3,13 @@
 {% block title %}学术对话助手 - 大模型智慧文献阅读管理平台{% endblock %}
 
 {% block content %}
-<div class="container-fluid h-100">
-    <div class="row h-100">
+<div class="container-fluid vh-100 p-0">
+    <div class="row h-100 g-0">
         <!-- 会话列表侧边栏 -->
-        <div class="col-md-3 col-lg-2 bg-white border-end h-100 p-0" id="conversations-sidebar">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-12 bg-white border-end h-100 d-flex flex-column" id="conversations-sidebar">
             <div class="d-flex flex-column h-100">
                 <!-- 侧边栏头部 -->
-                <div class="p-3 border-bottom">
+                <div class="p-3 border-bottom flex-shrink-0">
                     <button class="btn btn-primary w-100" onclick="startNewConversation()">
                         <i class="fas fa-plus me-2"></i>新建对话
                     </button>
@@ -28,15 +28,19 @@
         </div>
 
         <!-- 主聊天区域 -->
-        <div class="col-md-9 col-lg-10 d-flex flex-column h-100 p-0">
+        <div class="col-xl-10 col-lg-9 col-md-8 col-sm-12 d-flex flex-column h-100">
             <!-- 聊天头部 -->
-            <div class="bg-white border-bottom p-3">
+            <div class="bg-white border-bottom p-3 flex-shrink-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1" id="chat-title">学术对话助手</h5>
                         <small class="text-muted" id="chat-subtitle">选择一个会话开始学术讨论</small>
                     </div>
                     <div class="btn-group">
+                        <!-- 移动端显示/隐藏侧边栏按钮 -->
+                        <button class="btn btn-outline-secondary btn-sm d-md-none" onclick="toggleSidebar()" title="切换侧边栏">
+                            <i class="fas fa-bars"></i>
+                        </button>
                         <button class="btn btn-outline-secondary btn-sm" onclick="clearCurrentChat()" title="清空当前对话">
                             <i class="fas fa-eraser"></i>
                         </button>
@@ -48,121 +52,132 @@
             </div>
 
             <!-- 消息展示区域 -->
-            <div class="flex-grow-1 overflow-auto p-3" id="messages-container" style="background: #f8f9fa;">
-                <div class="text-center py-5" id="welcome-message">
-                    <div class="mb-4">
-                        <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
-                        <h4>欢迎使用学术对话助手</h4>
-                        <p class="text-muted">我是您的专属学术研究助手，可以帮您进行文献讨论、学术问答、研究指导等</p>
-                    </div>
-                    
-                    <!-- 示例问题卡片组 -->
-                    <div class="row justify-content-center">
-                        <div class="col-lg-10">
-                            <div class="row g-3">
-                                <!-- 文献研究类 -->
-                                <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-book-open text-primary me-2"></i>文献研究
-                                            </h6>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-outline-primary btn-sm" onclick="sendSampleMessage('请帮我分析这篇论文的核心观点和创新点')">
-                                                    <i class="fas fa-search me-1"></i>分析论文核心观点
-                                                </button>
-                                                <button class="btn btn-outline-primary btn-sm" onclick="sendSampleMessage('这个研究领域有哪些经典文献？')">
-                                                    <i class="fas fa-star me-1"></i>推荐经典文献
-                                                </button>
-                                                <button class="btn btn-outline-primary btn-sm" onclick="sendSampleMessage('如何撰写文献综述？')">
-                                                    <i class="fas fa-edit me-1"></i>文献综述撰写
-                                                </button>
+            <div class="flex-grow-1 position-relative d-flex flex-column" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 0;">
+                <!-- 停止生成按钮 - 只在流式回答时显示 -->
+                <div class="position-absolute w-100 d-flex justify-content-center" id="stop-generation-btn" style="display: none !important; top: 20px; z-index: 1000;">
+                    <button class="btn btn-outline-secondary shadow-sm stop-btn" onclick="stopGeneration()" style="border-radius: 20px; padding: 8px 16px; background: white; border: 1px solid #ddd;">
+                        <i class="fas fa-stop me-2"></i>停止生成
+                    </button>
+                </div>
+                
+                <div class="flex-grow-1 p-3 overflow-hidden">
+                    <div class="messages-wrapper h-100 overflow-auto" id="messages-wrapper" style="scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.3) transparent;">
+                        <div class="text-center py-5" id="welcome-message">
+                            <div class="mb-4">
+                                <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+                                <h4>欢迎使用学术对话助手</h4>
+                                <p class="text-muted">我是您的专属学术研究助手，可以帮您进行文献讨论、学术问答、研究指导等</p>
+                            </div>
+                            
+                            <!-- 示例问题卡片组 -->
+                            <div class="row justify-content-center">
+                                <div class="col-lg-10">
+                                    <div class="row g-3">
+                                        <!-- 文献研究类 -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-book-open text-primary me-2"></i>文献研究
+                                                    </h6>
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-outline-primary btn-sm" onclick="sendSampleMessage('请帮我分析这篇论文的核心观点和创新点')">
+                                                            <i class="fas fa-search me-1"></i>分析论文核心观点
+                                                        </button>
+                                                        <button class="btn btn-outline-primary btn-sm" onclick="sendSampleMessage('这个研究领域有哪些经典文献？')">
+                                                            <i class="fas fa-star me-1"></i>推荐经典文献
+                                                        </button>
+                                                        <button class="btn btn-outline-primary btn-sm" onclick="sendSampleMessage('如何撰写文献综述？')">
+                                                            <i class="fas fa-edit me-1"></i>文献综述撰写
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 学术写作类 -->
-                                <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-pen-nib text-success me-2"></i>学术写作
-                                            </h6>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-outline-success btn-sm" onclick="sendSampleMessage('请帮我改进这段论文摘要的表达')">
-                                                    <i class="fas fa-magic me-1"></i>优化论文摘要
-                                                </button>
-                                                <button class="btn btn-outline-success btn-sm" onclick="sendSampleMessage('如何提高学术论文的逻辑性？')">
-                                                    <i class="fas fa-sitemap me-1"></i>提升论文逻辑
-                                                </button>
-                                                <button class="btn btn-outline-success btn-sm" onclick="sendSampleMessage('学术论文的引用格式有哪些？')">
-                                                    <i class="fas fa-quote-right me-1"></i>引用格式指导
-                                                </button>
+                                        
+                                        <!-- 学术写作类 -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-pen-nib text-success me-2"></i>学术写作
+                                                    </h6>
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-outline-success btn-sm" onclick="sendSampleMessage('请帮我改进这段论文摘要的表达')">
+                                                            <i class="fas fa-magic me-1"></i>优化论文摘要
+                                                        </button>
+                                                        <button class="btn btn-outline-success btn-sm" onclick="sendSampleMessage('如何提高学术论文的逻辑性？')">
+                                                            <i class="fas fa-sitemap me-1"></i>提升论文逻辑
+                                                        </button>
+                                                        <button class="btn btn-outline-success btn-sm" onclick="sendSampleMessage('学术论文的引用格式有哪些？')">
+                                                            <i class="fas fa-quote-right me-1"></i>引用格式指导
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 研究方法类 -->
-                                <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-flask text-info me-2"></i>研究方法
-                                            </h6>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-outline-info btn-sm" onclick="sendSampleMessage('定量研究和定性研究的区别是什么？')">
-                                                    <i class="fas fa-chart-bar me-1"></i>研究方法对比
-                                                </button>
-                                                <button class="btn btn-outline-info btn-sm" onclick="sendSampleMessage('如何设计一个有效的实验方案？')">
-                                                    <i class="fas fa-cogs me-1"></i>实验设计指导
-                                                </button>
-                                                <button class="btn btn-outline-info btn-sm" onclick="sendSampleMessage('数据分析中的常见统计方法有哪些？')">
-                                                    <i class="fas fa-calculator me-1"></i>统计方法介绍
-                                                </button>
+                                        
+                                        <!-- 研究方法类 -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-flask text-info me-2"></i>研究方法
+                                                    </h6>
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-outline-info btn-sm" onclick="sendSampleMessage('定量研究和定性研究的区别是什么？')">
+                                                            <i class="fas fa-chart-bar me-1"></i>研究方法对比
+                                                        </button>
+                                                        <button class="btn btn-outline-info btn-sm" onclick="sendSampleMessage('如何设计一个有效的实验方案？')">
+                                                            <i class="fas fa-cogs me-1"></i>实验设计指导
+                                                        </button>
+                                                        <button class="btn btn-outline-info btn-sm" onclick="sendSampleMessage('数据分析中的常见统计方法有哪些？')">
+                                                            <i class="fas fa-calculator me-1"></i>统计方法介绍
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 学术翻译类 -->
-                                <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">
-                                                <i class="fas fa-language text-warning me-2"></i>学术翻译
-                                            </h6>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-outline-warning btn-sm" onclick="sendSampleMessage('请帮我翻译这段学术文本，保持专业性')">
-                                                    <i class="fas fa-exchange-alt me-1"></i>专业翻译
-                                                </button>
-                                                <button class="btn btn-outline-warning btn-sm" onclick="sendSampleMessage('这个专业术语的准确翻译是什么？')">
-                                                    <i class="fas fa-book me-1"></i>术语翻译
-                                                </button>
-                                                <button class="btn btn-outline-warning btn-sm" onclick="sendSampleMessage('如何提高英文学术写作水平？')">
-                                                    <i class="fas fa-globe me-1"></i>英文写作提升
-                                                </button>
+                                        
+                                        <!-- 学术翻译类 -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-language text-warning me-2"></i>学术翻译
+                                                    </h6>
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-outline-warning btn-sm" onclick="sendSampleMessage('请帮我翻译这段学术文本，保持专业性')">
+                                                            <i class="fas fa-exchange-alt me-1"></i>专业翻译
+                                                        </button>
+                                                        <button class="btn btn-outline-warning btn-sm" onclick="sendSampleMessage('这个专业术语的准确翻译是什么？')">
+                                                            <i class="fas fa-book me-1"></i>术语翻译
+                                                        </button>
+                                                        <button class="btn btn-outline-warning btn-sm" onclick="sendSampleMessage('如何提高英文学术写作水平？')">
+                                                            <i class="fas fa-globe me-1"></i>英文写作提升
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- 快速开始提示 -->
+                            <div class="mt-4">
+                                <small class="text-muted">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    提示：您可以点击任意示例问题快速开始，或直接输入您的学术问题
+                                </small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- 快速开始提示 -->
-                    <div class="mt-4">
-                        <small class="text-muted">
-                            <i class="fas fa-lightbulb me-1"></i>
-                            提示：您可以点击任意示例问题快速开始，或直接输入您的学术问题
-                        </small>
                     </div>
                 </div>
             </div>
 
             <!-- 输入区域 -->
-            <div class="bg-white border-top p-3">
+            <div class="bg-white border-top p-3 position-relative">
                 <form id="message-form" class="d-flex align-items-end">
                     <div class="flex-grow-1 me-2">
                         <div class="position-relative">
@@ -218,6 +233,8 @@
     var currentConversationId = '{{ conversation_id }}';
     var uploadedFile = null;
     var isStreaming = false;
+    var currentAbortController = null;
+    var currentEventSource = null;
 
     // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', function() {
@@ -306,10 +323,10 @@
             const response = await fetch(`/api/conversations/${conversationId}/messages`);
             const data = await response.json();
             
-            const container = document.getElementById('messages-container');
+            const wrapper = document.getElementById('messages-wrapper');
             
             if (data.data && data.data.length > 0) {
-                container.innerHTML = data.data.reverse().map(msg => {
+                wrapper.innerHTML = data.data.reverse().map(msg => {
                     return `
                         <div class="message-group mb-3">
                             <!-- 用户消息 -->
@@ -339,7 +356,7 @@
                 }).join('');
                 
                 // 滚动到底部
-                container.scrollTop = container.scrollHeight;
+                smoothScrollToBottom();
             }
         } catch (error) {
             console.error('加载消息失败:', error);
@@ -363,7 +380,7 @@
 
     // 显示欢迎消息和示例问题
     function showWelcomeMessage() {
-        document.getElementById('messages-container').innerHTML = `
+        document.getElementById('messages-wrapper').innerHTML = `
             <div class="text-center py-4" id="welcome-message">
                 <div class="mb-4">
                     <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
@@ -505,6 +522,9 @@
         
         isStreaming = true;
         document.getElementById('send-button').disabled = true;
+        // 显示停止按钮（覆盖 display: none !important）
+        const stopBtn = document.getElementById('stop-generation-btn');
+        stopBtn.style.setProperty('display', 'block', 'important');
         
         // 隐藏欢迎消息
         const welcomeMsg = document.getElementById('welcome-message');
@@ -526,24 +546,21 @@
                 conversation_id: currentConversationId
             };
             
-            // 处理不同类型的文件
+            // 如果有上传的文件，添加到files数组中
             if (uploadedFile) {
-                if (uploadedFile.type === 'image') {
-                    // 图片文件：添加到files参数
-                    requestData.files = [uploadedFile];
-                } else if (uploadedFile.type === 'document') {
-                    // 文档文件：将内容添加到查询消息中作为上下文
-                    queryMessage = `用户上传了一个${uploadedFile.extension.toUpperCase()}文档（${uploadedFile.name}），内容如下：\n\n${uploadedFile.content}\n\n用户问题：${message}`;
-                    requestData.query = queryMessage;
-                }
+                requestData.files = [uploadedFile];
             }
+            
+            // 创建可取消的请求
+            currentAbortController = new AbortController();
             
             const response = await fetch('/api/chat/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestData)
+                body: JSON.stringify(requestData),
+                signal: currentAbortController.signal
             });
             
             if (!response.ok) {
@@ -597,6 +614,10 @@
         } finally {
             isStreaming = false;
             document.getElementById('send-button').disabled = false;
+            // 隐藏停止按钮
+            const stopBtn = document.getElementById('stop-generation-btn');
+            stopBtn.style.setProperty('display', 'none', 'important');
+            currentAbortController = null;
             
             // 清理上传的文件
             if (uploadedFile) {
@@ -607,32 +628,46 @@
 
     // 添加消息到界面
     function addMessage(content, type, isStreaming = false) {
-        const container = document.getElementById('messages-container');
+        const wrapper = document.getElementById('messages-wrapper');
         const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         const timestamp = new Date().toLocaleString('zh-CN');
         
         const messageHtml = type === 'user' ? `
-            <div class="message-group mb-3">
-                <div class="d-flex justify-content-end">
-                    <div class="message user-message">
-                        <div class="message-content">${content}</div>
-                        <small class="text-muted">${timestamp}</small>
+            <div class="message-group mb-4 animate__animated animate__fadeInUp animate__faster">
+                <div class="d-flex justify-content-end align-items-start">
+                    <div class="user-message-container">
+                        <div class="message user-message">
+                            <div class="message-content">${content}</div>
+                        </div>
+                        <div class="message-time text-end mt-1">${timestamp}</div>
+                    </div>
+                    <div class="user-avatar ms-3">
+                        <div class="avatar-circle user-avatar-bg">
+                            <span class="avatar-text">你</span>
+                        </div>
                     </div>
                 </div>
             </div>
         ` : `
-            <div class="message-group mb-3">
-                <div class="d-flex justify-content-start">
-                    <div class="message ai-message" id="${messageId}">
-                        <div class="message-content">${content}${isStreaming ? '<span class="typing-indicator">▊</span>' : ''}</div>
-                        <small class="text-muted">${timestamp}</small>
+            <div class="message-group mb-4 animate__animated animate__fadeInUp animate__faster">
+                <div class="d-flex justify-content-start align-items-start">
+                    <div class="ai-avatar me-3">
+                        <div class="avatar-circle ai-avatar-bg">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                    </div>
+                    <div class="ai-message-container flex-grow-1">
+                        <div class="message ai-message" id="${messageId}">
+                            <div class="message-content">${content}${isStreaming ? '<span class="typing-indicator animate__animated animate__pulse animate__infinite">●●●</span>' : ''}</div>
+                        </div>
+                        <div class="message-time mt-1">${timestamp}</div>
                     </div>
                 </div>
             </div>
         `;
         
-        container.insertAdjacentHTML('beforeend', messageHtml);
-        container.scrollTop = container.scrollHeight;
+        wrapper.insertAdjacentHTML('beforeend', messageHtml);
+        smoothScrollToBottom();
         
         return messageId;
     }
@@ -642,12 +677,18 @@
         const messageElement = document.getElementById(messageId);
         if (messageElement) {
             const contentElement = messageElement.querySelector('.message-content');
-            contentElement.innerHTML = content + '<span class="typing-indicator">▊</span>';
-            
-            // 滚动到底部
-            const container = document.getElementById('messages-container');
-            container.scrollTop = container.scrollHeight;
+            contentElement.innerHTML = content + '<span class="typing-indicator animate__animated animate__pulse animate__infinite">●●●</span>';
+            smoothScrollToBottom();
         }
+    }
+    
+    // 平滑滚动到底部
+    function smoothScrollToBottom() {
+        const wrapper = document.getElementById('messages-wrapper');
+        wrapper.scrollTo({
+            top: wrapper.scrollHeight,
+            behavior: 'smooth'
+        });
     }
 
     // 完成消息
@@ -659,17 +700,47 @@
             
             // 添加操作按钮
             const actionsHtml = `
-                <div class="message-actions mt-2">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard(\`${content}\`)">
-                        <i class="fas fa-copy"></i>
+                <div class="message-actions d-flex gap-1 flex-wrap">
+                    <button class="btn" onclick="copyToClipboard(\`${content.replace(/`/g, '\\`')}\`)" title="复制内容">
+                        <i class="fas fa-copy me-1"></i>复制
                     </button>
-                    <button class="btn btn-sm btn-outline-success">
-                        <i class="fas fa-thumbs-up"></i>
+                    <button class="btn" title="有用">
+                        <i class="fas fa-thumbs-up me-1"></i>好评
+                    </button>
+                    <button class="btn" title="无用">
+                        <i class="fas fa-thumbs-down me-1"></i>差评
+                    </button>
+                    <button class="btn" onclick="regenerateResponse('${messageId}')" title="重新生成">
+                        <i class="fas fa-redo me-1"></i>重新生成
                     </button>
                 </div>
             `;
-            contentElement.insertAdjacentHTML('afterend', actionsHtml);
+            
+            // 将操作按钮添加到ai-message-container中
+            const messageContainer = messageElement.closest('.ai-message-container');
+            if (messageContainer) {
+                messageContainer.insertAdjacentHTML('beforeend', actionsHtml);
+            }
         }
+    }
+
+    // 停止生成回答
+    function stopGeneration() {
+        if (currentAbortController) {
+            currentAbortController.abort();
+            showToast('已停止AI回答', 'info');
+        }
+        if (currentEventSource) {
+            currentEventSource.close();
+            currentEventSource = null;
+        }
+        
+        isStreaming = false;
+        document.getElementById('send-button').disabled = false;
+        // 隐藏停止按钮
+        const stopBtn = document.getElementById('stop-generation-btn');
+        stopBtn.style.setProperty('display', 'none', 'important');
+        currentAbortController = null;
     }
 
     // 发送示例消息
@@ -704,32 +775,17 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                if (data.file_type === 'image') {
-                    // 图片文件：设置Dify文件信息
-                    uploadedFile = {
-                        type: data.file.type,  // 'image'
-                        transfer_method: data.file.transfer_method,  // 'local_file'
-                        id: data.file.id  // Dify文件ID
-                    };
-                    
-                    // 显示图片预览
-                    displayImagePreview(data.file);
-                    showToast('图片上传成功', 'success');
-                } else if (data.file_type === 'document') {
-                    // 文档文件：设置文档信息
-                    uploadedFile = {
-                        type: 'document',
-                        name: data.filename,
-                        content: data.content,
-                        size: data.size,
-                        extension: data.extension
-                    };
-                    
-                    // 显示文档预览
-                    displayDocumentPreview(data);
-                    showToast('文档上传成功', 'success');
-                }
+            if (data.success && data.file) {
+                // 所有文件都上传到Dify，统一处理
+                uploadedFile = {
+                    type: data.file.type,  // 'image', 'document', 'audio', 'video', 'custom'
+                    transfer_method: data.file.transfer_method,  // 'local_file'
+                    upload_file_id: data.file.id  // Dify文件ID
+                };
+                
+                // 显示文件预览
+                displayFilePreview(data.file, data.file_type);
+                showToast(`${data.file_type === 'image' ? '图片' : data.file_type === 'document' ? '文档' : '文件'}上传成功`, 'success');
             } else {
                 showToast(data.error || '文件上传失败', 'error');
                 input.value = '';
@@ -742,58 +798,51 @@
         });
     }
     
-    // 显示图片预览
-    function displayImagePreview(fileData) {
+    // 显示文件预览
+    function displayFilePreview(fileData, fileType) {
         const fileName = fileData.name;
         const fileSize = fileData.size;
         const fileExtension = fileData.extension;
         
         // 设置文件图标
         const iconElement = document.getElementById('file-icon');
-        iconElement.innerHTML = `<i class="fas fa-image fa-2x text-success"></i>`;
-        
-        // 设置文件信息
-        document.getElementById('file-name').textContent = fileName;
-        document.getElementById('file-size').textContent = formatFileSize(fileSize);
-        document.getElementById('file-type').textContent = fileExtension.toUpperCase() + ' 图片文件';
-        
-        // 隐藏内容预览（图片不需要文本预览）
-        document.getElementById('file-content-preview').classList.add('d-none');
-        
-        // 显示预览区域
-        document.getElementById('file-preview').classList.remove('d-none');
-    }
-    
-    // 显示文档预览
-    function displayDocumentPreview(fileData) {
-        const fileName = fileData.filename;
-        const fileSize = fileData.size;
-        const fileExtension = fileData.extension;
-        const content = fileData.content;
-        
-        // 设置文件图标
-        const iconElement = document.getElementById('file-icon');
         let iconClass = 'fas fa-file';
         let iconColor = 'text-muted';
+        let fileTypeText = '文件';
         
-        if (fileExtension === 'pdf') {
-            iconClass = 'fas fa-file-pdf';
-            iconColor = 'text-danger';
-        } else if (['doc', 'docx'].includes(fileExtension)) {
-            iconClass = 'fas fa-file-word';
-            iconColor = 'text-primary';
-        } else if (['xls', 'xlsx'].includes(fileExtension)) {
-            iconClass = 'fas fa-file-excel';
+        if (fileType === 'image') {
+            iconClass = 'fas fa-image';
             iconColor = 'text-success';
-        } else if (['txt', 'md', 'mdx', 'markdown'].includes(fileExtension)) {
-            iconClass = 'fas fa-file-alt';
+            fileTypeText = '图片文件';
+        } else if (fileType === 'document') {
+            fileTypeText = '文档文件';
+            if (fileExtension === 'pdf') {
+                iconClass = 'fas fa-file-pdf';
+                iconColor = 'text-danger';
+            } else if (['doc', 'docx'].includes(fileExtension)) {
+                iconClass = 'fas fa-file-word';
+                iconColor = 'text-primary';
+            } else if (['xls', 'xlsx'].includes(fileExtension)) {
+                iconClass = 'fas fa-file-excel';
+                iconColor = 'text-success';
+            } else if (['txt', 'md', 'mdx', 'markdown'].includes(fileExtension)) {
+                iconClass = 'fas fa-file-alt';
+                iconColor = 'text-info';
+            } else if (['html', 'xml'].includes(fileExtension)) {
+                iconClass = 'fab fa-html5';
+                iconColor = 'text-warning';
+            } else if (fileExtension === 'csv') {
+                iconClass = 'fas fa-file-csv';
+                iconColor = 'text-success';
+            }
+        } else if (fileType === 'audio') {
+            iconClass = 'fas fa-file-audio';
             iconColor = 'text-info';
-        } else if (['html', 'xml'].includes(fileExtension)) {
-            iconClass = 'fab fa-html5';
-            iconColor = 'text-warning';
-        } else if (fileExtension === 'csv') {
-            iconClass = 'fas fa-file-csv';
-            iconColor = 'text-success';
+            fileTypeText = '音频文件';
+        } else if (fileType === 'video') {
+            iconClass = 'fas fa-file-video';
+            iconColor = 'text-primary';
+            fileTypeText = '视频文件';
         }
         
         iconElement.innerHTML = `<i class="${iconClass} fa-2x ${iconColor}"></i>`;
@@ -801,16 +850,10 @@
         // 设置文件信息
         document.getElementById('file-name').textContent = fileName;
         document.getElementById('file-size').textContent = formatFileSize(fileSize);
-        document.getElementById('file-type').textContent = fileExtension.toUpperCase() + ' 文档文件';
+        document.getElementById('file-type').textContent = fileExtension.toUpperCase() + ' ' + fileTypeText;
         
-        // 显示内容预览（限制长度）
-        if (content && content.trim()) {
-            const previewContent = content.length > 500 ? content.substring(0, 500) + '...' : content;
-            document.getElementById('content-text').textContent = previewContent;
-            document.getElementById('file-content-preview').classList.remove('d-none');
-        } else {
-            document.getElementById('file-content-preview').classList.add('d-none');
-        }
+        // 隐藏内容预览（所有文件都上传到Dify，不显示本地内容）
+        document.getElementById('file-content-preview').classList.add('d-none');
         
         // 显示预览区域
         document.getElementById('file-preview').classList.remove('d-none');
@@ -852,9 +895,364 @@
     function exportChat() {
         showToast('导出功能开发中...', 'info');
     }
+    
+    // 复制到剪贴板
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('内容已复制到剪贴板', 'success');
+        }).catch(() => {
+            showToast('复制失败', 'error');
+        });
+    }
+    
+    // 重新生成回答
+    function regenerateResponse(messageId) {
+        showToast('重新生成功能开发中...', 'info');
+    }
+    
+    // 切换侧边栏显示（移动端）
+    function toggleSidebar() {
+        const sidebar = document.getElementById('conversations-sidebar');
+        const mainArea = sidebar.nextElementSibling;
+        
+        if (sidebar.classList.contains('d-none')) {
+            sidebar.classList.remove('d-none');
+            mainArea.classList.add('d-none');
+        } else {
+            sidebar.classList.add('d-none');
+            mainArea.classList.remove('d-none');
+        }
+    }
+    
+    // 显示toast提示
+    function showToast(message, type = 'info') {
+        // 创建toast容器（如果不存在）
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toastId = 'toast-' + Date.now();
+        const iconMap = {
+            success: 'fa-check-circle text-success',
+            error: 'fa-exclamation-circle text-danger',
+            warning: 'fa-exclamation-triangle text-warning',
+            info: 'fa-info-circle text-info'
+        };
+        
+        const toastHtml = `
+            <div class="toast animate__animated animate__fadeInRight" id="${toastId}" role="alert">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="fas ${iconMap[type]} me-2"></i>
+                    <span class="flex-grow-1">${message}</span>
+                    <button type="button" class="btn-close ms-2" onclick="closeToast('${toastId}')"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        // 3秒后自动关闭
+        setTimeout(() => closeToast(toastId), 3000);
+    }
+    
+    // 关闭toast
+    function closeToast(toastId) {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.classList.add('animate__fadeOutRight');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }
+    
+    // 格式化时间
+    function formatTime(timestamp) {
+        return new Date(timestamp * 1000).toLocaleString('zh-CN');
+    }
 </script>
 
 <style>
+    /* 隐藏滚动条但保持功能 */
+    .messages-wrapper::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .messages-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .messages-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.2);
+        border-radius: 10px;
+        transition: background 0.3s;
+    }
+    
+    .messages-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(0,0,0,0.4);
+    }
+    
+    /* 会话列表样式 */
+    .conversation-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        background: white;
+    }
+    
+    .conversation-item:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-color: #dee2e6;
+        transform: translateX(3px);
+    }
+    
+    .conversation-item.active {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-color: #2196f3;
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    }
+    
+    /* 头像样式 */
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .user-avatar-bg {
+        background-color: #19c37d;
+        color: white;
+    }
+    
+    .ai-avatar-bg {
+        background-color: #ab68ff;
+        color: white;
+    }
+    
+    .avatar-text {
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    /* 消息容器样式 */
+    .user-message-container {
+        max-width: 70%;
+    }
+    
+    .ai-message-container {
+        max-width: 85%;
+    }
+    
+    /* 消息气泡样式 */
+    .message {
+        padding: 12px 16px;
+        border-radius: 18px;
+        margin-bottom: 4px;
+        word-wrap: break-word;
+        line-height: 1.5;
+        font-size: 15px;
+    }
+    
+    .user-message {
+        background-color: #2f2f2f;
+        color: #ffffff;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .ai-message {
+        background-color: #f7f7f8;
+        color: #0d0d0d;
+        border: none;
+        border-bottom-left-radius: 4px;
+    }
+    
+    /* 消息内容样式 */
+    .message-content {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+    
+    .message-time {
+        font-size: 11px;
+        color: #6b7280;
+        opacity: 0.8;
+    }
+    
+    /* 消息操作按钮 */
+    .message-actions {
+        opacity: 0;
+        transition: all 0.2s ease;
+        margin-top: 8px;
+    }
+    
+    .ai-message-container:hover .message-actions {
+        opacity: 1;
+    }
+    
+    .message-actions .btn {
+        font-size: 11px;
+        padding: 4px 8px;
+        transition: all 0.2s ease;
+        border: none;
+        background: transparent;
+        color: #6b7280;
+    }
+    
+    .message-actions .btn:hover {
+        background-color: #f3f4f6;
+        color: #374151;
+        transform: scale(1.05);
+    }
+    
+    /* 打字指示器 */
+    .typing-indicator {
+        color: #6b7280;
+        font-weight: normal;
+        margin-left: 4px;
+        opacity: 0.7;
+    }
+    
+    /* 停止按钮样式 */
+    .stop-btn {
+        transition: all 0.2s ease;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-color: #d1d5db;
+        animation: slideInDown 0.3s ease-out;
+    }
+    
+    .stop-btn:hover {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+        color: #374151;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .stop-btn:active {
+        transform: translateY(0);
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Toast样式 */
+    .toast {
+        background: white;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        margin-bottom: 10px;
+        min-width: 300px;
+    }
+    
+    .toast-body {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        /* 移动端隐藏侧边栏，全屏显示聊天区域 */
+        #conversations-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1050;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        #conversations-sidebar:not(.d-none) {
+            transform: translateX(0);
+        }
+        
+        .user-message-container {
+            max-width: 85%;
+        }
+        
+        .ai-message-container {
+            max-width: 90%;
+        }
+        
+        .message {
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+        
+        .avatar-circle {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+        
+        .avatar-text {
+            font-size: 10px;
+        }
+        
+        .message-actions .btn {
+            font-size: 10px;
+            padding: 3px 6px;
+        }
+        
+        .stop-btn {
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        
+        /* 移动端输入框优化 */
+        #message-input {
+            font-size: 16px; /* 防止iOS缩放 */
+        }
+    }
+    
+    /* 桌面端响应式调整 */
+    @media (min-width: 769px) and (max-width: 1199px) {
+        .user-message-container {
+            max-width: 75%;
+        }
+        
+        .ai-message-container {
+            max-width: 80%;
+        }
+    }
+    
+    /* 大屏幕优化 */
+    @media (min-width: 1200px) {
+        .user-message-container {
+            max-width: 70%;
+        }
+        
+        .ai-message-container {
+            max-width: 85%;
+        }
+    }
+    
+    /* 会话列表样式优化 */
     .conversation-item {
         padding: 12px;
         margin-bottom: 8px;
@@ -866,7 +1264,7 @@
     
     .conversation-item:hover {
         background-color: #f8f9fa;
-        border-color: #dee2e6;
+        border-color: #e9ecef;
     }
     
     .conversation-item.active {
@@ -874,51 +1272,35 @@
         border-color: #2196f3;
     }
     
-    .message {
-        max-width: 70%;
-        padding: 12px 16px;
-        border-radius: 12px;
-        margin-bottom: 8px;
+    /* 自定义滚动条样式 */
+    .messages-wrapper::-webkit-scrollbar {
+        width: 6px;
     }
     
-    .user-message {
-        background-color: #007bff;
-        color: white;
-        margin-left: auto;
+    .messages-wrapper::-webkit-scrollbar-track {
+        background: transparent;
     }
     
-    .ai-message {
-        background-color: white;
-        border: 1px solid #dee2e6;
-        margin-right: auto;
+    .messages-wrapper::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 3px;
     }
     
-    .message-content {
-        word-wrap: break-word;
-        white-space: pre-wrap;
+    .messages-wrapper::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0,0,0,0.3);
     }
     
-    .message-actions {
-        opacity: 0;
-        transition: opacity 0.2s ease;
+    #conversations-list::-webkit-scrollbar {
+        width: 4px;
     }
     
-    .ai-message:hover .message-actions {
-        opacity: 1;
+    #conversations-list::-webkit-scrollbar-track {
+        background: transparent;
     }
     
-    .typing-indicator {
-        animation: blink 1s infinite;
-        color: #007bff;
-    }
-    
-    @keyframes blink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0; }
-    }
-    
-    #messages-container {
-        height: calc(100vh - 200px);
+    #conversations-list::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 2px;
     }
     
     /* 示例问题卡片样式 */

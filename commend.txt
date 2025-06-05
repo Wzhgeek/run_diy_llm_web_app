@@ -17,3 +17,6 @@ APIKEY为：app-TsSl0xTEJKcKP10ONOobYNQX
 
 
 
+停止按钮
+文件上传
+知识库引用
