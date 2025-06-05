@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 大模型智慧文献阅读管理平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- 欢迎横幅 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="academic-banner text-white rounded-3 p-4 text-center">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-graduation-cap me-3"></i>
+                    大模型智慧文献阅读管理平台
+                </h1>
+                <p class="lead mb-4">
+                    基于前沿大语言模型技术的文献智能处理平台，提供AI对话、文档分析翻译、知识库构建等专业学术服务
+                </p>
+                <a href="{{ url_for('chat') }}" class="btn btn-academic btn-lg me-3">
+                    <i class="fas fa-rocket me-2"></i>开始探索
+                </a>
+                <button class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                    <i class="fas fa-info-circle me-2"></i>了解更多
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能卡片 -->
+    <div class="row g-4">
+        <!-- 智能对话 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card academic-card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-comments fa-2x text-primary"></i>
+                    </div>
+                    <h4 class="card-title mb-3">学术对话助手</h4>
+                    <p class="card-text text-muted mb-4">
+                        与大模型进行学术交流，支持文献讨论、研究问题解答、概念解释等专业对话
+                    </p>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>流式实时响应</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>多模态交互</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>会话历史管理</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>消息反馈机制</li>
+                    </ul>
+                    <a href="{{ url_for('chat') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-2"></i>开始对话
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文档处理 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card academic-card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-file-alt fa-2x text-success"></i>
+                    </div>
+                    <h4 class="card-title mb-3">文献处理中心</h4>
+                    <p class="card-text text-muted mb-4">
+                        专业的学术文献处理工具，支持多语言翻译、论文摘要、文献综述等功能
+                    </p>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>学术文献翻译</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>论文智能摘要</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>文献综述生成</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>批量文献处理</li>
+                    </ul>
+                    <a href="{{ url_for('document') }}" class="btn btn-success">
+                        <i class="fas fa-arrow-right me-2"></i>文档处理
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识库管理 -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card academic-card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center p-4">
+                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-database fa-2x text-info"></i>
+                    </div>
+                    <h4 class="card-title mb-3">学术知识库</h4>
+                    <p class="card-text text-muted mb-4">
+                        构建专业学术知识库，实现文献智能检索、学术问答和研究助手功能
+                    </p>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>文献批量上传</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>智能向量索引</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>学术知识检索</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>索引状态监控</li>
+                    </ul>
+                    <a href="{{ url_for('knowledge') }}" class="btn btn-info">
+                        <i class="fas fa-arrow-right me-2"></i>管理知识库
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card stats-card shadow-sm">
+                <div class="card-header gradient-bg text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>平台统计
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="border-end">
+                                <h3 class="text-primary mb-1" id="stat-conversations">--</h3>
+                                <small class="text-muted">活跃会话</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="border-end">
+                                <h3 class="text-success mb-1" id="stat-documents">--</h3>
+                                <small class="text-muted">处理文档</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="border-end">
+                                <h3 class="text-info mb-1" id="stat-datasets">--</h3>
+                                <small class="text-muted">知识库数量</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <h3 class="text-warning mb-1">
+                                <i class="fas fa-circle text-success"></i>
+                            </h3>
+                            <small class="text-muted">API状态</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>快速操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-primary w-100" onclick="startNewChat()">
+                                <i class="fas fa-plus me-2"></i>新建对话
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-success w-100" onclick="uploadDocument()">
+                                <i class="fas fa-upload me-2"></i>上传文档
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-info w-100" onclick="createDataset()">
+                                <i class="fas fa-database me-2"></i>创建知识库
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 关于模态框 -->
+<div class="modal fade" id="aboutModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>关于大模型智慧文献阅读管理平台
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">核心特性</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i>流式AI对话交互</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i>多模态内容理解</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i>智能文档处理</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i>知识库构建管理</li>
+                            <li class="mb-2"><i class="fas fa-check text-primary me-2"></i>响应式界面设计</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">技术规格</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><strong>后端框架:</strong> Flask + Python</li>
+                            <li class="mb-2"><strong>前端技术:</strong> Bootstrap 5 + JavaScript</li>
+                            <li class="mb-2"><strong>API集成:</strong> Dify API v1</li>
+                            <li class="mb-2"><strong>响应模式:</strong> 流式处理</li>
+                            <li class="mb-2"><strong>部署端口:</strong> 8888</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p class="text-muted mb-0">
+                        版本 1.0.0 | 开发者: wangzihan | 
+                        <i class="fas fa-heart text-danger"></i> 
+                        为学术研究而设计
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <a href="{{ url_for('chat') }}" class="btn btn-primary">开始使用</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 页面加载完成后获取统计信息
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatistics();
+    });
+
+    // 加载统计信息
+    async function loadStatistics() {
+        try {
+            // 获取会话数量
+            const conversations = await fetch('/api/conversations');
+            const convData = await conversations.json();
+            document.getElementById('stat-conversations').textContent = convData.data.length;
+
+            // 获取知识库数量
+            const datasets = await fetch('/api/datasets');
+            const datasetData = await datasets.json();
+            document.getElementById('stat-datasets').textContent = datasetData.data.length;
+
+            // 文档处理数量（示例数据）
+            document.getElementById('stat-documents').textContent = '0';
+
+        } catch (error) {
+            console.error('加载统计信息失败:', error);
+        }
+    }
+
+    // 快速操作函数
+    function startNewChat() {
+        window.location.href = '/chat';
+    }
+
+    function uploadDocument() {
+        window.location.href = '/document';
+    }
+
+    function createDataset() {
+        window.location.href = '/knowledge';
+    }
+</script>
+
+<style>
+    .hover-shadow {
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        transform: translateY(-2px);
+    }
+    
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .border-end {
+        border-right: 1px solid #dee2e6;
+    }
+    
+    @media (max-width: 768px) {
+        .border-end {
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %} 

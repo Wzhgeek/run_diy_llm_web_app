@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+
+{% block title %}文档处理 - Dify智能助手{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>文档处理
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- 功能选择标签页 -->
+                    <ul class="nav nav-tabs mb-4" id="taskTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="translate-tab" data-bs-toggle="tab" data-bs-target="#translate" type="button" role="tab">
+                                <i class="fas fa-language me-2"></i>翻译
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
+                                <i class="fas fa-compress-alt me-2"></i>总结
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rewrite-tab" data-bs-toggle="tab" data-bs-target="#rewrite" type="button" role="tab">
+                                <i class="fas fa-edit me-2"></i>改写
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="row">
+                        <!-- 输入区域 -->
+                        <div class="col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-upload me-2"></i>输入内容
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- 文本输入区域 -->
+                                    <div class="mb-3">
+                                        <label for="input-text" class="form-label">输入文本内容</label>
+                                        <textarea class="form-control" id="input-text" 
+                                                 rows="15" 
+                                                 placeholder="请输入需要处理的文本内容..."
+                                                 style="resize: vertical;"></textarea>
+                                        <div class="form-text">
+                                            <span id="char-count">0</span> 字符
+                                        </div>
+                                    </div>
+
+                                    <!-- 选项配置 -->
+                                    <div class="tab-content" id="optionsContent">
+                                        <!-- 翻译选项 -->
+                                        <div class="tab-pane fade show active" id="translate" role="tabpanel">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label class="form-label">目标语言</label>
+                                                    <select class="form-select" id="target-language">
+                                                        <option value="中文">中文</option>
+                                                        <option value="英文">英文</option>
+                                                        <option value="日文">日文</option>
+                                                        <option value="韩文">韩文</option>
+                                                        <option value="法文">法文</option>
+                                                        <option value="德文">德文</option>
+                                                        <option value="西班牙文">西班牙文</option>
+                                                        <option value="俄文">俄文</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 总结选项 -->
+                                        <div class="tab-pane fade" id="summary" role="tabpanel">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label class="form-label">总结类型</label>
+                                                    <select class="form-select" id="summary-type">
+                                                        <option value="要点">要点提取</option>
+                                                        <option value="摘要" selected>内容摘要</option>
+                                                        <option value="大纲">结构大纲</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 改写选项 -->
+                                        <div class="tab-pane fade" id="rewrite" role="tabpanel">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label class="form-label">改写风格</label>
+                                                    <select class="form-select" id="rewrite-style">
+                                                        <option value="正式">正式文体</option>
+                                                        <option value="通俗" selected>通俗易懂</option>
+                                                        <option value="学术">学术风格</option>
+                                                        <option value="活泼">活泼生动</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 处理按钮 -->
+                                    <div class="d-grid gap-2 mt-4">
+                                        <button class="btn btn-primary" id="process-btn" onclick="processDocument()">
+                                            <i class="fas fa-cogs me-2"></i>开始处理
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="clearInput()">
+                                            <i class="fas fa-eraser me-2"></i>清空内容
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 输出区域 -->
+                        <div class="col-lg-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-download me-2"></i>处理结果
+                                        </h6>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-light btn-sm" onclick="copyResult()" title="复制结果">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="output-area" class="h-100">
+                                        <div class="text-center text-muted py-5" id="placeholder">
+                                            <i class="fas fa-magic fa-3x mb-3"></i>
+                                            <h5>等待处理</h5>
+                                            <p>请在左侧输入内容并选择处理类型</p>
+                                        </div>
+                                        
+                                        <!-- 处理中状态 -->
+                                        <div id="processing" class="text-center py-5 d-none">
+                                            <div class="spinner-border text-primary mb-3" role="status">
+                                                <span class="visually-hidden">处理中...</span>
+                                            </div>
+                                            <h5>正在处理中</h5>
+                                            <p class="text-muted">请稍候，AI正在分析和处理您的内容...</p>
+                                        </div>
+
+                                        <!-- 结果显示区域 -->
+                                        <div id="result-content" class="d-none">
+                                            <div class="border rounded p-3 bg-light" 
+                                                 style="min-height: 400px; white-space: pre-wrap; font-family: inherit;">
+                                                <div id="result-text"></div>
+                                            </div>
+                                            
+                                            <!-- 结果统计 -->
+                                            <div class="mt-3">
+                                                <div class="row text-center">
+                                                    <div class="col-6">
+                                                        <div class="border-end">
+                                                            <div class="fw-bold text-primary" id="result-chars">0</div>
+                                                            <small class="text-muted">字符数</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="fw-bold text-info" id="task-type">翻译</div>
+                                                        <small class="text-muted">处理类型</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var isProcessing = false;
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 绑定字符计数
+        document.getElementById('input-text').addEventListener('input', updateCharCount);
+        
+        // 绑定标签页切换事件
+        document.querySelectorAll('#taskTabs button').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                updateTaskTypeDisplay();
+            });
+        });
+
+        updateCharCount();
+        updateTaskTypeDisplay();
+    });
+
+    // 更新字符计数
+    function updateCharCount() {
+        const text = document.getElementById('input-text').value;
+        document.getElementById('char-count').textContent = text.length;
+    }
+
+    // 更新任务类型显示
+    function updateTaskTypeDisplay() {
+        const activeTab = document.querySelector('#taskTabs .nav-link.active');
+        const taskType = activeTab.textContent.trim();
+        document.getElementById('task-type').textContent = taskType;
+    }
+
+    // 处理文档
+    async function processDocument() {
+        if (isProcessing) {
+            showToast('正在处理中，请稍候...', 'warning');
+            return;
+        }
+
+        const content = document.getElementById('input-text').value.trim();
+        if (!content) {
+            showToast('请输入要处理的内容', 'warning');
+            return;
+        }
+
+        // 获取当前任务类型
+        const activeTab = document.querySelector('#taskTabs .nav-link.active');
+        const taskType = activeTab.id.replace('-tab', '');
+
+        // 获取配置参数
+        var config = {};
+        if (taskType === 'translate') {
+            config.language = document.getElementById('target-language').value;
+        } else if (taskType === 'summary') {
+            config.type = document.getElementById('summary-type').value;
+        } else if (taskType === 'rewrite') {
+            config.style = document.getElementById('rewrite-style').value;
+        }
+
+        isProcessing = true;
+        
+        // 显示处理状态
+        showProcessingState();
+
+        try {
+            const response = await fetch('/api/document/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: taskType,
+                    content: content,
+                    language: config.language || '中文',
+                    config: config
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('处理请求失败');
+            }
+
+            // 处理流式响应
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let resultText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // 保留不完整的行
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            
+                            if (data.type === 'message') {
+                                resultText = data.full_content;
+                                updateResult(resultText);
+                            } else if (data.type === 'end') {
+                                showResultState(resultText);
+                            } else if (data.error) {
+                                throw new Error(data.error);
+                            }
+                        } catch (e) {
+                            console.error('解析响应数据失败:', e);
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            showToast(`处理失败: ${error.message}`, 'error');
+            showPlaceholderState();
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    // 显示处理状态
+    function showProcessingState() {
+        document.getElementById('placeholder').classList.add('d-none');
+        document.getElementById('result-content').classList.add('d-none');
+        document.getElementById('processing').classList.remove('d-none');
+        document.getElementById('process-btn').disabled = true;
+    }
+
+    // 显示结果状态
+    function showResultState(text) {
+        document.getElementById('processing').classList.add('d-none');
+        document.getElementById('result-content').classList.remove('d-none');
+        document.getElementById('process-btn').disabled = false;
+
+        // 更新统计信息
+        document.getElementById('result-chars').textContent = text.length;
+    }
+
+    // 显示占位符状态
+    function showPlaceholderState() {
+        document.getElementById('processing').classList.add('d-none');
+        document.getElementById('result-content').classList.add('d-none');
+        document.getElementById('placeholder').classList.remove('d-none');
+        document.getElementById('process-btn').disabled = false;
+    }
+
+    // 更新结果内容
+    function updateResult(text) {
+        document.getElementById('result-text').textContent = text;
+    }
+
+    // 复制结果
+    async function copyResult() {
+        const resultText = document.getElementById('result-text').textContent;
+        if (!resultText) {
+            showToast('没有可复制的内容', 'warning');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(resultText);
+            showToast('结果已复制到剪贴板', 'success');
+        } catch (err) {
+            showToast('复制失败', 'error');
+        }
+    }
+
+    // 清空输入
+    function clearInput() {
+        if (confirm('确定要清空输入内容吗？')) {
+            document.getElementById('input-text').value = '';
+            updateCharCount();
+            showPlaceholderState();
+        }
+    }
+</script>
+
+<style>
+    #output-area {
+        min-height: 500px;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: #007bff;
+        color: white !important;
+        border-color: #007bff;
+    }
+    
+    .border-end {
+        border-right: 1px solid #dee2e6;
+    }
+    
+    @media (max-width: 768px) {
+        .border-end {
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let isProcessing = false;
+    let startTime = 0;
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 绑定字符计数
+        document.getElementById('input-text').addEventListener('input', updateCharCount);
+        
+        // 绑定标签页切换事件
+        document.querySelectorAll('#taskTabs button').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                updateTaskTypeDisplay();
+            });
+        });
+
+        updateCharCount();
+        updateTaskTypeDisplay();
+    });
+
+    // 更新字符计数
+    function updateCharCount() {
+        const text = document.getElementById('input-text').value;
+        document.getElementById('char-count').textContent = text.length;
+    }
+
+    // 更新任务类型显示
+    function updateTaskTypeDisplay() {
+        const activeTab = document.querySelector('#taskTabs .nav-link.active');
+        const taskType = activeTab.textContent.trim();
+        document.getElementById('task-type').textContent = taskType;
+    }
+
+    // 处理文档
+    async function processDocument() {
+        if (isProcessing) {
+            showToast('正在处理中，请稍候...', 'warning');
+            return;
+        }
+
+        const content = document.getElementById('input-text').value.trim();
+        if (!content) {
+            showToast('请输入要处理的内容', 'warning');
+            return;
+        }
+
+        // 获取当前任务类型
+        const activeTab = document.querySelector('#taskTabs .nav-link.active');
+        const taskType = activeTab.id.replace('-tab', '');
+
+        // 获取配置参数
+        let config = {};
+        if (taskType === 'translate') {
+            config.language = document.getElementById('target-language').value;
+        } else if (taskType === 'summary') {
+            config.type = document.getElementById('summary-type').value;
+        } else if (taskType === 'rewrite') {
+            config.style = document.getElementById('rewrite-style').value;
+        }
+
+        isProcessing = true;
+        startTime = Date.now();
+        
+        // 显示处理状态
+        showProcessingState();
+
+        try {
+            const response = await fetch('/api/document/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: taskType,
+                    content: content,
+                    language: config.language || '中文',
+                    config: config
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('处理请求失败');
+            }
+
+            // 处理流式响应
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let resultText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // 保留不完整的行
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            
+                            if (data.type === 'message') {
+                                resultText = data.full_content;
+                                updateResult(resultText);
+                            } else if (data.type === 'end') {
+                                showResultState(resultText);
+                            } else if (data.error) {
+                                throw new Error(data.error);
+                            }
+                        } catch (e) {
+                            console.error('解析响应数据失败:', e);
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            showToast(`处理失败: ${error.message}`, 'error');
+            showPlaceholderState();
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    // 显示处理状态
+    function showProcessingState() {
+        document.getElementById('placeholder').classList.add('d-none');
+        document.getElementById('result-content').classList.add('d-none');
+        document.getElementById('processing').classList.remove('d-none');
+        document.getElementById('process-btn').disabled = true;
+    }
+
+    // 显示结果状态
+    function showResultState(text) {
+        document.getElementById('processing').classList.add('d-none');
+        document.getElementById('result-content').classList.remove('d-none');
+        document.getElementById('process-btn').disabled = false;
+
+        // 更新统计信息
+        const processTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        document.getElementById('result-chars').textContent = text.length;
+        document.getElementById('process-time').textContent = processTime;
+    }
+
+    // 显示占位符状态
+    function showPlaceholderState() {
+        document.getElementById('processing').classList.add('d-none');
+        document.getElementById('result-content').classList.add('d-none');
+        document.getElementById('placeholder').classList.remove('d-none');
+        document.getElementById('process-btn').disabled = false;
+    }
+
+    // 更新结果内容
+    function updateResult(text) {
+        document.getElementById('result-text').textContent = text;
+    }
+
+    // 复制结果
+    async function copyResult() {
+        const resultText = document.getElementById('result-text').textContent;
+        if (!resultText) {
+            showToast('没有可复制的内容', 'warning');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(resultText);
+            showToast('结果已复制到剪贴板', 'success');
+        } catch (err) {
+            showToast('复制失败', 'error');
+        }
+    }
+
+    // 清空输入
+    function clearInput() {
+        if (confirm('确定要清空输入内容吗？')) {
+            document.getElementById('input-text').value = '';
+            updateCharCount();
+            showPlaceholderState();
+        }
+    }
+</script>
+
+<style>
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    
+    .border-2 {
+        border-width: 2px !important;
+    }
+    
+    #output-area {
+        min-height: 500px;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: #007bff;
+        color: white !important;
+        border-color: #007bff;
+    }
+    
+    .progress {
+        height: 6px;
+    }
+    
+    .border-end {
+        border-right: 1px solid #dee2e6;
+    }
+    
+    @media (max-width: 768px) {
+        .border-end {
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %} 

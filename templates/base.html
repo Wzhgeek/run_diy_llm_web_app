@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}大模型智慧文献阅读管理平台{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- 自定义CSS -->
+    <link href="{{ url_for('static', filename='custom.css') }}" rel="stylesheet">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-light">
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <i class="fas fa-graduation-cap me-2"></i>
+                <span class="fw-bold">大模型智慧文献阅读管理平台</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'chat' %}active{% endif %}" href="{{ url_for('chat') }}">
+                            <i class="fas fa-comments me-1"></i>智能对话
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'document' %}active{% endif %}" href="{{ url_for('document') }}">
+                            <i class="fas fa-file-alt me-1"></i>文档处理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'knowledge' %}active{% endif %}" href="{{ url_for('knowledge') }}">
+                            <i class="fas fa-database me-1"></i>知识库
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>用户
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-1"></i>设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-1"></i>退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 底部状态栏 -->
+    <footer class="bg-white border-top py-2">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="fas fa-circle text-success me-1"></i>
+                        API连接正常 | 版本 1.0.0
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">
+                        © 2024 wangzihan | 
+                        <a href="mailto:wangzh011031@163.com" class="text-decoration-none text-muted">wangzh011031@163.com</a> | 
+                        <span id="current-time"></span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast 通知容器 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">系统通知</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading 遮罩 -->
+    <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="text-center text-white">
+                <div class="spinner-border mb-3" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <div>处理中，请稍候...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 通用JavaScript -->
+    <script>
+        // 更新当前时间
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // 显示Toast通知
+        function showToast(message, type = 'info') {
+            const toastEl = document.getElementById('liveToast');
+            const toastBody = document.getElementById('toast-body');
+            
+            // 设置图标和颜色
+            let icon = 'fas fa-info-circle';
+            let bgClass = 'bg-info';
+            
+            if (type === 'success') {
+                icon = 'fas fa-check-circle';
+                bgClass = 'bg-success';
+            } else if (type === 'error') {
+                icon = 'fas fa-exclamation-circle';
+                bgClass = 'bg-danger';
+            } else if (type === 'warning') {
+                icon = 'fas fa-exclamation-triangle';
+                bgClass = 'bg-warning';
+            }
+            
+            toastBody.innerHTML = `<i class="${icon} me-2"></i>${message}`;
+            toastEl.className = `toast ${bgClass} text-white`;
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
+        // 显示/隐藏加载遮罩
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('d-none');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('d-none');
+        }
+
+        // API请求封装
+        async function apiRequest(url, options = {}) {
+            try {
+                showLoading();
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '请求失败');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                showToast(error.message, 'error');
+                throw error;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('zh-CN');
+        }
+
+        // 复制到剪贴板
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('已复制到剪贴板', 'success');
+            } catch (err) {
+                showToast('复制失败', 'error');
+            }
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
