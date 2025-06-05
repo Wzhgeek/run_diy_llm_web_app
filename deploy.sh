@@ -162,6 +162,24 @@ if [ ! -f "$APP_DIR/run.py" ]; then
     exit 1
 fi
 
+# 验证Python虚拟环境
+log_info "验证Python虚拟环境..."
+if [ ! -f "$VENV_DIR/bin/python" ]; then
+    log_error "Python虚拟环境路径错误: $VENV_DIR/bin/python"
+    exit 1
+fi
+
+# 测试Python执行
+PYTHON_TEST=$($VENV_DIR/bin/python --version 2>&1)
+log_info "虚拟环境Python版本: $PYTHON_TEST"
+
+# 检查run.py是否配置为正确端口
+if grep -q "port.*8888" "$APP_DIR/run.py"; then
+    log_info "端口配置检查通过 (8888)"
+else
+    log_warn "未在run.py中发现8888端口配置，请检查"
+fi
+
 # 创建服务文件内容
 SERVICE_CONTENT="[Unit]
 Description=Dify ChatFlow Web Application

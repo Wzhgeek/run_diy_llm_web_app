@@ -111,10 +111,14 @@ fi
 # 8. 检查requirements.txt是否有变化
 log_step "检查依赖更新..."
 if [ -f "requirements.txt" ]; then
-    # 激活虚拟环境
-    if [ -f "$VENV_DIR/bin/activate" ]; then
-        log_info "激活虚拟环境"
+    # 验证虚拟环境
+    if [ -f "$VENV_DIR/bin/python" ] && [ -f "$VENV_DIR/bin/activate" ]; then
+        log_info "激活虚拟环境: $VENV_DIR"
         source "$VENV_DIR/bin/activate"
+        
+        # 验证Python路径
+        PYTHON_PATH=$(which python)
+        log_info "使用Python路径: $PYTHON_PATH"
         
         # 更新依赖
         log_info "更新Python依赖包"
@@ -122,11 +126,25 @@ if [ -f "requirements.txt" ]; then
         pip install -r requirements.txt
         log_info "依赖包更新完成"
     else
-        log_warn "虚拟环境不存在，跳过依赖更新"
+        log_warn "虚拟环境不存在或损坏: $VENV_DIR"
+        log_warn "建议重新运行部署脚本: ./deploy.sh"
     fi
 else
     log_warn "requirements.txt 不存在，跳过依赖更新"
 fi
+
+# 验证关键文件
+log_step "验证应用文件..."
+if [ ! -f "run.py" ]; then
+    log_error "关键文件 run.py 不存在！"
+    exit 1
+fi
+
+if [ ! -f "app.py" ]; then
+    log_warn "app.py 文件不存在，可能影响应用运行"
+fi
+
+log_info "应用文件验证完成"
 
 # 9. 重启服务
 log_step "启动应用服务..."
