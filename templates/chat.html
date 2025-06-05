@@ -520,14 +520,22 @@
         
         try {
             // 构建请求数据
+            let queryMessage = message;
             const requestData = {
-                query: message,
+                query: queryMessage,
                 conversation_id: currentConversationId
             };
             
-            // 如果有上传的图片文件，按照API文档格式添加files参数
-            if (uploadedFile && uploadedFile.type === 'image') {
-                requestData.files = [uploadedFile];
+            // 处理不同类型的文件
+            if (uploadedFile) {
+                if (uploadedFile.type === 'image') {
+                    // 图片文件：添加到files参数
+                    requestData.files = [uploadedFile];
+                } else if (uploadedFile.type === 'document') {
+                    // 文档文件：将内容添加到查询消息中作为上下文
+                    queryMessage = `用户上传了一个${uploadedFile.extension.toUpperCase()}文档（${uploadedFile.name}），内容如下：\n\n${uploadedFile.content}\n\n用户问题：${message}`;
+                    requestData.query = queryMessage;
+                }
             }
             
             const response = await fetch('/api/chat/send', {
@@ -675,54 +683,61 @@
         const file = input.files[0];
         if (!file) return;
         
-        // 检查文件类型 - 根据API文档，主要支持图片格式
-        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
-            showToast('仅支持图片文件（PNG、JPG、JPEG、WebP、GIF）', 'error');
-            input.value = '';
-            return;
-        }
-        
-        // 检查文件大小 (10MB限制)
-        if (file.size > 10 * 1024 * 1024) {
-            showToast('图片文件大小不能超过10MB', 'error');
+        // 检查文件大小 (50MB限制)
+        if (file.size > 50 * 1024 * 1024) {
+            showToast('文件大小不能超过50MB', 'error');
             input.value = '';
             return;
         }
         
         // 显示加载提示
-        showToast('正在上传图片到Dify...', 'info');
+        showToast('正在上传文件...', 'info');
         
         // 创建FormData
         const formData = new FormData();
         formData.append('file', file);
         
-        // 上传文件到Dify API
+        // 上传文件
         fetch('/api/upload', {
             method: 'POST',
             body: formData
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.file) {
-                // 上传成功，设置文件信息（按照API文档格式）
-                uploadedFile = {
-                    type: data.file.type,  // 'image'
-                    transfer_method: data.file.transfer_method,  // 'local_file'
-                    id: data.file.id  // Dify文件ID
-                };
-                
-                // 显示文件预览
-                displayImagePreview(data.file);
-                showToast('图片上传成功', 'success');
+            if (data.success) {
+                if (data.file_type === 'image') {
+                    // 图片文件：设置Dify文件信息
+                    uploadedFile = {
+                        type: data.file.type,  // 'image'
+                        transfer_method: data.file.transfer_method,  // 'local_file'
+                        id: data.file.id  // Dify文件ID
+                    };
+                    
+                    // 显示图片预览
+                    displayImagePreview(data.file);
+                    showToast('图片上传成功', 'success');
+                } else if (data.file_type === 'document') {
+                    // 文档文件：设置文档信息
+                    uploadedFile = {
+                        type: 'document',
+                        name: data.filename,
+                        content: data.content,
+                        size: data.size,
+                        extension: data.extension
+                    };
+                    
+                    // 显示文档预览
+                    displayDocumentPreview(data);
+                    showToast('文档上传成功', 'success');
+                }
             } else {
-                showToast(data.error || '图片上传失败', 'error');
+                showToast(data.error || '文件上传失败', 'error');
                 input.value = '';
             }
         })
         .catch(error => {
             console.error('文件上传错误:', error);
-            showToast('图片上传失败', 'error');
+            showToast('文件上传失败', 'error');
             input.value = '';
         });
     }
@@ -744,6 +759,58 @@
         
         // 隐藏内容预览（图片不需要文本预览）
         document.getElementById('file-content-preview').classList.add('d-none');
+        
+        // 显示预览区域
+        document.getElementById('file-preview').classList.remove('d-none');
+    }
+    
+    // 显示文档预览
+    function displayDocumentPreview(fileData) {
+        const fileName = fileData.filename;
+        const fileSize = fileData.size;
+        const fileExtension = fileData.extension;
+        const content = fileData.content;
+        
+        // 设置文件图标
+        const iconElement = document.getElementById('file-icon');
+        let iconClass = 'fas fa-file';
+        let iconColor = 'text-muted';
+        
+        if (fileExtension === 'pdf') {
+            iconClass = 'fas fa-file-pdf';
+            iconColor = 'text-danger';
+        } else if (['doc', 'docx'].includes(fileExtension)) {
+            iconClass = 'fas fa-file-word';
+            iconColor = 'text-primary';
+        } else if (['xls', 'xlsx'].includes(fileExtension)) {
+            iconClass = 'fas fa-file-excel';
+            iconColor = 'text-success';
+        } else if (['txt', 'md', 'mdx', 'markdown'].includes(fileExtension)) {
+            iconClass = 'fas fa-file-alt';
+            iconColor = 'text-info';
+        } else if (['html', 'xml'].includes(fileExtension)) {
+            iconClass = 'fab fa-html5';
+            iconColor = 'text-warning';
+        } else if (fileExtension === 'csv') {
+            iconClass = 'fas fa-file-csv';
+            iconColor = 'text-success';
+        }
+        
+        iconElement.innerHTML = `<i class="${iconClass} fa-2x ${iconColor}"></i>`;
+        
+        // 设置文件信息
+        document.getElementById('file-name').textContent = fileName;
+        document.getElementById('file-size').textContent = formatFileSize(fileSize);
+        document.getElementById('file-type').textContent = fileExtension.toUpperCase() + ' 文档文件';
+        
+        // 显示内容预览（限制长度）
+        if (content && content.trim()) {
+            const previewContent = content.length > 500 ? content.substring(0, 500) + '...' : content;
+            document.getElementById('content-text').textContent = previewContent;
+            document.getElementById('file-content-preview').classList.remove('d-none');
+        } else {
+            document.getElementById('file-content-preview').classList.add('d-none');
+        }
         
         // 显示预览区域
         document.getElementById('file-preview').classList.remove('d-none');
