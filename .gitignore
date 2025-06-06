@@ -1,26 +1,45 @@
-# Python缓存文件
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# 虚拟环境
-venv/
+*.so
+.Python
 env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
 ENV/
 
-# IDE文件
-.vscode/
+# IDE
 .idea/
+.vscode/
 *.swp
 *.swo
-*~
 
-# 系统文件
+# Logs
+*.log
+
+# Local configuration
+.env
+config.local.json
+
+# System files
 .DS_Store
 Thumbs.db
-
-# 日志文件
-*.log
 
 # 临时文件
 *.tmp
