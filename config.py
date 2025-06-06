@@ -51,7 +51,8 @@ class DifyAPIConfig:
         'messages': '/messages',
         'files_upload': '/files/upload',
         'completion_messages': '/completion-messages',
-        'chat_stop': '/chat-messages/{task_id}/stop',
+        'chat_messages_stop': '/chat-messages/{task_id}/stop',
+        'completion_messages_stop': '/completion-messages/{task_id}/stop',
         'message_feedback': '/messages/{message_id}/feedbacks',
         'message_suggested': '/messages/{message_id}/suggested',
         
@@ -66,10 +67,10 @@ class DifyAPIConfig:
         'dataset_detail': '/datasets/{dataset_id}',
         'dataset_documents': '/datasets/{dataset_id}/documents',
         'dataset_document_detail': '/datasets/{dataset_id}/documents/{document_id}',
-        'dataset_create_by_text': '/datasets/{dataset_id}/document/create-by-text',
-        'dataset_create_by_file': '/datasets/{dataset_id}/document/create-by-file',
-        'dataset_update_by_text': '/datasets/{dataset_id}/documents/{document_id}/update-by-text',
-        'dataset_update_by_file': '/datasets/{dataset_id}/documents/{document_id}/update-by-file',
+        'dataset_create_by_text': '/datasets/{dataset_id}/document/create_by_text',
+        'dataset_create_by_file': '/datasets/{dataset_id}/document/create_by_file',
+        'dataset_update_by_text': '/datasets/{dataset_id}/documents/{document_id}/update_by_text',
+        'dataset_update_by_file': '/datasets/{dataset_id}/documents/{document_id}/update_by_file',
         'dataset_indexing_status': '/datasets/{dataset_id}/documents/{batch_id}/indexing-status',
         'dataset_retrieve': '/datasets/{dataset_id}/retrieve',
         'dataset_segments': '/datasets/{dataset_id}/documents/{document_id}/segments',
@@ -126,8 +127,8 @@ class DefaultSettings:
     DEFAULT_DATASET_PERMISSION = "only_me"
     DEFAULT_INDEXING_TECHNIQUE = "high_quality"
     DEFAULT_PROCESS_RULE_MODE = "automatic"
-    DEFAULT_RETRIEVAL_TOP_K = 3
-    DEFAULT_RETRIEVAL_SCORE_THRESHOLD = 0.5
+    DEFAULT_TOP_K = 3
+    DEFAULT_SCORE_THRESHOLD = 0.5
     DEFAULT_SEARCH_METHOD = "semantic_search"
     
     # 分页设置

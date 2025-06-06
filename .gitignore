@@ -32,4 +32,5 @@ uploads/*
 
 # 配置文件（如果包含敏感信息）
 # config_local.py 
-comment.txt
+commend.txt
+输入格式.txt

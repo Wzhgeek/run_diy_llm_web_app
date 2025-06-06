@@ -34,14 +34,14 @@ class DifyAPIClient:
         self.chat_headers = DifyAPIConfig.get_chat_headers()
         self.dataset_headers = DifyAPIConfig.get_dataset_headers()
     
-    def chat_message(self, query, conversation_id="", user_id=None, files=None, stream=True):
+    def chat_message(self, query, conversation_id="", user_id=None, files=None, inputs=None, stream=True):
         """发送聊天消息"""
         url = DifyAPIConfig.get_full_url('chat_messages')
         user_id = user_id or DefaultSettings.DEFAULT_USER_ID
         response_mode = DefaultSettings.DEFAULT_RESPONSE_MODE if stream else "blocking"
         
         data = {
-            "inputs": {},
+            "inputs": inputs or {},
             "query": query,
             "response_mode": response_mode,
             "conversation_id": conversation_id,
@@ -208,10 +208,18 @@ class DifyAPIClient:
         }
         
         try:
+            print(f"创建文档请求: {url}")
+            print(f"请求数据: {data}")
+            print(f"请求头: {self.dataset_headers}")
+            
             response = requests.post(url, headers=self.dataset_headers, json=data, timeout=self.timeout)
+            print(f"响应状态码: {response.status_code}")
+            print(f"响应内容: {response.text}")
+            
             response.raise_for_status()
             return response.json()
         except Exception as e:
+            print(f"创建文档异常: {e}")
             return None
     
     def create_document_by_file(self, dataset_id, file_path, name=None, indexing_technique=None):
@@ -286,17 +294,23 @@ class DifyAPIClient:
     def retrieve_dataset(self, dataset_id, query, top_k=None, score_threshold=None):
         """检索知识库"""
         url = DifyAPIConfig.get_full_url('dataset_retrieve', dataset_id=dataset_id)
-        top_k = top_k or DefaultSettings.DEFAULT_RETRIEVAL_TOP_K
-        score_threshold = score_threshold or DefaultSettings.DEFAULT_RETRIEVAL_SCORE_THRESHOLD
+        top_k = top_k or DefaultSettings.DEFAULT_TOP_K
+        score_threshold = score_threshold or DefaultSettings.DEFAULT_SCORE_THRESHOLD
         
         data = {
             "query": query,
             "retrieval_model": {
-                "search_method": DefaultSettings.DEFAULT_SEARCH_METHOD,
+                "search_method": "keyword_search",
                 "reranking_enable": False,
+                "reranking_mode": None,
+                "reranking_model": {
+                    "reranking_provider_name": "",
+                    "reranking_model_name": ""
+                },
+                "weights": None,
                 "top_k": top_k,
-                "score_threshold_enabled": True,
-                "score_threshold": score_threshold
+                "score_threshold_enabled": score_threshold > 0,
+                "score_threshold": score_threshold if score_threshold > 0 else None
             }
         }
         
@@ -305,7 +319,23 @@ class DifyAPIClient:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            return {"query": {"content": query}, "records": []}
+            return {"records": []}
+
+    def stop_chat_message(self, task_id, user_id=None):
+        """停止聊天消息生成"""
+        url = DifyAPIConfig.get_full_url('chat_messages_stop', task_id=task_id)
+        user_id = user_id or DefaultSettings.DEFAULT_USER_ID
+        
+        data = {
+            "user": user_id
+        }
+        
+        try:
+            response = requests.post(url, headers=self.chat_headers, json=data, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
 
 # 初始化API客户端
 dify_client = DifyAPIClient()
@@ -333,18 +363,20 @@ def send_message():
     query = data.get('query', '')
     conversation_id = data.get('conversation_id', '')
     files = data.get('files', None)  # 支持文件引用
+    inputs = data.get('inputs', {})  # 支持inputs参数
     
     if not query.strip():
         return jsonify({'error': '消息不能为空'}), 400
     
     def generate():
-        response = dify_client.chat_message(query, conversation_id, files=files, stream=True)
+        response = dify_client.chat_message(query, conversation_id, files=files, inputs=inputs, stream=True)
         if not response:
             yield f"data: {json.dumps({'error': 'API请求失败'})}\n\n"
             return
             
         current_answer = ""
         current_conversation_id = conversation_id
+        current_task_id = None
         
         for line in response.iter_lines():
             if line:
@@ -353,23 +385,30 @@ def send_message():
                     try:
                         json_data = json.loads(line_str[6:])
                         
+                        # 获取task_id
+                        if json_data.get('task_id'):
+                            current_task_id = json_data.get('task_id')
+                        
                         if json_data.get('event') == 'message':
                             current_answer += json_data.get('answer', '')
                             current_conversation_id = json_data.get('conversation_id', current_conversation_id)
                             
+                            # 直接转发Dify的响应格式
                             yield f"data: {json.dumps({
-                                'type': 'message',
-                                'content': json_data.get('answer', ''),
-                                'full_content': current_answer,
-                                'conversation_id': current_conversation_id
+                                'event': 'message',
+                                'answer': json_data.get('answer', ''),
+                                'conversation_id': current_conversation_id,
+                                'task_id': current_task_id
                             })}\n\n"
                             
                         elif json_data.get('event') == 'message_end':
+                            # 直接转发Dify的响应格式
                             yield f"data: {json.dumps({
-                                'type': 'end',
+                                'event': 'message_end',
                                 'conversation_id': current_conversation_id,
                                 'message_id': json_data.get('id', ''),
-                                'metadata': json_data.get('metadata', {})
+                                'metadata': json_data.get('metadata', {}),
+                                'task_id': current_task_id
                             })}\n\n"
                             
                     except json.JSONDecodeError:
@@ -667,6 +706,27 @@ def retrieve_dataset(dataset_id):
     
     result = dify_client.retrieve_dataset(dataset_id, query, top_k, score_threshold)
     return jsonify(result)
+
+@app.route('/api/chat/stop', methods=['POST'])
+def stop_chat():
+    """停止聊天回答"""
+    try:
+        data = request.get_json()
+        task_id = data.get('task_id')
+        
+        if not task_id:
+            return jsonify({"error": "缺少task_id参数"}), 400
+        
+        client = DifyAPIClient()
+        result = client.stop_chat_message(task_id)
+        
+        if "error" in result:
+            return jsonify({"error": result["error"]}), 500
+        
+        return jsonify({"result": "success"})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/health')
 def health_check():
