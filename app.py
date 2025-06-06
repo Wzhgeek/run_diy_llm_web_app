@@ -347,8 +347,34 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """主页"""
-    return render_template('index.html')
+    """主页 - 自动识别设备类型"""
+    user_agent = request.headers.get('User-Agent', '').lower()
+    
+    # 检测移动设备的关键词
+    mobile_keywords = [
+        'mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 
+        'windows phone', 'opera mini', 'opera mobi', 'palm', 'webos',
+        'symbian', 'fennec', 'maemo', 'silk', 'kindle', 'tablet'
+    ]
+    
+    # 检查是否为移动设备
+    is_mobile = any(keyword in user_agent for keyword in mobile_keywords)
+    
+    # 检查屏幕宽度（如果有的话）
+    # 这个需要通过JavaScript来检测，我们先用User-Agent判断
+    
+    # 如果有明确的设备类型参数，优先使用
+    device_type = request.args.get('device')
+    if device_type == 'mobile':
+        return redirect(url_for('mobile_chat'))
+    elif device_type == 'pc':
+        return render_template('index.html')
+    
+    # 自动检测设备类型
+    if is_mobile:
+        return redirect(url_for('mobile_chat'))
+    else:
+        return render_template('index.html')
 
 @app.route('/chat')
 def chat():
@@ -356,16 +382,79 @@ def chat():
     conversation_id = request.args.get('conversation_id', '')
     return render_template('chat.html', conversation_id=conversation_id)
 
+@app.route('/mobile')
+def mobile_chat():
+    """移动端聊天页面"""
+    return render_template('mobile_chat.html')
+
+@app.route('/pc')
+def pc_index():
+    """PC端主页（强制显示PC版本）"""
+    return render_template('index.html')
+
 @app.route('/api/chat/send', methods=['POST'])
 def send_message():
-    """发送聊天消息API"""
-    data = request.get_json()
-    query = data.get('query', '')
-    conversation_id = data.get('conversation_id', '')
-    files = data.get('files', None)  # 支持文件引用
-    inputs = data.get('inputs', {})  # 支持inputs参数
+    """发送聊天消息API - 支持JSON和FormData格式"""
+    # 检查请求格式
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        # FormData格式 (移动端文件上传)
+        query = request.form.get('message', '')
+        conversation_id = request.form.get('conversation_id', '')
+        files = None
+        inputs = {}
+        
+        # 处理文件上传
+        if 'file' in request.files:
+            uploaded_file = request.files['file']
+            if uploaded_file and uploaded_file.filename:
+                # 检查文件类型
+                filename = secure_filename(uploaded_file.filename)
+                if not allowed_file(filename):
+                    return jsonify({'error': '不支持的文件类型'}), 400
+                
+                try:
+                    # 确保上传目录存在
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                    
+                    # 保存文件到临时目录
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    uploaded_file.save(filepath)
+                    
+                    # 检查文件大小
+                    file_size = os.path.getsize(filepath)
+                    if file_size > 50 * 1024 * 1024:
+                        os.remove(filepath)
+                        return jsonify({'error': '文件大小不能超过50MB'}), 400
+                    
+                    # 上传到Dify
+                    upload_result = dify_client.upload_file(filepath)
+                    
+                    # 删除临时文件
+                    try:
+                        os.remove(filepath)
+                    except:
+                        pass
+                    
+                    if upload_result:
+                        files = [{
+                            'type': 'image' if upload_result.get('extension', '').lower() in ['png', 'jpg', 'jpeg', 'gif', 'webp'] else 'document',
+                            'transfer_method': 'local_file',
+                            'upload_file_id': upload_result.get('id')
+                        }]
+                    else:
+                        return jsonify({'error': '文件上传失败'}), 500
+                        
+                except Exception as e:
+                    return jsonify({'error': f'文件处理失败: {str(e)}'}), 500
+    else:
+        # JSON格式 (原有格式)
+        data = request.get_json()
+        query = data.get('query', '')
+        conversation_id = data.get('conversation_id', '')
+        files = data.get('files', None)
+        inputs = data.get('inputs', {})
     
-    if not query.strip():
+    if not query.strip() and not files and not inputs:
         return jsonify({'error': '消息不能为空'}), 400
     
     def generate():
@@ -394,22 +483,24 @@ def send_message():
                             current_conversation_id = json_data.get('conversation_id', current_conversation_id)
                             
                             # 直接转发Dify的响应格式
-                            yield f"data: {json.dumps({
+                            response_data = {
                                 'event': 'message',
                                 'answer': json_data.get('answer', ''),
                                 'conversation_id': current_conversation_id,
                                 'task_id': current_task_id
-                            })}\n\n"
+                            }
+                            yield f"data: {json.dumps(response_data)}\n\n"
                             
                         elif json_data.get('event') == 'message_end':
                             # 直接转发Dify的响应格式
-                            yield f"data: {json.dumps({
+                            response_data = {
                                 'event': 'message_end',
                                 'conversation_id': current_conversation_id,
                                 'message_id': json_data.get('id', ''),
                                 'metadata': json_data.get('metadata', {}),
                                 'task_id': current_task_id
-                            })}\n\n"
+                            }
+                            yield f"data: {json.dumps(response_data)}\n\n"
                             
                     except json.JSONDecodeError:
                         continue
@@ -561,11 +652,12 @@ def process_document():
                         
                         if 'answer' in json_data:
                             current_answer += json_data.get('answer', '')
-                            yield f"data: {json.dumps({
+                            response_data = {
                                 'type': 'message',
                                 'content': json_data.get('answer', ''),
                                 'full_content': current_answer
-                            })}\n\n"
+                            }
+                            yield f"data: {json.dumps(response_data)}\n\n"
                             
                         elif json_data.get('event') == 'message_end':
                             yield f"data: {json.dumps({'type': 'end'})}\n\n"

@@ -17,7 +17,7 @@ class AppConfig:
     SECRET_KEY = 'dify_web_app_secret_key_2024'
     DEBUG = True
     HOST = '0.0.0.0'
-    PORT = 8888
+    PORT = 8080
     
     # 文件上传配置
     UPLOAD_FOLDER = 'uploads'

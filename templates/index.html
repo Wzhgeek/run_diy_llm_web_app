@@ -152,19 +152,24 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <button class="btn btn-outline-primary w-100" onclick="startNewChat()">
                                 <i class="fas fa-plus me-2"></i>新建对话
                             </button>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <button class="btn btn-outline-success w-100" onclick="uploadDocument()">
                                 <i class="fas fa-upload me-2"></i>上传文档
                             </button>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <button class="btn btn-outline-info w-100" onclick="createDataset()">
                                 <i class="fas fa-database me-2"></i>创建知识库
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-secondary w-100" onclick="switchToMobile()">
+                                <i class="fas fa-mobile-alt me-2"></i>移动版
                             </button>
                         </div>
                     </div>
@@ -264,6 +269,11 @@
 
     function createDataset() {
         window.location.href = '/knowledge';
+    }
+
+    function switchToMobile() {
+        // 跳转到移动版页面
+        window.location.href = '/?device=mobile';
     }
 </script>
 
