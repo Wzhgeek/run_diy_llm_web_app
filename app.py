@@ -369,15 +369,43 @@ class DifyAPIClient:
         try:
             print(f"🔍 请求建议问题API: {url}")
             print(f"📝 参数: {params}")
+            print(f"🔑 请求头: {self.chat_headers}")
+            
             response = requests.get(url, headers=self.chat_headers, params=params, timeout=self.timeout)
             print(f"📡 响应状态码: {response.status_code}")
+            
+            # 先打印响应内容用于调试
+            response_text = response.text
+            print(f"📄 响应内容: {response_text[:500]}")  # 只打印前500字符
+            
+            if response.status_code == 400:
+                print("❌ 400错误可能原因:")
+                print("  1. 消息ID不存在或无效")
+                print("  2. API Key权限不足")
+                print("  3. 建议问题功能未启用")
+                print("  4. 参数格式错误")
+                # 尝试解析错误响应
+                try:
+                    error_json = response.json()
+                    print(f"  📋 错误详情: {error_json}")
+                except:
+                    print(f"  📋 错误响应: {response_text}")
+                return {"data": [], "error": "建议问题功能暂时不可用"}
+            
             response.raise_for_status()
             result = response.json()
             print(f"💡 建议问题响应: {result}")
             return result
+            
+        except requests.exceptions.HTTPError as e:
+            print(f"❌ HTTP错误: {e}")
+            return {"data": [], "error": f"HTTP错误: {e}"}
+        except requests.exceptions.RequestException as e:
+            print(f"❌ 请求错误: {e}")
+            return {"data": [], "error": f"请求错误: {e}"}
         except Exception as e:
             print(f"❌ 获取建议问题失败: {e}")
-            return {"data": []}
+            return {"data": [], "error": str(e)}
 
 # 初始化API客户端
 dify_client = DifyAPIClient()
@@ -581,11 +609,24 @@ def api_stop_chat(task_id):
 def api_get_suggested_questions(message_id):
     """获取下一轮建议问题"""
     try:
+        # 检查功能是否启用
+        if not DefaultSettings.ENABLE_SUGGESTED_QUESTIONS:
+            print("⚠️ 建议问题功能已禁用")
+            return jsonify({"data": [], "message": "建议问题功能已禁用"}), 200
+        
         user_id = request.args.get('user', DefaultSettings.DEFAULT_USER_ID)
+        print(f"🎯 获取建议问题: message_id={message_id}, user_id={user_id}")
         
         result = dify_client.get_suggested_questions(message_id, user_id)
-        return jsonify(result)
+        
+        # 如果结果中包含错误，但不是空数据，返回成功状态但提示功能不可用
+        if "error" in result:
+            print(f"⚠️ 建议问题功能暂不可用: {result.get('error')}")
+            return jsonify({"data": [], "message": "建议问题功能暂时不可用"}), 200
+            
+        return jsonify(result), 200
     except Exception as e:
+        print(f"❌ API路由错误: {e}")
         return jsonify({"error": str(e), "data": []}), 500
 
 @app.route('/document')

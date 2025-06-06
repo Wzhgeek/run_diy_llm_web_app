@@ -1743,16 +1743,34 @@ async function loadSuggestedQuestions(messageId) {
     try {
         console.log('正在加载建议问题，messageId:', messageId);
         const response = await fetch(`/api/messages/${messageId}/suggested?user=web-user`);
-        const data = await response.json();
         
+        if (!response.ok) {
+            console.warn(`建议问题API响应错误: ${response.status} ${response.statusText}`);
+            // 如果是400错误，说明功能暂时不可用，使用备用问题
+            if (response.status === 400) {
+                console.log('建议问题功能暂时不可用，使用备用问题');
+                setTimeout(() => {
+                    const fallbackQuestions = ["继续深入", "举个例子", "还有其他方面吗？"];
+                    displaySuggestedQuestions(messageId, fallbackQuestions);
+                }, 2000);
+                return;
+            }
+        }
+        
+        const data = await response.json();
         console.log('建议问题API响应:', data);
         
         if (data.data && data.data.length > 0) {
             console.log('显示建议问题:', data.data);
             displaySuggestedQuestions(messageId, data.data);
+        } else if (data.message && data.message.includes('不可用')) {
+            console.log('建议问题功能暂时不可用，使用备用问题');
+            setTimeout(() => {
+                const fallbackQuestions = ["继续深入", "举个例子", "还有其他方面吗？"];
+                displaySuggestedQuestions(messageId, fallbackQuestions);
+            }, 2000);
         } else {
-            console.log('没有建议问题数据');
-            // 如果API没有返回建议问题，使用备用问题
+            console.log('没有建议问题数据，使用备用问题');
             setTimeout(() => {
                 const fallbackQuestions = ["继续深入", "举个例子"];
                 displaySuggestedQuestions(messageId, fallbackQuestions);
@@ -1761,7 +1779,8 @@ async function loadSuggestedQuestions(messageId) {
     } catch (error) {
         console.error('加载建议问题失败:', error);
         // 出错时也显示备用问题
-        const fallbackQuestions = ["继续深入", "举个例子"];
+        console.log('显示备用建议问题');
+        const fallbackQuestions = ["继续深入", "举个例子", "还有其他方面吗？"];
         displaySuggestedQuestions(messageId, fallbackQuestions);
     }
 }

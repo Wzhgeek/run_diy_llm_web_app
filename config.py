@@ -125,6 +125,9 @@ class DefaultSettings:
     DEFAULT_CONVERSATION_LIMIT = 20
     DEFAULT_MESSAGE_LIMIT = 20
     
+    # 功能开关
+    ENABLE_SUGGESTED_QUESTIONS = True  # 启用建议问题功能
+    
     # 知识库设置
     DEFAULT_DATASET_PERMISSION = "only_me"
     DEFAULT_INDEXING_TECHNIQUE = "high_quality"
