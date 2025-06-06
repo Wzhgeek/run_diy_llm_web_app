@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+
+{% block title %}工作台 - AI学术研究助手{% endblock %}
+
+{% block page_title %}工作台{% endblock %}
+
+{% block content %}
+<!-- 欢迎卡片 -->
+<div class="welcome-section mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="welcome-avatar me-3">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">欢迎回来，学术研究者！</h4>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-clock me-1"></i>
+                                今天是 <span id="current-date"></span>，开始您的学术探索之旅
+                            </p>
+                        </div>
+                    </div>
+                    <p class="lead mb-3">AI学术研究助手为您提供专业的文献处理、AI对话和知识管理服务</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('chat') }}" class="btn btn-primary">
+                            <i class="fas fa-comments me-2"></i>开始对话
+                        </a>
+                        <a href="{{ url_for('document') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-upload me-2"></i>处理文档
+                        </a>
+                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#helpModal">
+                            <i class="fas fa-question-circle me-2"></i>使用指南
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="welcome-illustration">
+                        <i class="fas fa-brain text-primary" style="font-size: 120px; opacity: 0.1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="quick-actions mb-4">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card action-card h-100" onclick="goToChat()">
+                <div class="card-body text-center p-4">
+                    <div class="action-icon text-primary mb-3">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h5 class="card-title">AI对话</h5>
+                    <p class="card-text text-muted mb-3">与AI助手进行学术交流，获得专业解答</p>
+                    <span class="action-badge">AI驱动</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card action-card h-100" onclick="goToDocument()">
+                <div class="card-body text-center p-4">
+                    <div class="action-icon text-success mb-3">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h5 class="card-title">文献处理</h5>
+                    <p class="card-text text-muted mb-3">上传文档进行翻译、摘要等处理</p>
+                    <span class="action-badge bg-success">高效处理</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card action-card h-100" onclick="goToKnowledge()">
+                <div class="card-body text-center p-4">
+                    <div class="action-icon text-info mb-3">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h5 class="card-title">知识库</h5>
+                    <p class="card-text text-muted mb-3">构建和管理您的学术知识库</p>
+                    <span class="action-badge bg-info">智能索引</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计概览 -->
+<div class="stats-overview mb-4">
+    <div class="card">
+        <div class="card-header bg-light border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-chart-bar me-2"></i>平台统计
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-primary" id="stat-conversations">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                        <div class="stat-label">活跃对话</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-success" id="stat-documents">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                        <div class="stat-label">处理文档</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-info" id="stat-datasets">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                        <div class="stat-label">知识库</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="stat-item">
+                        <div class="stat-value text-warning">
+                            <i class="fas fa-circle text-success"></i>
+                        </div>
+                        <div class="stat-label">系统状态</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 功能特性 -->
+<div class="features-section mb-4">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon text-primary me-3">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h5 class="card-title mb-0">AI核心功能</h5>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            多轮对话，智能记忆上下文
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            支持文档、图片等多模态输入
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            实时流式响应，体验流畅
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            专业学术知识，精准解答
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon text-info me-3">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h5 class="card-title mb-0">高级工具</h5>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            智能文献翻译与摘要生成
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            向量化知识库构建与检索
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            批量文档处理与分析
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            文献关系图谱可视化
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 即将推出的功能 -->
+<div class="upcoming-features">
+    <div class="card">
+        <div class="card-header bg-light border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-rocket me-2"></i>即将推出
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <div class="upcoming-item text-center p-3">
+                        <div class="upcoming-icon text-warning mb-2">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h6 class="upcoming-title">学术分析</h6>
+                        <p class="upcoming-desc text-muted small">论文引用分析、研究趋势预测</p>
+                        <span class="badge bg-warning">开发中</span>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="upcoming-item text-center p-3">
+                        <div class="upcoming-icon text-purple mb-2">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h6 class="upcoming-title">关系图谱</h6>
+                        <p class="upcoming-desc text-muted small">学术概念关系可视化</p>
+                        <span class="badge bg-secondary">规划中</span>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="upcoming-item text-center p-3">
+                        <div class="upcoming-icon text-success mb-2">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h6 class="upcoming-title">协作空间</h6>
+                        <p class="upcoming-desc text-muted small">多人协作研究平台</p>
+                        <span class="badge bg-secondary">规划中</span>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="upcoming-item text-center p-3">
+                        <div class="upcoming-icon text-info mb-2">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h6 class="upcoming-title">学习路径</h6>
+                        <p class="upcoming-desc text-muted small">个性化学术学习推荐</p>
+                        <span class="badge bg-secondary">规划中</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCurrentDate();
+        loadStatistics();
+    });
+
+    // 导航函数
+    function goToChat() {
+        window.location.href = '{{ url_for("chat") }}';
+    }
+
+    function goToDocument() {
+        window.location.href = '{{ url_for("document") }}';
+    }
+
+    function goToKnowledge() {
+        window.location.href = '{{ url_for("knowledge") }}';
+    }
+
+    // 更新当前日期
+    function updateCurrentDate() {
+        const now = new Date();
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            weekday: 'long'
+        };
+        document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+
+    // 加载统计信息
+    async function loadStatistics() {
+        try {
+            // 获取会话数量
+            const conversations = await fetch('/api/conversations');
+            const convData = await conversations.json();
+            document.getElementById('stat-conversations').textContent = convData.data.length;
+
+            // 获取知识库数量
+            const datasets = await fetch('/api/datasets');
+            const datasetData = await datasets.json();
+            document.getElementById('stat-datasets').textContent = datasetData.data.length;
+
+            // 文档处理数量（示例数据）
+            document.getElementById('stat-documents').textContent = '0';
+
+        } catch (error) {
+            console.error('加载统计信息失败:', error);
+            document.getElementById('stat-conversations').textContent = '--';
+            document.getElementById('stat-documents').textContent = '--';
+            document.getElementById('stat-datasets').textContent = '--';
+        }
+    }
+</script>
+
+<style>
+    /* 欢迎区域样式 */
+    .welcome-avatar {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-color), #0056b3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+    }
+
+    .welcome-illustration {
+        position: relative;
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 快速操作卡片 */
+    .action-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        border-color: var(--primary-color);
+    }
+
+    .action-icon {
+        font-size: 48px;
+        opacity: 0.9;
+    }
+
+    .action-badge {
+        background: var(--primary-color);
+        color: white;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    /* 统计项样式 */
+    .stat-item {
+        padding: 16px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .stat-item:hover {
+        background: var(--sidebar-hover);
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--sidebar-text-secondary);
+        font-weight: 500;
+    }
+
+    /* 功能特性图标 */
+    .feature-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--sidebar-hover);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    /* 即将推出功能 */
+    .upcoming-item {
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .upcoming-item:hover {
+        background: var(--sidebar-hover);
+    }
+
+    .upcoming-icon {
+        font-size: 32px;
+        opacity: 0.8;
+    }
+
+    .upcoming-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .upcoming-desc {
+        margin-bottom: 12px;
+    }
+
+    .text-purple {
+        color: #8b5cf6 !important;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .welcome-section .col-md-4 {
+            display: none;
+        }
+
+        .action-icon {
+            font-size: 36px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+        }
+
+        .upcoming-icon {
+            font-size: 24px;
+        }
+    }
+
+    /* 动画效果 */
+    .action-card {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .action-card:nth-child(1) { animation-delay: 0.1s; }
+    .action-card:nth-child(2) { animation-delay: 0.2s; }
+    .action-card:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,794 @@
+{% extends "base.html" %}
+
+{% block title %}知识库管理 - Dify智能助手{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- 知识库列表 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-database me-2"></i>知识库列表
+                        </h6>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createDatasetModal">
+                            <i class="fas fa-plus me-1"></i>新建
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="datasets-list" class="list-group list-group-flush">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <div class="mt-2 text-muted">加载知识库列表...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识库详情 -->
+        <div class="col-md-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0" id="dataset-title">
+                            <i class="fas fa-folder-open me-2"></i>选择一个知识库
+                        </h6>
+                        <div class="btn-group btn-group-sm" id="dataset-actions" style="display: none;">
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                                <i class="fas fa-file-plus me-1"></i>添加文档
+                            </button>
+                            <button class="btn btn-outline-info" onclick="testRetrieval()">
+                                <i class="fas fa-search me-1"></i>检索测试
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="confirmDeleteDataset()">
+                                <i class="fas fa-trash me-1"></i>删除知识库
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 知识库信息 -->
+                    <div id="dataset-info" style="display: none;">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-info-circle text-primary me-2"></i>
+                                    <strong>基本信息</strong>
+                                </div>
+                                <div class="ps-3">
+                                    <div class="mb-1"><strong>名称:</strong> <span id="dataset-name">-</span></div>
+                                    <div class="mb-1"><strong>描述:</strong> <span id="dataset-description">-</span></div>
+                                    <div class="mb-1"><strong>创建时间:</strong> <span id="dataset-created">-</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-chart-bar text-success me-2"></i>
+                                    <strong>统计信息</strong>
+                                </div>
+                                <div class="ps-3">
+                                    <div class="mb-1"><strong>文档数量:</strong> <span id="dataset-doc-count">0</span></div>
+                                    <div class="mb-1"><strong>字符数:</strong> <span id="dataset-word-count">0</span></div>
+                                    <div class="mb-1"><strong>应用数:</strong> <span id="dataset-app-count">0</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                    </div>
+
+                    <!-- 默认提示 -->
+                    <div id="no-dataset-selected" class="text-center py-5 text-muted">
+                        <i class="fas fa-database fa-3x mb-3"></i>
+                        <h5>请选择一个知识库</h5>
+                        <p>选择左侧的知识库来查看详细信息和管理文档</p>
+                    </div>
+
+                    <!-- 文档列表 -->
+                    <div id="documents-section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">
+                                <i class="fas fa-file-alt me-2"></i>文档列表
+                            </h6>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshDocuments()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                        </div>
+                        
+                        <div id="documents-list">
+                            <!-- 文档列表将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 创建知识库模态框 -->
+<div class="modal fade" id="createDatasetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>创建知识库
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-dataset-form">
+                    <div class="mb-3">
+                        <label for="dataset-name-input" class="form-label">知识库名称 *</label>
+                        <input type="text" class="form-control" id="dataset-name-input" 
+                               placeholder="请输入知识库名称" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dataset-description-input" class="form-label">描述</label>
+                        <textarea class="form-control" id="dataset-description-input" 
+                                  rows="3" placeholder="请输入知识库描述（可选）"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="createDataset()">创建</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加文档模态框 -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-plus me-2"></i>添加文档
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 文档类型选择 -->
+                <div class="mb-3">
+                    <label class="form-label">添加方式</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="document-type" id="text-type" value="text" checked>
+                        <label class="btn btn-outline-primary" for="text-type">
+                            <i class="fas fa-edit me-1"></i>文本输入
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="document-type" id="file-type" value="file">
+                        <label class="btn btn-outline-primary" for="file-type">
+                            <i class="fas fa-upload me-1"></i>文件上传
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 文本输入方式 -->
+                <div id="text-input-section">
+                    <form id="add-document-text-form">
+                        <div class="mb-3">
+                            <label for="document-name-input" class="form-label">文档名称 *</label>
+                            <input type="text" class="form-control" id="document-name-input" 
+                                   placeholder="请输入文档名称" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="document-content-input" class="form-label">文档内容 *</label>
+                            <textarea class="form-control" id="document-content-input" 
+                                      rows="12" placeholder="请输入文档内容" required></textarea>
+                            <div class="form-text">
+                                <span id="document-char-count">0</span> 字符
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 文件上传方式 -->
+                <div id="file-upload-section" style="display: none;">
+                    <form id="add-document-file-form" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="document-file-input" class="form-label">选择文件 *</label>
+                            <input type="file" class="form-control" id="document-file-input" 
+                                   accept=".txt,.pdf,.doc,.docx,.xls,.xlsx,.csv,.md,.html"
+                                   onchange="handleFileSelect(this)">
+                            <div class="form-text">
+                                支持格式：TXT, PDF, DOC, DOCX, XLS, XLSX, CSV, MD, HTML（最大50MB）
+                            </div>
+                        </div>
+                        <div id="file-preview" style="display: none;" class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-file me-2"></i>
+                                <span id="file-name"></span>
+                                <span class="text-muted">（<span id="file-size"></span>）</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addDocument()">
+                    <i class="fas fa-plus me-1"></i>添加文档
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 检索测试模态框 -->
+<div class="modal fade" id="retrievalTestModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search me-2"></i>知识检索测试
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="query-input" class="form-label">查询问题</label>
+                    <input type="text" class="form-control" id="query-input" 
+                           placeholder="请输入要检索的问题">
+                </div>
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="performRetrieval()">
+                        <i class="fas fa-search me-1"></i>开始检索
+                    </button>
+                </div>
+                <div id="retrieval-results" style="display: none;">
+                    <h6>检索结果:</h6>
+                    <div id="retrieval-content" class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                        <!-- 检索结果将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var currentDatasetId = null;
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDatasets();
+        
+        // 绑定字符计数
+        document.getElementById('document-content-input').addEventListener('input', function() {
+            document.getElementById('document-char-count').textContent = this.value.length;
+        });
+
+        // 绑定文档类型切换
+        document.querySelectorAll('input[name="document-type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                toggleDocumentInputType(this.value);
+            });
+        });
+    });
+
+    // 切换文档输入类型
+    function toggleDocumentInputType(type) {
+        const textSection = document.getElementById('text-input-section');
+        const fileSection = document.getElementById('file-upload-section');
+        
+        if (type === 'text') {
+            textSection.style.display = 'block';
+            fileSection.style.display = 'none';
+        } else {
+            textSection.style.display = 'none';
+            fileSection.style.display = 'block';
+        }
+    }
+
+    // 处理文件选择
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (!file) {
+            document.getElementById('file-preview').style.display = 'none';
+            return;
+        }
+        
+        // 显示文件预览
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = formatFileSize(file.size);
+        document.getElementById('file-preview').style.display = 'block';
+    }
+
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 加载知识库列表
+    async function loadDatasets() {
+        try {
+            const response = await fetch('/api/datasets');
+            const data = await response.json();
+            
+            const container = document.getElementById('datasets-list');
+            
+            if (data.data && data.data.length > 0) {
+                container.innerHTML = data.data.map(dataset => `
+                    <div class="list-group-item list-group-item-action dataset-item" 
+                         onclick="selectDataset('${dataset.id}', '${dataset.name}')" 
+                         data-id="${dataset.id}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${dataset.name}</h6>
+                            <small class="text-muted">${formatTime(dataset.created_at)}</small>
+                        </div>
+                        <p class="mb-1 text-muted">${dataset.description || '暂无描述'}</p>
+                        <small class="text-info">
+                            <i class="fas fa-file-alt me-1"></i>${dataset.document_count} 文档
+                            <i class="fas fa-font ms-2 me-1"></i>${dataset.word_count} 字符
+                        </small>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-database fa-2x mb-2"></i>
+                        <div>暂无知识库</div>
+                        <small>点击"新建"创建您的第一个知识库</small>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('加载知识库列表失败:', error);
+            showToast('加载知识库列表失败', 'error');
+        }
+    }
+
+    // 选择知识库
+    function selectDataset(datasetId, datasetName) {
+        currentDatasetId = datasetId;
+        
+        // 更新活跃状态
+        document.querySelectorAll('.dataset-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-id="${datasetId}"]`).classList.add('active');
+        
+        // 显示知识库信息
+        document.getElementById('no-dataset-selected').style.display = 'none';
+        document.getElementById('dataset-info').style.display = 'block';
+        document.getElementById('documents-section').style.display = 'block';
+        document.getElementById('dataset-actions').style.display = 'block';
+        
+        // 更新标题
+        document.getElementById('dataset-title').innerHTML = `
+            <i class="fas fa-folder-open me-2"></i>${datasetName}
+        `;
+        
+        // 加载知识库详细信息
+        loadDatasetDetails(datasetId);
+    }
+
+    // 加载知识库详细信息
+    async function loadDatasetDetails(datasetId) {
+        try {
+            // 这里可以添加获取知识库详细信息的API调用
+            // 暂时使用模拟数据
+            document.getElementById('dataset-name').textContent = '当前知识库';
+            document.getElementById('dataset-description').textContent = '暂无描述';
+            document.getElementById('dataset-created').textContent = new Date().toLocaleString('zh-CN');
+            document.getElementById('dataset-doc-count').textContent = '0';
+            document.getElementById('dataset-word-count').textContent = '0';
+            document.getElementById('dataset-app-count').textContent = '0';
+            
+            // 加载文档列表
+            loadDocuments(datasetId);
+        } catch (error) {
+            console.error('加载知识库详情失败:', error);
+        }
+    }
+
+    // 加载文档列表
+    async function loadDocuments(datasetId) {
+        try {
+            const response = await fetch(`/api/datasets/${datasetId}/documents`);
+            const data = await response.json();
+            
+            const container = document.getElementById('documents-list');
+            
+            if (data.data && data.data.length > 0) {
+                container.innerHTML = data.data.map(doc => `
+                    <div class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${doc.name}</h6>
+                                <span class="badge bg-${getStatusColor(doc.indexing_status)} rounded-pill">
+                                    ${getStatusText(doc.indexing_status)}
+                                </span>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>${formatTime(doc.created_at)}
+                                <i class="fas fa-font ms-2 me-1"></i>${doc.word_count || 0} 字符
+                                <i class="fas fa-coins ms-2 me-1"></i>${doc.tokens || 0} tokens
+                            </small>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="viewDocument('${doc.id}', '${doc.name}')">
+                                    <i class="fas fa-eye me-1"></i>查看详情
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteDocument('${doc.id}', '${doc.name}')">
+                                    <i class="fas fa-trash me-1"></i>删除
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <div>暂无文档</div>
+                        <small>点击"添加文档"开始构建知识库</small>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('加载文档列表失败:', error);
+            showToast('加载文档列表失败', 'error');
+        }
+    }
+
+    // 获取状态颜色
+    function getStatusColor(status) {
+        const colors = {
+            'completed': 'success',
+            'waiting': 'warning',
+            'indexing': 'info',
+            'error': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    // 获取状态文本
+    function getStatusText(status) {
+        const texts = {
+            'completed': '已完成',
+            'waiting': '等待中',
+            'indexing': '处理中',
+            'error': '错误'
+        };
+        return texts[status] || '未知';
+    }
+
+    // 创建知识库
+    async function createDataset() {
+        const name = document.getElementById('dataset-name-input').value.trim();
+        const description = document.getElementById('dataset-description-input').value.trim();
+        
+        if (!name) {
+            showToast('请输入知识库名称', 'warning');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/datasets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: description
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '创建失败');
+            }
+            
+            const result = await response.json();
+            showToast('知识库创建成功', 'success');
+            
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('createDatasetModal')).hide();
+            
+            // 清空表单
+            document.getElementById('create-dataset-form').reset();
+            
+            // 刷新列表
+            loadDatasets();
+            
+        } catch (error) {
+            showToast(`创建失败: ${error.message}`, 'error');
+        }
+    }
+
+    // 添加文档
+    async function addDocument() {
+        if (!currentDatasetId) {
+            showToast('请先选择一个知识库', 'warning');
+            return;
+        }
+        
+        const documentType = document.querySelector('input[name="document-type"]:checked').value;
+        
+        try {
+            let response;
+            
+            if (documentType === 'text') {
+                // 文本方式添加
+                const name = document.getElementById('document-name-input').value.trim();
+                const content = document.getElementById('document-content-input').value.trim();
+                
+                if (!name || !content) {
+                    showToast('请填写完整的文档信息', 'warning');
+                    return;
+                }
+                
+                response = await fetch(`/api/datasets/${currentDatasetId}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        text: content
+                    })
+                });
+            } else {
+                // 文件方式添加
+                const fileInput = document.getElementById('document-file-input');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    showToast('请选择要上传的文件', 'warning');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                response = await fetch(`/api/datasets/${currentDatasetId}/documents`, {
+                    method: 'POST',
+                    body: formData
+                });
+            }
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '添加失败');
+            }
+            
+            const result = await response.json();
+            showToast('文档添加成功，开始处理...', 'success');
+            
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('addDocumentModal')).hide();
+            
+            // 清空表单
+            resetDocumentForm();
+            
+            // 刷新文档列表
+            loadDocuments(currentDatasetId);
+            
+        } catch (error) {
+            showToast(`添加失败: ${error.message}`, 'error');
+        }
+    }
+
+    // 重置文档表单
+    function resetDocumentForm() {
+        document.getElementById('add-document-text-form').reset();
+        document.getElementById('add-document-file-form').reset();
+        document.getElementById('document-char-count').textContent = '0';
+        document.getElementById('file-preview').style.display = 'none';
+        
+        // 重置为文本输入模式
+        document.getElementById('text-type').checked = true;
+        toggleDocumentInputType('text');
+    }
+
+    // 删除文档确认
+    function confirmDeleteDocument(documentId, documentName) {
+        if (confirm(`确定要删除文档"${documentName}"吗？此操作不可恢复。`)) {
+            deleteDocument(documentId);
+        }
+    }
+
+    // 删除文档
+    async function deleteDocument(documentId) {
+        try {
+            const response = await fetch(`/api/datasets/${currentDatasetId}/documents/${documentId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '删除失败');
+            }
+            
+            showToast('文档删除成功', 'success');
+            
+            // 刷新文档列表
+            loadDocuments(currentDatasetId);
+            
+        } catch (error) {
+            showToast(`删除失败: ${error.message}`, 'error');
+        }
+    }
+
+    // 删除知识库确认
+    function confirmDeleteDataset() {
+        if (!currentDatasetId) {
+            showToast('请先选择一个知识库', 'warning');
+            return;
+        }
+        
+        const datasetName = document.getElementById('dataset-title').textContent.replace(/.*?(\S+)$/, '$1');
+        if (confirm(`确定要删除知识库"${datasetName}"吗？此操作将删除其中的所有文档，且不可恢复。`)) {
+            deleteDataset(currentDatasetId);
+        }
+    }
+
+    // 删除知识库
+    async function deleteDataset(datasetId) {
+        try {
+            const response = await fetch(`/api/datasets/${datasetId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '删除失败');
+            }
+            
+            showToast('知识库删除成功', 'success');
+            
+            // 重置界面
+            currentDatasetId = null;
+            document.getElementById('no-dataset-selected').style.display = 'block';
+            document.getElementById('dataset-info').style.display = 'none';
+            document.getElementById('documents-section').style.display = 'none';
+            document.getElementById('dataset-actions').style.display = 'none';
+            
+            // 刷新知识库列表
+            loadDatasets();
+            
+        } catch (error) {
+            showToast(`删除失败: ${error.message}`, 'error');
+        }
+    }
+
+    // 刷新文档列表
+    function refreshDocuments() {
+        if (currentDatasetId) {
+            loadDocuments(currentDatasetId);
+        }
+    }
+
+    // 检索测试
+    function testRetrieval() {
+        if (!currentDatasetId) {
+            showToast('请先选择一个知识库', 'warning');
+            return;
+        }
+        
+        // 显示检索测试模态框
+        const modal = new bootstrap.Modal(document.getElementById('retrievalTestModal'));
+        modal.show();
+    }
+
+    // 执行检索
+    async function performRetrieval() {
+        const query = document.getElementById('query-input').value.trim();
+        
+        if (!query) {
+            showToast('请输入查询问题', 'warning');
+            return;
+        }
+        
+        try {
+            showLoading();
+            
+            const response = await fetch(`/api/datasets/${currentDatasetId}/retrieve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    top_k: 3,
+                    score_threshold: 0.5
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '检索失败');
+            }
+            
+            const result = await response.json();
+            
+            document.getElementById('retrieval-results').style.display = 'block';
+            
+            if (result.records && result.records.length > 0) {
+                document.getElementById('retrieval-content').innerHTML = `
+                    <div class="mb-3">
+                        <strong>检索问题:</strong> ${query}
+                    </div>
+                    <div class="mb-3">
+                        <strong>找到 ${result.records.length} 个相关片段:</strong>
+                    </div>
+                    ${result.records.map((record, index) => `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">片段 ${index + 1}</h6>
+                                    <span class="badge bg-success">${(record.score * 100).toFixed(1)}%</span>
+                                </div>
+                                <p class="card-text small">${record.segment.content}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-file me-1"></i>${record.segment.document.name}
+                                </small>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                document.getElementById('retrieval-content').innerHTML = `
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <div>未找到相关内容</div>
+                        <small>请尝试其他关键词或添加更多文档</small>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            showToast(`检索失败: ${error.message}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+</script>
+
+<style>
+    .dataset-item {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .dataset-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .dataset-item.active {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+    }
+    
+    .list-group-item {
+        border-left: 3px solid transparent;
+    }
+    
+    .list-group-item.active {
+        border-left-color: #007bff;
+    }
+</style>
+{% endblock %} 

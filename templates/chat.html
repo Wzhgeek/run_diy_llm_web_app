@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}AI对话 - AI学术研究助手{% endblock %}
+
+{% block page_title %}AI对话{% endblock %}
+
+{% block extra_head %}
+<!-- 引入聊天页面专用CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid h-100">
+    <div class="row h-100">
+        <!-- 左侧对话历史面板 -->
+        <div class="col-md-3 p-0" id="sidebarPanel">
+            <div class="card h-100 border-0">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-comments me-2"></i>对话历史
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" onclick="startNewConversation()" title="新建对话">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="hideSidebar()" title="隐藏历史会话" id="hideSidebarBtn">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </div>
+            </div>
+        </div>
+                <div class="card-body p-0">
+            <!-- 搜索框 -->
+                    <div class="p-3 border-bottom">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="搜索会话..." 
+                           id="conversationSearch" onkeyup="searchConversations()">
+                </div>
+                </div>
+                
+                <!-- 会话列表 -->
+                    <div class="conversations-list list-group list-group-flush" id="conversationsList">
+                    <div class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <div class="mt-2 small text-muted">加载中...</div>
+                </div>
+            </div>
+        </div>
+                <div class="card-footer bg-light">
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary flex-fill" onclick="exportAllConversations()" title="导出全部会话">
+                    <i class="fas fa-download me-1"></i>导出全部
+                        </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="clearAllConversations()" title="清空全部会话">
+                    <i class="fas fa-trash me-1"></i>清空
+                        </button>
+                </div>
+            </div>
+            </div>
+                            </div>
+                            
+        <!-- 右侧主聊天区域 -->
+        <div class="col-md-9 p-0" id="chatPanel">
+            <!-- 显示侧边栏按钮 -->
+            <button class="btn btn-outline-secondary btn-sm sidebar-show-btn position-absolute" id="showSidebarBtn" onclick="showSidebar()" title="显示历史会话" style="display: none;">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="chat-main h-100" id="chatMain">
+        <!-- 聊天头部 -->
+        <div class="chat-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="chat-title-section position-relative">
+                    <h5 id="chatTitle">AI学术研究助手</h5>
+                    <div class="chat-subtitle" id="chatSubtitle">开始您的学术研究对话</div>
+
+                                                    </div>
+                <div class="chat-actions">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="exportCurrentChat()" title="导出当前对话">
+                        <i class="fas fa-download"></i>
+                                                        </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="renameCurrentChat()" title="重命名对话">
+                        <i class="fas fa-edit"></i>
+                                                        </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearCurrentChat()" title="清空当前对话">
+                        <i class="fas fa-eraser"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+        <!-- 消息区域 -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-content">
+                    <div class="welcome-icon mb-4">
+                        <i class="fas fa-brain"></i>
+                                        </div>
+                    <h4 class="mb-3">欢迎使用AI学术研究助手</h4>
+                    <p class="text-muted mb-4">我可以帮助您进行学术研究、文献分析、论文写作等任务</p>
+                                        
+                    <!-- 快速开始示例 -->
+                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                            <div class="example-card feature-upload" onclick="triggerAnalysisUpload()">
+                                <i class="fas fa-search-plus"></i>
+                                <span class="card-title">论文分析</span>
+                                <small class="card-subtitle">点击上传论文文件</small>
+                                                    </div>
+                                                </div>
+                        <div class="col-md-6">
+                            <div class="example-card feature-text" onclick="sendExample('如何撰写一篇高质量的文献综述？')">
+                                <i class="fas fa-pen"></i>
+                                <span class="card-title">学术写作</span>
+                                <small class="card-subtitle">智能写作指导</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                            <div class="example-card feature-text" onclick="sendExample('这个研究领域的最新进展是什么？')">
+                                <i class="fas fa-lightbulb"></i>
+                                <span class="card-title">研究前沿</span>
+                                <small class="card-subtitle">探索最新研究</small>
+                                                    </div>
+                                                </div>
+                        <div class="col-md-6">
+                            <div class="example-card feature-upload" onclick="triggerTranslationUpload()">
+                                <i class="fas fa-language"></i>
+                                <span class="card-title">学术翻译</span>
+                                <small class="card-subtitle">点击上传文档文件</small>
+                                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input">
+            <!-- 科研提示词按钮组 -->
+            <div class="prompt-buttons">
+                <button class="btn btn-sm btn-outline-primary prompt-btn" onclick="insertPrompt('请帮我分析这篇论文的创新点和局限性')">论文分析</button>
+                <button class="btn btn-sm btn-outline-primary prompt-btn" onclick="insertPrompt('请帮我总结这篇文献的主要研究方法')">研究方法</button>
+                <button class="btn btn-sm btn-outline-primary prompt-btn" onclick="insertPrompt('请帮我对比分析这两篇论文的异同点')">对比分析</button>
+                <button class="btn btn-sm btn-outline-primary prompt-btn" onclick="insertPrompt('请帮我生成一个研究框架')">研究框架</button>
+                <button class="btn btn-sm btn-outline-primary prompt-btn" onclick="insertPrompt('请帮我优化这段学术写作')">写作优化</button>
+            </div>
+            
+            <!-- 停止生成按钮 -->
+            <div class="stop-button-container" id="stopButtonContainer" style="display: none;">
+                <button class="btn stop-button" onclick="stopGeneration()">
+                        <i class="fas fa-stop me-2"></i>停止生成
+                    </button>
+                </div>
+                
+            <!-- 文件上传预览 -->
+            <div class="file-preview" id="filePreview" style="display: none;">
+                <div class="file-item" id="fileItem">
+                    <div class="file-info">
+                        <i class="file-icon fas fa-file"></i>
+                        <div class="file-details">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                    </div>
+                    <!-- 圆圈进度条 -->
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-circle" id="progressCircle">
+                            <div class="progress-value" id="progressValue">0%</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-link text-danger" onclick="removeFile()" id="removeFileBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+                    
+            <!-- 输入框区域 -->
+            <div class="input-container">
+                <div class="input-group">
+                    <button class="btn btn-outline-secondary" type="button" onclick="triggerFileUpload('file')" title="上传文件">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="triggerFileUpload('image')" title="上传图片">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <input type="file" id="fileInput" style="display: none;" accept=".txt,.md,.pdf,.doc,.docx,.csv,.html,.xlsx,.xls" onchange="handleFileUpload()">
+                    <input type="file" id="imageInput" style="display: none;" accept=".png,.jpg,.jpeg,.gif,.webp,.svg" onchange="handleImageUpload()">
+                    <input type="file" id="analysisInput" style="display: none;" accept=".pdf,.doc,.docx,.txt,.md" onchange="handleAnalysisUpload()">
+                    <input type="file" id="translationInput" style="display: none;" accept=".pdf,.doc,.docx,.txt,.md,.html" onchange="handleTranslationUpload()">
+                    
+                    <textarea class="form-control message-input" id="messageInput" placeholder="输入您的学术问题..." 
+                              rows="1" onkeydown="handleKeyDown(event)" oninput="autoResize()"></textarea>
+                    
+                    <button class="btn send-button" type="button" onclick="sendMessage()" id="sendButton">
+                        <i class="fas fa-paper-plane"></i>
+                        </button>
+                </div>
+            </div>
+        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                    </div>
+                </div>
+                
+<!-- 重命名对话模态框 -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">重命名对话</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newConversationName" class="form-label">新的对话名称</label>
+                    <input type="text" class="form-control" id="newConversationName" placeholder="请输入新的对话名称">
+                        </div>
+                    </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmRename()">确认</button>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">删除确认</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除这个对话吗？删除后无法恢复。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">删除</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 版权信息 -->
+    <footer class="copyright-footer">
+        <div class="container-fluid">
+            <div class="text-center">
+                <small class="text-muted">
+                    © 2024 AI学术研究助手 | 开发者：王梓涵 | 
+                    <a href="mailto:wangzh011031@163.com" class="text-decoration-none">wangzh011031@163.com</a>
+                </small>
+                </div>
+                                        </div>
+    </footer>
+                                        </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- 引入聊天页面专用JavaScript -->
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %} 
