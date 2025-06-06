@@ -42,8 +42,7 @@ pip install -r requirements.txt
 
 ### 3. 配置API
 API配置已内置在应用中：
-- **API地址**: http://118.196.22.104/v1
-- **API密钥**: app-TsSl0xTEJKcKP10ONOobYNQX
+
 
 ### 4. 启动应用
 ```bash
