@@ -409,7 +409,7 @@ async function handleStreamResponse(response, existingMessageElement = null) {
                             } else {
                                 // 重新生成的情况下，更新会话ID和任务ID
                                 if (data.conversation_id) {
-                                    currentConversationId = data.conversation_id;
+                                currentConversationId = data.conversation_id;
                                 }
                                 if (data.task_id) {
                                     taskId = data.task_id;
@@ -485,9 +485,9 @@ function addMessage(role, content, messageId = null, fileInfo = null, createdAt 
             minute: '2-digit' 
         }) :
         new Date().toLocaleTimeString('zh-CN', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
     
     // 构建文件信息显示
     let fileInfoHtml = '';
@@ -516,18 +516,18 @@ function addMessage(role, content, messageId = null, fileInfo = null, createdAt 
         ${role === 'assistant' ? `
             <div class="message-bottom-section">
                 <div class="message-actions">
-                    <button class="action-btn" onclick="regenerateMessage('${messageId || Date.now()}')" title="重新生成">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                    <button class="action-btn like-btn" onclick="likeMessage('${messageId || Date.now()}', 'like')" title="点赞">
-                        <i class="fas fa-thumbs-up"></i>
-                    </button>
-                    <button class="action-btn dislike-btn" onclick="likeMessage('${messageId || Date.now()}', 'dislike')" title="点踩">
-                        <i class="fas fa-thumbs-down"></i>
-                    </button>
-                    <button class="action-btn" onclick="copyMessage('${messageId || Date.now()}')" title="复制">
-                        <i class="fas fa-copy"></i>
-                    </button>
+                <button class="action-btn" onclick="regenerateMessage('${messageId || Date.now()}')" title="重新生成">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="action-btn like-btn" onclick="likeMessage('${messageId || Date.now()}', 'like')" title="点赞">
+                    <i class="fas fa-thumbs-up"></i>
+                </button>
+                <button class="action-btn dislike-btn" onclick="likeMessage('${messageId || Date.now()}', 'dislike')" title="点踩">
+                    <i class="fas fa-thumbs-down"></i>
+                </button>
+                <button class="action-btn" onclick="copyMessage('${messageId || Date.now()}')" title="复制">
+                    <i class="fas fa-copy"></i>
+                </button>
                 </div>
                 <div class="suggested-questions" id="suggested-${messageId || Date.now()}" style="display: none;">
                     <!-- 建议问题将在这里动态加载 -->
@@ -1003,7 +1003,7 @@ function stopGeneration() {
             console.error('停止生成失败:', error);
             showToast('停止失败', 'error');
         }).finally(() => {
-            currentTask = null;
+        currentTask = null;
             hideStopButton();
         });
     } else {
@@ -1016,7 +1016,7 @@ function sendExample(message) {
     const input = document.getElementById('messageInput');
     if (input) {
         input.value = message;
-        sendMessage();
+    sendMessage();
     }
 }
 
@@ -1357,7 +1357,7 @@ async function uploadFile(file) {
                     } catch (e) {
                         reject(new Error('响应解析失败'));
                     }
-                } else {
+        } else {
                     try {
                         const errorData = JSON.parse(xhr.responseText);
                         reject(new Error(errorData.error || '上传失败'));
@@ -1447,8 +1447,8 @@ function getFileType(mimeType) {
 function autoResize() {
     const textarea = document.getElementById('messageInput');
     if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
 }
 
@@ -1533,20 +1533,20 @@ async function regenerateMessage(messageId) {
             }
             
             // 发送带文件的请求
-            const requestData = {
-                query: userContent,
-                conversation_id: currentConversationId,
+        const requestData = {
+            query: userContent,
+            conversation_id: currentConversationId,
                 inputs: inputs,
-                user: 'web-user'
-            };
-            
+            user: 'web-user'
+        };
+        
             const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData)
-            });
-            
-            if (!response.ok) throw new Error('请求失败');
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) throw new Error('请求失败');
             await handleStreamResponse(response, messageElement);
         } else {
             // 普通文本消息重新生成
@@ -1563,7 +1563,7 @@ async function regenerateMessage(messageId) {
             });
             
             if (!response.ok) throw new Error('请求失败');
-            await handleStreamResponse(response, messageElement);
+        await handleStreamResponse(response, messageElement);
         }
         
     } catch (error) {
@@ -1622,8 +1622,8 @@ function copyMessage(messageId) {
     
     // 尝试使用现代clipboard API
     if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(content).then(() => {
-            showToast('内容已复制到剪贴板', 'success');
+    navigator.clipboard.writeText(content).then(() => {
+        showToast('内容已复制到剪贴板', 'success');
             
             // 视觉反馈：短暂高亮复制按钮
             const copyBtn = messageElement.querySelector('[title="复制"]');
@@ -1643,21 +1643,21 @@ function copyMessage(messageId) {
 
 // 降级复制方案
 function fallbackCopyTextToClipboard(text) {
-    const textArea = document.createElement('textarea');
+        const textArea = document.createElement('textarea');
     textArea.value = text;
     textArea.style.top = '0';
     textArea.style.left = '0';
     textArea.style.position = 'fixed';
     textArea.style.opacity = '0';
     
-    document.body.appendChild(textArea);
+        document.body.appendChild(textArea);
     textArea.focus();
-    textArea.select();
+        textArea.select();
     
     try {
         const successful = document.execCommand('copy');
         if (successful) {
-            showToast('内容已复制到剪贴板', 'success');
+        showToast('内容已复制到剪贴板', 'success');
         } else {
             showToast('复制失败，请手动选择复制', 'error');
         }
@@ -1667,7 +1667,7 @@ function fallbackCopyTextToClipboard(text) {
     }
     
     document.body.removeChild(textArea);
-}
+        }
 
 // 移除了鼠标悬停事件，操作按钮现在常驻显示
 
@@ -1723,7 +1723,7 @@ document.addEventListener('click', function(event) {
             sidebar.classList.remove('show');
         }
     }
-});
+}); 
 
 // 插入提示词到输入框
 function insertPrompt(prompt) {

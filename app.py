@@ -359,7 +359,7 @@ class DifyAPIClient:
             return response.json()
         except Exception as e:
             return {"error": str(e)}
-    
+
     def get_suggested_questions(self, message_id, user_id=None):
         """获取下一轮建议问题"""
         url = DifyAPIConfig.get_full_url('message_suggested', message_id=message_id)
