@@ -1,6 +1,7 @@
 /* AI学术研究助手 - 豆包风格现代化设计 */
 :root {
     --primary-color: #2c5aa0;
+    --primary-rgb: 44, 90, 160; /* RGB值用于半透明效果 */
     --secondary-color: #6c757d;
     --success-color: #28a745;
     --info-color: #17a2b8;
@@ -439,6 +440,20 @@
     border-bottom: 1px solid var(--border-color) !important;
 }
 
+/* 深色模式下主题切换按钮样式 */
+[data-theme="dark"] #themeToggle {
+    background: linear-gradient(135deg, #334155, #1e293b) !important;
+    border: 1px solid #475569 !important;
+    color: #94a3b8 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] #themeToggle:hover {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2), 0 2px 6px rgba(96, 165, 250, 0.15) !important;
+}
+
 /* 侧边栏导航链接选中状态 */
 [data-theme="dark"] .nav-link.active {
     background: var(--primary-color) !important;
@@ -677,6 +692,53 @@
     color: #9ca3af !important;
 }
 
+/* 深色模式下用户信息区域优化 */
+[data-theme="dark"] .user-profile {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .user-profile:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    border-color: #60a5fa !important;
+}
+
+[data-theme="dark"] .user-profile::before {
+    background: linear-gradient(135deg, transparent 0%, rgba(96, 165, 250, 0.05) 100%) !important;
+}
+
+[data-theme="dark"] .user-avatar {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+    box-shadow: 0 3px 12px rgba(96, 165, 250, 0.4), 0 1px 4px rgba(96, 165, 250, 0.3) !important;
+}
+
+[data-theme="dark"] .user-avatar:hover {
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.5), 0 2px 6px rgba(96, 165, 250, 0.4) !important;
+}
+
+[data-theme="dark"] .user-name {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .user-status {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .user-action-btn {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #94a3b8 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] .user-action-btn:hover {
+    background: #475569 !important;
+    border-color: #60a5fa !important;
+    color: #60a5fa !important;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2), 0 2px 6px rgba(96, 165, 250, 0.15) !important;
+}
+
 /* 页面整体布局 */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Helvetica, Arial, sans-serif;
@@ -771,23 +833,63 @@ body {
 
 /* 用户信息 */
 .user-profile {
-    padding: 20px;
-    border-bottom: 1px solid var(--sidebar-border);
+    padding: 24px 20px;
+    margin: 16px 16px 20px 16px; /* 添加外边距突出显示 */
+    border-radius: 16px; /* 圆润边角 */
+    background: var(--sidebar-bg);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06); /* 简约大气阴影 */
+    border: 1px solid var(--sidebar-border);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 用户信息区域悬浮效果 */
+.user-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+/* 添加微妙的背景装饰 */
+.user-profile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(var(--primary-rgb), 0.02) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.user-profile:hover::before {
+    opacity: 1;
 }
 
 .user-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color), #1e4d72);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
+    font-size: 20px;
+    box-shadow: 0 3px 12px rgba(var(--primary-rgb), 0.3), 0 1px 4px rgba(var(--primary-rgb), 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.4), 0 2px 6px rgba(var(--primary-rgb), 0.3);
 }
 
 .user-info {
@@ -795,18 +897,28 @@ body {
 }
 
 .user-name {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     color: var(--sidebar-text);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 2;
 }
 
 .user-status {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--sidebar-text-secondary);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+}
+
+.user-status i {
+    animation: pulse 2s infinite;
 }
 
 .user-actions {
@@ -815,25 +927,29 @@ body {
 }
 
 .user-action-btn {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border: 1px solid var(--sidebar-border);
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--sidebar-hover);
     color: var(--sidebar-text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+    position: relative;
+    z-index: 2;
 }
 
 .user-action-btn:hover {
     background: var(--sidebar-active);
     border-color: var(--primary-color);
     color: var(--primary-color);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15), 0 2px 6px rgba(var(--primary-rgb), 0.1);
 }
 
 /* 导航区域 */
@@ -1022,6 +1138,29 @@ body {
 .header-btn:hover {
     background: var(--sidebar-hover);
     color: var(--sidebar-text);
+}
+
+/* 主题切换按钮特殊样式 */
+#themeToggle {
+    background: linear-gradient(135deg, var(--sidebar-hover), var(--sidebar-bg));
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+}
+
+#themeToggle:hover {
+    background: linear-gradient(135deg, var(--primary-color), #1e4d72);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15), 0 2px 6px rgba(var(--primary-rgb), 0.1);
+}
+
+#themeToggle i {
+    transition: all 0.3s ease;
+}
+
+#themeToggle:hover i {
+    transform: rotate(180deg);
 }
 
 .notification-badge {
@@ -1394,6 +1533,33 @@ body {
     .assistant-message .message-content {
         max-width: 85%;
     }
+    
+    /* 小屏幕下的用户信息区域优化 */
+    .user-profile {
+        margin: 12px;
+        padding: 18px 16px;
+        border-radius: 12px;
+    }
+    
+    .user-avatar {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+    }
+    
+    .user-name {
+        font-size: 15px;
+    }
+    
+    .user-status {
+        font-size: 12px;
+    }
+    
+    .user-action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
 }
 
 /* 状态指示器 */
@@ -1490,6 +1656,141 @@ body {
 .knowledge-item:hover {
     border-color: var(--primary-color);
     transform: translateX(4px);
+}
+
+/* 手机版视图样式 */
+.mobile-view {
+    font-size: 16px;
+}
+
+.mobile-view .sidebar {
+    width: 100%;
+    transform: translateX(-100%);
+}
+
+.mobile-view .sidebar.show {
+    transform: translateX(0);
+}
+
+.mobile-view .main-content {
+    margin-left: 0;
+}
+
+.mobile-view .top-header {
+    padding: 0 16px;
+    height: 56px;
+}
+
+.mobile-view .header-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+}
+
+.mobile-view #themeToggle {
+    border-radius: 8px;
+}
+
+.mobile-view #themeToggle:hover i {
+    transform: rotate(90deg);
+}
+
+.mobile-view .page-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.mobile-view .content-wrapper {
+    padding: 12px;
+}
+
+.mobile-view .card {
+    margin-bottom: 16px;
+}
+
+.mobile-view .user-message .message-content,
+.mobile-view .assistant-message .message-content {
+    max-width: 90%;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.mobile-view .form-control,
+.mobile-view .form-select {
+    font-size: 16px;
+    min-height: 44px;
+}
+
+.mobile-view .btn {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 12px 20px;
+}
+
+.mobile-view .modal-dialog {
+    margin: 16px;
+}
+
+.mobile-view .notification-dropdown {
+    width: calc(100vw - 32px);
+    max-width: 320px;
+}
+
+/* 手机版响应式优化 */
+.mobile-view .nav-link {
+    padding: 16px 20px;
+    font-size: 16px;
+}
+
+.mobile-view .nav-link i {
+    font-size: 18px;
+}
+
+.mobile-view .user-profile {
+    padding: 20px;
+    margin: 12px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.mobile-view .user-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+}
+
+.mobile-view .user-name {
+    font-size: 15px;
+}
+
+.mobile-view .user-status {
+    font-size: 12px;
+}
+
+.mobile-view .user-action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+}
+
+.mobile-view .chat-container {
+    height: calc(100vh - 56px);
+}
+
+.mobile-view .chat-input {
+    padding: 16px;
+    margin: 8px;
+    border-radius: 12px; /* 手机版下圆润边角 */
+}
+
+.mobile-view .chat-header {
+    margin: 8px;
+    border-radius: 12px; /* 手机版下圆润边角 */
+}
+
+.mobile-view .chat-input textarea {
+    font-size: 16px;
+    min-height: 44px;
 }
 
 /* 打印样式 */

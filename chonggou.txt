@@ -111,3 +111,137 @@
 
 
 最后，完成页面开发之后需要你启用它，路由不改变！
+
+
+
+需要你对于文献处理部分的翻译功能进行开发，使用翻译API，要求合理，切换方便
+翻译API
+百度：
+APP ID：20250607002376039
+密钥：AsP5BitqawDJ1LgBWfXU
+翻译api文档：https://api.fanyi.baidu.com/doc/21
+api配置要显示在config.py中，方便后续更改写好注释
+百度翻译API调用示例：
+```
+# -*- coding: utf-8 -*-
+
+# This code shows an example of text translation from English to Simplified-Chinese.
+# This code runs on Python 2.7.x and Python 3.x.
+# You may install `requests` to run this code: pip install requests
+# Please refer to `https://api.fanyi.baidu.com/doc/21` for complete api document
+
+import requests
+import random
+import json
+from hashlib import md5
+
+# Set your own appid/appkey.
+appid = 'INPUT_YOUR_APPID'
+appkey = 'INPUT_YOUR_APPKEY'
+
+# For list of language codes, please refer to `https://api.fanyi.baidu.com/doc/21`
+from_lang = 'en'
+to_lang =  'zh'
+
+endpoint = 'http://api.fanyi.baidu.com'
+path = '/api/trans/vip/translate'
+url = endpoint + path
+
+query = 'Hello World! This is 1st paragraph.\nThis is 2nd paragraph.'
+
+# Generate salt and sign
+def make_md5(s, encoding='utf-8'):
+    return md5(s.encode(encoding)).hexdigest()
+
+salt = random.randint(32768, 65536)
+sign = make_md5(appid + query + str(salt) + appkey)
+
+# Build request
+headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+payload = {'appid': appid, 'q': query, 'from': from_lang, 'to': to_lang, 'salt': salt, 'sign': sign}
+
+# Send request
+r = requests.post(url, params=payload, headers=headers)
+result = r.json()
+
+# Show response
+print(json.dumps(result, indent=4, ensure_ascii=False))
+
+```
+功能顺序：翻译，语法检查，总结，改写优化
+
+
+还需要你做一个语法检查功能，使用Grammarly的API
+以下是一个调用示例：
+```
+import os
+import requests
+
+# Load client credentials from environment variables
+CLIENT_ID = os.getenv('CLIENT_ID')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+TOKEN_ENDPOINT = "https://auth.grammarly.com/v4/api/oauth2/token"
+SCOPE = "users-api:read"
+API_ENDPOINT = "https://api.grammarly.com/ecosystem/api/institutions-summary"
+
+# Step 1: Request Access Token
+def get_access_token():
+    payload = {
+        "grant_type": "client_credentials",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "scope": SCOPE
+    }
+    response = requests.post(TOKEN_ENDPOINT, data=payload)
+    response.raise_for_status()  # Raise an exception for HTTP errors
+    return response.json().get("access_token")
+
+# Step 2: Make Authenticated API Request
+def fetch_user_data():
+    access_token = get_access_token()
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    response = requests.get(API_ENDPOINT, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+# Example usage
+if __name__ == "__main__":
+    data = fetch_user_data()
+    print(data)
+```
+需要你对于文献处理部分的增加一个语法检查功能进行开发，使用grammarly的API，要求合理，切换方便
+
+
+功能顺序：翻译，语法检查，总结，改写优化
+
+
+在翻译界面翻译场景下拉列表增加功能
+
+
+增加领域翻译功能，使用百度翻译API，要求合理，切换方便
+API参考文档：https://api.fanyi.baidu.com/doc/22
+
+增加文档翻译功能，使用百度翻译API，要求合理，切换方便
+API参考文档：https://api.fanyi.baidu.com/doc/27  
+
+增加图片翻译功能，使用百度翻译API，要求合理，切换方便
+https://api.fanyi.baidu.com/doc/26
+
+通用翻译功能，使用百度翻译API，要求合理，切换方便
+翻译api文档：https://api.fanyi.baidu.com/doc/21
+
+
+最后搞一个AI翻译，正常调用dify的对话即可，目前代码已实现，参考即可
+
+
+
+领域翻译：API参考文档：https://api.fanyi.baidu.com/doc/22
+
+
+文档翻译API参考文档：https://api.fanyi.baidu.com/doc/27  
+
+图片翻译API：https://api.fanyi.baidu.com/doc/26
+
+通用翻译api文档：https://api.fanyi.baidu.com/doc/21

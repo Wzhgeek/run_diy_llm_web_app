@@ -1,0 +1,1054 @@
+通用翻译api
+通用翻译API HTTPS 地址：
+https://fanyi-api.baidu.com/api/trans/vip/translate
+
+
+输入参数
+请求方式： 可使用 GET 或 POST 方式，如使用 POST 方式，Content-Type 请指定为：application/x-www-form-urlencoded
+字符编码：统一采用 UTF-8 编码格式
+query 长度：为保证翻译质量和响应速度，建议将单次请求长度控制在 2000 字符以内
+
+字段名	类型	是否必填	描述	备注
+q	string	是	请求翻译query	UTF-8编码，完成个人/企业认证后上限为6000字符
+from	string	是	翻译源语言	可设置为auto（自动检测语言）
+to	string	是	翻译目标语言	不可设置为auto
+appid	string	是	APPID	可在开发者信息查看
+salt	string	是	随机数	可为字母或数字的字符串
+sign	string	是	签名	appid+q+salt+密钥的MD5值
+以下字段仅开通了”我的术语库“用户需要填写
+needIntervene	integer	否	判断是否需要使用自定义术语干预API	1-是，0-否
+
+鉴权签名（sign）
+鉴权签名是为了保证调用安全，使用 MD5 算法生成的一段字符串，生成的签名长度为 32 位，签名中的英文字符均为小写格式。
+
+生成方法：
+Step1. 将请求参数中的 APPID(appid)， 待翻译文本(q)，随机数(salt)，以及平台分配的密钥(可在开发者信息查看) 按照 appid+q+salt+密钥 的顺序拼接得到字符串 1。
+Step2. 对字符串 1 做 MD5 ，得到 32 位小写的 sign。
+
+注意事项：
+
+待翻译文本（q）参数需为 UTF-8 编码；
+在生成签名拼接 appid+q+salt+密钥 字符串时，q 不需要做 URL encode，在生成签名之后，发送 HTTPS 请求之前才需要对要发送的待翻译文本字段 q 做 URL encode；
+如遇到报 54001 签名错误，请检查您的签名生成方法是否正确，在对 sign 进行拼接和加密时，q 不需要做 URL encode，很多开发者遇到签名报错均是由于拼接 sign 前就做了 URL encode；
+在生成签名后，发送 HTTP 请求时，如果将 query 拼接在URL上，需要对 query 做 URL encode。
+
+
+输出参数
+返回的结果是json格式，包含以下字段：
+
+
+字段名	类型	描述	备注
+from	string	源语言	返回用户指定的语言，或者自动检测出的语种（源语言设为 auto 时）
+to	string	目标语言	返回用户指定的目标语言
+trans_result	array	翻译结果	返回翻译结果，包括 src 和 dst 字段
+trans_result.*.src	string	原文	接入举例中的“apple”
+trans_result.*dst	string	译文	接入举例中的“苹果”
+error_code	integer	错误码	仅当出现错误时显示
+接入示例
+请求参数示例：
+
+# 示例：将英文单词 apple 翻译成中文
+
+# 输入参数
+q = 'apple' # 待翻译文本，utf-8编码
+from = 'en' # 原文语言代码
+to = 'zh' # 译文语言代码
+appid = '2015063000000001' # 请替换为您的appid
+salt = '65478' # 函数生成的随机码
+appkey = '1234567890' # 请替换为您的密钥
+needIntervene = 0 # 调用术语库，可选参数
+
+# 生成签名sign
+sign_str = appid + q + salt + appkey # 得到字符串'2015063000000001apple654781234567890'
+sign = md5(sign_str) # 对字符串做md5加密，注意需32位小写，即结果为'a1a7461d92e5194c5cae3182b5b24de1'
+
+拼接完整请求（拼接时需要对q需进行URLencode，否则会出现54001签名错误）：
+
+http://api.fanyi.baidu.com/api/trans/vip/translate?q=apple&from=en&to=zh&appid=2015063000000001&salt=65478&sign=a1a7461d92e5194c5cae3182b5b24de1
+注：也可使用 POST 方式，如 POST 方式传送，Content-Type 请指定为：application/x-www-form-urlencoded
+
+输出示例
+正确情况：
+
+{
+    "from": "en",
+    "to": "zh",
+    "trans_result": [
+        {
+            "src": "apple",
+            "dst": "苹果"
+        }
+    ]
+}
+异常情况：
+
+{
+    "error_code": "54001",
+    "error_msg": "Invalid Sign"
+}
+
+
+5. 语种代码对照表
+通用翻译API支持语种数已达 201种，完整列表如下。
+其中，对于常见语种列表内的语种，所有用户均可调用。对于非常见语种，仅企业已认证的尊享版用户可调用，未认证的非尊享版用户调用将返回58001错误。
+源语言语种不确定时可设置为 auto，目标语言语种不可设置为 auto。但对于非常用语种，语种自动检测可能存在误差。
+
+常见语种列表
+
+
+名称	代码	名称	代码	名称	代码
+自动检测	auto	中文	zh	英语	en
+粤语	yue	文言文	wyw	日语	jp
+韩语	kor	法语	fra	西班牙语	spa
+泰语	th	阿拉伯语	ara	俄语	ru
+葡萄牙语	pt	德语	de	意大利语	it
+希腊语	el	荷兰语	nl	波兰语	pl
+保加利亚语	bul	爱沙尼亚语	est	丹麦语	dan
+芬兰语	fin	捷克语	cs	罗马尼亚语	rom
+斯洛文尼亚语	slo	瑞典语	swe	匈牙利语	hu
+繁体中文	cht	越南语	vie	 	 
+
+完整语种列表
+
+中文首字母	名称	代码	语种检测	名称	代码	语种检测	名称	代码	语种检测
+A	阿拉伯语	ara	是	爱尔兰语	gle	是	奥克语	oci	是
+阿尔巴尼亚语	alb	是	阿尔及利亚阿拉伯语	arq	否	阿肯语	aka	否
+阿拉贡语	arg	否	阿姆哈拉语	amh	是	阿萨姆语	asm	是
+艾马拉语	aym	否	阿塞拜疆语	aze	是	阿斯图里亚斯语	ast	是
+奥塞梯语	oss	否	爱沙尼亚语	est	是	奥杰布瓦语	oji	否
+奥里亚语	ori	是	奥罗莫语	orm	否			
+B
+波兰语	pl	是	波斯语	per	是	布列塔尼语	bre	是
+巴什基尔语	bak	否	巴斯克语	baq	是	巴西葡萄牙语	pot	否
+白俄罗斯语	bel	是	柏柏尔语	ber	是	邦板牙语	pam	否
+保加利亚语	bul	是	北方萨米语	sme	否	北索托语	ped	否
+本巴语	bem	否	比林语	bli	否	比斯拉马语	bis	否
+俾路支语	bal	否	冰岛语	ice	是	波斯尼亚语	bos	是
+博杰普尔语	bho	否						
+C	楚瓦什语	chv	否	聪加语	tso	否			
+D	丹麦语	dan	是	德语	de	是	鞑靼语	tat	是
+掸语	sha	否	德顿语	tet	否	迪维希语	div	否
+低地德语	log	是						
+E	俄语	ru	是						
+F	法语	fra	是	菲律宾语	fil	是	芬兰语	fin	是
+梵语	san	否	弗留利语	fri	否	富拉尼语	ful	否
+法罗语	fao	否						
+G	盖尔语	gla	否	刚果语	kon	否	高地索布语	ups	否
+高棉语	hkm	是	格陵兰语	kal	否	格鲁吉亚语	geo	是
+古吉拉特语	guj	是	古希腊语	gra	否	古英语	eno	否
+瓜拉尼语	grn	否						
+H	韩语	kor	是	荷兰语	nl	是	胡帕语	hup	否
+哈卡钦语	hak	否	海地语	ht	否	黑山语	mot	否
+豪萨语	hau	否						
+J	吉尔吉斯语	kir	否	加利西亚语	glg	是	加拿大法语	frn	否
+加泰罗尼亚语	cat	是	捷克语	cs	是			
+K	卡拜尔语	kab	是	卡纳达语	kan	是	卡努里语	kau	否
+卡舒比语	kah	否	康瓦尔语	cor	否	科萨语	xho	是
+科西嘉语	cos	否	克里克语	cre	否	克里米亚鞑靼语	cri	否
+克林贡语	kli	否	克罗地亚语	hrv	是	克丘亚语	que	否
+克什米尔语	kas	否	孔卡尼语	kok	否	库尔德语	kur	是
+L	拉丁语	lat	是	老挝语	lao	否	罗马尼亚语	rom	是
+拉特加莱语	lag	否	拉脱维亚语	lav	是	林堡语	lim	否
+林加拉语	lin	否	卢干达语	lug	否	卢森堡语	ltz	否
+卢森尼亚语	ruy	否	卢旺达语	kin	是	立陶宛语	lit	是
+罗曼什语	roh	否	罗姆语	ro	否	逻辑语	loj	否
+M	马来语	may	是	缅甸语	bur	是	马拉地语	mar	否
+马拉加斯语	mg	是	马拉雅拉姆语	mal	是	马其顿语	mac	是
+马绍尔语	mah	否	迈蒂利语	mai	是	曼克斯语	glv	否
+毛里求斯克里奥尔语	mau	否	毛利语	mao	否	孟加拉语	ben	是
+马耳他语	mlt	是	苗语	hmn	否			
+N	挪威语	nor	是	那不勒斯语	nea	否	南恩德贝莱语	nbl	否
+南非荷兰语	afr	是	南索托语	sot	否	尼泊尔语	nep	是
+P	葡萄牙语	pt	是	旁遮普语	pan	是	帕皮阿门托语	pap	否
+普什图语	pus	否						
+Q	齐切瓦语	nya	否	契维语	twi	否	切罗基语	chr	否
+R	日语	jp	是	瑞典语	swe	是			
+S	萨丁尼亚语	srd	否	萨摩亚语	sm	否	塞尔维亚-克罗地亚语	sec	否
+塞尔维亚语	srp	是	桑海语	sol	否	僧伽罗语	sin	是
+世界语	epo	是	书面挪威语	nob	是	斯洛伐克语	sk	是
+斯洛文尼亚语	slo	是	斯瓦希里语	swa	是	塞尔维亚语（西里尔）	src	否
+索马里语	som	是	苏格兰语	sco	否			
+T	泰语	th	是	土耳其语	tr	是	塔吉克语	tgk	是
+泰米尔语	tam	是	他加禄语	tgl	是	提格利尼亚语	tir	否
+泰卢固语	tel	是	突尼斯阿拉伯语	tua	否	土库曼语	tuk	否
+W	乌克兰语	ukr	是	瓦隆语	wln	是	威尔士语	wel	是
+文达语	ven	否	沃洛夫语	wol	否	乌尔都语	urd	是
+X	西班牙语	spa	是	希伯来语	heb	是	希腊语	el	是
+匈牙利语	hu	是	西弗里斯语	fry	是	西里西亚语	sil	否
+希利盖农语	hil	否	下索布语	los	否	夏威夷语	haw	否
+新挪威语	nno	是	西非书面语	nqo	否	信德语	snd	否
+修纳语	sna	否	宿务语	ceb	否	叙利亚语	syr	否
+巽他语	sun	否						
+Y	英语	en	是	印地语	hi	是	印尼语	id	是
+意大利语	it	是	越南语	vie	是	意第绪语	yid	否
+因特语	ina	否	亚齐语	ach	否	印古什语	ing	否
+伊博语	ibo	否	伊多语	ido	否	约鲁巴语	yor	否
+亚美尼亚语	arm	是	伊努克提图特语	iku	否			
+Z	中文(简体)	zh	是	中文(繁体)	cht	是	中文(文言文)	wyw	是
+中文(粤语)	yue	是	扎扎其语	zaz	否	中古法语	frm	否
+祖鲁语	zul	否	爪哇语	jav	否	自动检测	auto	是
+
+6. 错误码列表
+
+错误码	含义	解决方案
+52000	成功	
+52001	请求超时	检查传入的 q 参数是否是正常文本，以及 from 或 to 参数是否在支持的语种列表中
+52002	系统错误	请重试
+52003	未授权用户	请检查appid是否正确，或是否已开通对应服务服务是否开通
+54000	必填参数为空	请检查是否漏传、误传参数
+54001	签名错误	请检查签名生成方法是否有误
+54003	访问频率受限	请降低您的调用频率，或在管理控制台进行身份认证后切换为高级版/尊享版 
+54004	账户余额不足	请前往管理控制台为账户充值。如后台显示还有余额，说明当天用量计费金额已超过账户余额
+54005	长query请求频繁	请降低长度大于1万字节query的发送频率，3s后再试
+58000	客户端IP非法	检查开发者信息页面填写的对应服务器IP地址是否正确，如服务器为动态IP，建议留空不填
+58001	译文语言方向不支持	检查译文语言是否在语言列表里，个人标准版和高级版支持28个常见语种，企业尊享版支持全部语种
+58002	服务当前已关闭	请前往管理控制台开启服务
+58003	此IP已被封禁	同一IP当日使用多个APPID发送翻译请求，则该IP将被封禁当日请求权限，次日解封。请勿将APPID和密钥填写到第三方软件中。
+90107	认证未通过或未生效	请前往我的认证查看认证进度
+20003	请求内容存在安全风险	请检查请求文本是否涉及反动，暴力等相关内容
+
+7. 附加功能
+7.1 自定义术语库
+自定义术语库是百度翻译推出的 API 增值服务，如果您认为通用翻译API对于某些术语翻译不准确，可在“管理控制台-我的术语库”页面填写您认为正确的原文和译文，启用术语库，并在接口 URL 增加“&needIntervene=1”，即可在翻译结果中看到干预效果（提交后需等待 10 分钟方可生效）。
+需要提醒您的是：因翻译模型并非对术语的一一替换，而是将您填写的术语翻译与原翻译进行对比和计算。如您填写的翻译与原译文差异过大，则可能导致干预后结果有错乱。此外，术语干预仅适用于专有名词、术语的自定义，目前暂不支持针对 HTML 代码（如<p> <div>）原样输出。
+
+领域翻译API通过HTTP接口对外提供多语种互译服务。您只需要通过调用领域翻译API，传入待翻译的内容，并指定要翻译的源语言（支持源语言语种自动检测）和目标语言种类，就可以得到相应的翻译结果。
+
+领域翻译API HTTPS地址：
+https://fanyi-api.baidu.com/api/trans/vip/fieldtranslate
+
+
+输入参数
+
+字段名	类型	是否必填	描述	备注
+q	text	是	请求翻译query	UTF-8编码
+from	text	是	翻译源语言	可设置为auto
+to	text	是	翻译目标语言	不可设置为auto
+appid	text	是	APPID	可在管理控制台查看
+salt	text	是	随机数	可为字母或数字的字符串
+domain	text	是	翻译领域类型	具体见下表
+sign	text	是	签名	appid+q+salt+密钥的MD5值
+needIntervene	integer	否	判断是否需要使用自定义术语干预API	1-是，0-否
+
+
+domain领域支持范围：
+
+支持传入值	描述	支持语言方向
+it	信息技术领域	中文（简）-> 英语、英语 -> 中文（简）
+finance	金融财经领域	中文（简）-> 英语、英语 -> 中文（简）
+machinery	机械制造领域	中文（简）-> 英语、英语 -> 中文（简）
+senimed	生物医药领域	中文（简）-> 英语、英语 -> 中文（简）
+novel	网络文学领域	中文（简）-> 英语
+academic	学术论文领域	中文（简）-> 英语、英语 -> 中文（简）
+aerospace	航空航天领域	中文（简）-> 英语、英语 -> 中文（简）
+wiki	人文社科领域	中文（简）-> 英语
+news	新闻资讯领域	中文（简）-> 英语、英语 -> 中文（简）
+law	法律法规领域	中文（简）-> 英语、英语 -> 中文（简）
+contract	合同领域	中文（简）-> 英语、英语 -> 中文（简）
+请求方式：可使用GET或POST方式，如使用POST方式，Content-Type请指定为：application/x-www-form-urlencoded
+字符编码：统一采用UTF-8编码格式
+query长度：为保证翻译质量，请将单次请求长度控制在 6000 字节以内（汉字约为2000个）
+
+
+
+签名生成方法
+签名是为了保证调用安全，使用MD5算法生成的一段字符串，生成的签名长度为32位，签名中的英文字符均为小写格式。
+
+生成方法：
+Step1. 将请求参数中的 APPID(appid)、翻译query(q，注意为UTF-8编码)、随机数(salt)、支持翻译领域（domain）以及平台分配的密钥(可在管理控制台查看) 按照appid+q+salt+domain+密钥的顺序拼接得到字符串1。
+Step2. 对字符串1做md5，得到32位小写的sign。
+注：
+1. 待翻译文本（q）需为UTF-8编码；
+2. 在生成签名拼接appid+q+salt+密钥字符串时，q不需要做URL encode，在生成签名之后，发送HTTP请求之前才需要对要发送的待翻译文本字段q做URL encode；
+3. 科技电子、水利机械、网络文学三个领域仅支持中到英，如设置语言方向为英到中，则默认输出通用翻译结果；生物医药、金融财经领域可支持中到英和英到中两种语言方向。
+4. 如遇到报 54001 签名错误，请检查您的签名生成方法是否正确，在对 sign 进行拼接和加密时，q 不需要做 URL encode，很多开发者遇到签名报错均是由于拼接 sign 前就做了 URL encode；
+
+
+
+输出参数
+返回的结果是json格式，包含以下字段：
+
+
+字段名	类型	描述	备注
+from	string	源语言	返回用户指定的语言，或者自动检测出的语种（源语言设为 auto 时）
+to	string	目标语言	返回用户指定的目标语言
+trans_result	mixed list	翻译结果	返回翻译结果，包括 src 和 dst 字段
+trans_result.*.src	string	原文	接入举例中的“amyotrophic lateral sclerosis”
+trans_result.*dst	string	译文	接入举例中的“肌萎缩性侧束硬化症”
+error_code	integer	错误码	仅当出现错误时显示
+
+接入举例
+例如：将英文单词amyotrophic lateral sclerosis翻译成肌萎缩性侧束硬化症，生物医药领域：
+
+请求参数：
+     q=amyotrophic lateral sclerosis
+     from=en
+     to=zh
+     appid=2015063000000001（请替换为您的appid）
+     salt=1435660288（随机码）
+     domain=medicine
+     平台分配的密钥: 12345678
+
+
+生成签名sign：
+Step1. 拼接字符串1：
+拼接appid=2015063000000001+q=amyotrophic lateral sclerosis+salt=1435660288+domain=medicine+密钥=12345678得到字符串1：“2015063000000001amyotrophic lateral sclerosis1435660288medicine12345678”
+Step2. 计算签名：（对字符串1做md5加密）
+sign=md5(2015063000000001amyotrophic lateral sclerosis1435660288medicine12345678)，得到sign=a649f9a644b25d717beee5ce600b40ae
+
+拼接完整请求：
+http://api.fanyi.baidu.com/api/trans/vip/fieldtranslate?q=amyotrophic+lateral+sclerosis&from=en&to=zh&appid=2015063000000001&salt=1435660288&domain=medicine&sign=a649f9a644b25d717beee5ce600b40ae
+注：也可使用POST方式，如POST方式传送，Content-Type请指定为：application/x-www-form-urlencoded
+
+输出举例
+正确情况：
+{
+    "from": "en",
+    "to": "zh",
+    "trans_result": [
+        {
+            "src": "amyotrophic lateral sclerosis",
+            "dst": "肌萎缩性侧束硬化症"
+        }
+    ]
+}
+异常情况：
+{
+    "error_code": "54001",
+    "error_msg": "Invalid Sign"
+}
+
+5. 语种列表
+源语言语种不确定时可设置为 auto，目标语言语种不可设置为 auto。但对于非常用语种，语种自动检测可能存在误差。
+
+语言简写	名称
+auto	自动检测
+zh	中文
+en	英文
+
+6. 错误码列表
+当翻译结果无法正常返回时，请参考下表处理：
+
+
+ 错误码 	 含义 	 解决方案 
+ 52000 	 成功 	
+ 52001 	 请求超时 	 请重试 
+ 52002 	 系统错误 	 请重试 
+ 52003 	 未授权用户 	 请检查appid是否正确或者服务是否开通 
+ 54000 	 必填参数为空 	 请检查是否少传参数 
+ 54001 	 签名错误 	 请检查您的签名生成方法 
+ 54003 	 访问频率受限 	 请降低您的调用频率，或进行身份认证后切换为高级版/尊享版 
+ 54004 	 账户余额不足 	 请前往管理控制台为账户充值 
+ 54005 	 长query请求频繁 	 请降低长query的发送频率，3s后再试 
+ 58000 	 客户端IP非法 	 检查个人资料里填写的IP地址是否正确，可前往开发者信息-基本信息修改 
+ 58001 	 译文语言方向不支持 	 检查译文语言是否在语言列表里 
+ 58002 	 服务当前已关闭 	 请前往管理控制台开启服务 
+ 90107 	 认证未通过或未生效 	 请前往我的认证查看认证进度 
+ 20003 	 请求内容存在安全风险 	 请检查请求内容 
+
+ 文档翻译API 
+ 整体文档翻译功能，分为
+两个异步接口：
+
+报价服务：提交文档，实现返回文件字符数、预估消费金额功能。 （不收费）
+翻译服务：提交文档，实现翻译功能（收费）
+备注：两个服务可以独立请求并实现相应功能，翻译服务不强依赖报价服务。
+两个查询接口：
+
+报价进度查询（不收费），每秒限制5次查询。
+翻译进度查询（不收费），每秒限制5次查询。
+后台管理：
+
+百度翻译开放平台管理控制台可查看翻译任务记录。
+
+实现流程如图：
+
+
+使用前准备
+前往百度翻译开放平台注册开发者，并申请文档翻译服务（申请时填写回调接口，非必需）。
+客户端服务器准备可接收推送请求接口，用于异步服务结果推送。
+备注：若没有可接收结果推送接口，提交任务后可通过同步接口查询（建议小文件1s查询一次，大文件10s请求一次） 或 管理控制台自助查询（报价进度结果不同步到管理控制台，注意接口访问次数限制）
+
+API接口说明
+请求方式
+请求方式： POST
+
+基础参数
+输入Headers
+参数名称	参数值	是否必填	备注
+Content-Type	application/json	是	
+X-Appid	appid	是	可在管理控制台查看
+X-Sign	xxxxxx	是	加密sign，参考 异步任务回调加密方式
+X-Timestamp	1642331332	是	请求时间戳 10位
+输出Headers
+参数名称	类型	示例	备注
+X-MT-Logid	string	xxxxxx	返回唯一logid
+接口服务
+异步报价服务
+描述
+功能：查看文档报价信息，返回当前文档字符数和预扣费等信息。
+形式：提交任务，完成后进行异步通知。
+收费与否：否
+请求url
+https://fanyi-api.baidu.com/transapi/doctrans/createjob/quote
+请求方式
+POST
+请求参数
+
+字段名	类型	是否必填	示例	备注
+from	string	是	en	原文语种
+to	string	是	zh	译文语种
+input	object	是		请求内容
+input.content	string	是	6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2	文档内容，base64编码，编码后最大长度 50M
+input.format	string	是	txt	源文件格式 (小写)，目前支持：doc、docx、xls、xlsx、ppt、pptx、xml、html、htm、txt、pdf 
+input.filename	string	是	test.txt	文件名
+input.transImage	int	否	0	是否翻译文档中的图片 (设置后图片中的字符会算入计费)；0-否 1-是
+input.needIntervene	int	否	0	判断是否需要使用自定义术语库干预；0-否 1-是
+
+示例
+{
+    "from": "en",
+    "to": "zh",
+    "input": {
+        "content": "6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2",
+        "format": "txt",
+        "filename": "test.txt"  
+        "transImage": "0"  
+    }  
+}
+输出参数
+字段名	类型	示例	备注
+code	int	0	错误码 0-成功 非0-失败
+msg	string	success	错误信息
+data	array		请求结果数据集，当且仅当code为 0 时存在
+data.fileId	string	fcf6db042e1d65d756fac8d983c4a415	任务文件ID ，32位小写 用于报价服务异步回调匹配ID，同一个文件，同一个翻译方向返回一致，有效期 3小时
+正常情况
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "fileId" :"fcf6db042e1d65d756fac8d983c4a415"    
+    }
+}
+异常情况
+{
+    "code": 10005,
+    "msg": "Sign fail"
+}
+接口回调
+
+字段名	类型	示例	备注
+code	int	0	错误码 0-成功 非0-失败
+msg	string	success	错误信息
+fileId	string	fcf6db042e1d65d756fac8d983c4a415	任务文件ID ，32位小写 用于报价服务异步回调匹配ID，同一个文件，同一个翻译方向返回一致，有效期 3小时
+notifyType	string	quote	通知类型：quote - 报价回调；trans - 翻译回调
+amount	int	100	报价金额，单位分（扣除免费字符之后的报价）
+charCount	int	10	字符数
+lastFreeCharCount	int	40000	剩余免费字符量
+timestamp	int	1680257791	10位时间戳
+sign	string	xxxx	加密sign， 参考附录 同步回调结果加密方式
+from	string	en	文档原文语种
+异步翻译服务
+描述
+功能：实现文档翻译功能。
+形式：提交任务，完成后进行异步通知。
+收费与否：是
+请求url
+https://fanyi-api.baidu.com/transapi/doctrans/createjob/trans
+请求方式
+POST
+请求参数
+
+字段名	类型	是否必填	示例	备注
+from	string	是	en	原文语种
+to	string	是	zh	译文语种
+input	object	是		请求内容
+input.content	string	是	6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2	文档内容，base64编码，编码后最大长度 50M
+input.fileId	string	否	fcf6db042e1d65d756fac8d983c4a415	文件ID，报价服务返回文件ID，可以直接用，不在重复提交文档信息，与content字段二选一，同时存在优先使用fileId字段
+input.format	string	是	txt	源文件格式 (小写)，目前支持：doc、docx、xls、xlsx、ppt、pptx、xml、html、htm、txt、pdf 
+input.filename	string	是	test.txt	文件名
+input.transImage	int	否	0	是否翻译文档中的图片 (设置后图片中的字符会算入计费)；0-否 1-是
+input.needIntervene	int	否	0	判断是否需要使用自定义术语库干预；0-否 1-是
+output	object	是		输出信息设置
+output.format	string	否		指定输出格式，参考附录 支持格式 内容，传空表示按照默认格式输出
+
+
+示例
+{
+    "from": "en",
+    "to": "zh",
+    "input": {
+        "content": "6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2",
+        "fileId" :"",
+        "format": "txt",
+        "filename": "test.txt" 
+        "transImage": "0"   
+    },
+    "output":{
+        "format" : "txt"
+    }
+}
+
+输出参数
+字段名	类型	示例	备注
+code	int	0	错误码 0-成功 非0-失败
+msg	string	success	错误信息
+data	array		请求结果数据集，当且仅当code为 0 时存在
+data.requestId	int	123456	任务ID
+正常情况
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "requestId" : 123456   
+    }
+}
+异常情况
+{
+    "code": 10005,
+    "msg": "Sign fail"
+}
+接口回调
+字段名	类型	示例	备注
+code	int	0	错误码 0-成功 非0-失败
+msg	string	success	错误信息
+requestId	int	123456	任务ID
+notifyType	string	quote	通知类型：quote - 报价回调；trans - 翻译回调
+amount	int	100	报价金额，单位分
+charCount	int	10	字符数
+lastFreeCharCount	int	40000	免费字符剩余量
+timestamp	int	1680257791	10位时间戳
+sign	string	xxxx	加密sign， 参考附录 回调结果加密方式 
+查询报价进度
+描述
+功能：查询异步报价进度。
+形式：同步返回报价进度信息
+收费与否：否
+请求url
+https://fanyi-api.baidu.com/transapi/doctrans/query/quote
+请求方式
+POST
+请求参数
+参数名称	类型	是否必需	示例	备注
+fileId	string	是	fcf6db042e1d65d756fac8d983c4a415	文件ID
+示例
+{
+    "fileId":"fcf6db042e1d65d756fac8d983c4a415"
+}
+输出参数
+
+字段名	类型	示例	备注
+code	int	0	错误码 0-成功 非0-失败
+msg	string	success	错误信息
+data	object		请求结果数据集，当且仅当code为 0 时存在
+data.fileId	string	fcf6db042e1d65d756fac8d983c4a415	文件ID
+data.status	int	0	状态：0 - 任务解析中；1- 任务完成；2 - 任务失败(文件解析失败) 
+data.charCount	int	10	文件字符数
+data.amount	int	10	预扣费金额
+data.from	string	en	文档原文语种
+data.lastFreeCharCount	int	10	剩余免费字符量
+
+正常情况
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "fileId" : "fcf6db042e1d65d756fac8d983c4a415",
+        "status" : 1,
+        "charCount" : 1000,
+        "amount" : 100,
+        "lastFreeCharCount" : 1000
+    }
+}
+异常情况
+{
+    "code": 10005,
+    "msg": "Sign fail"
+}
+查询翻译进度
+描述
+功能：查询异步翻译进度。
+形式：同步返回
+收费与否：否
+请求url
+https://fanyi-api.baidu.com/transapi/doctrans/query/trans
+请求方式
+POST
+请求参数
+参数名称	类型	是否必需	示例	备注
+requestId	int	是	123456	任务ID
+示例
+{
+    "requestId":123456
+}
+输出参数
+字段名	类型	示例	备注
+code	int	0	错误码 0-成功 非0-失败
+msg	string	success	错误信息
+data	object		请求结果数据集，当且仅当code为 0 时存在
+data.requestId	string	fcf6db042e1d65d756fac8d983c4a415	文件ID
+data.status	int	0	状态：0 - 翻译中；1- 翻译成功；2 - 翻译失败 
+data.reason	string	解析失败	失败原因
+data.fileSrcUrl	string	xxxxx	译文url
+data.outPutDocType	string	txt	输出格式
+data.from	string	en	源语种
+data.to	string	zh	目标语种
+data.name	string	test.txt	文档名
+data.charCount	int	1000	文档字符数
+data.amount	int	1000	消费金额 ，单位分
+正常情况
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "requestId":123456,
+        "status": 1,
+        "reason": "",
+        "fileSrcUrl": "",
+        "outPutDocType": "txt",
+        "from": "en",
+        "to": "zh",
+        "name":"test.txt",
+        "charCount": 1000,
+        "amount": 100
+    }
+}
+异常情况
+{
+    "code": 10005,
+    "msg": "Sign fail"
+}
+
+校验方法
+hmac_sha256加密方法
+https://fanyiapp.cdn.bcebos.com/api/doc/HMAC_SHA256%E5%8A%A0%E5%AF%86%E6%96%B9%E6%B3%95.pdf
+
+异步任务请求校验方式
+签名是为了保证调用安全，核心使用hmac_sha256算法，进行密钥校验。参数放在请求HEADER中
+
+生成方法：
+Step1: 传入http请求中的body（原始json串，保留原始格式）字符串作为字符串1。（注意部分语言需确保字符串为UTF-8编码）
+Step2. 将 APPID(X-Appid)，时间戳(X-Timestamp)， 字符串1，按照APPID+时间戳+字符串1顺序拼接得到字符串2。
+Step3. 对字符串2 做hmac_sha256加密，密钥使用平台分配的密钥(可在管理控制台查看) 得到字符串3。
+Step4. 对字符串3 做base64编码得到X-Sign。
+
+案例(异步翻译服务加密)：
+appid=2015063000000001（请替换为您的appid）
+timestamp=1646034877（10位时间戳）
+平台分配的密钥 seckey= 12345678
+json串：
+{
+    "from": "en",
+    "to": "zh",
+    "input": {
+        "content": "6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2",
+        "fileId" :"xxxxx",
+        "format": "txt",
+        "filename": "test.txt"    
+    },
+    "output":{
+        "format" : "txt"
+    }
+}
+# 加密过程
+Step1. 字符串1 = {
+    "from": "en",
+    "to": "zh",
+    "input": {
+        "content": "6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2",
+        "fileId" :"xxxxx",
+        "format": "txt",
+        "filename": "test.txt"    
+    },
+    "output":{
+        "format" : "txt"
+    }
+}
+备注：字符串1就是http中body的数据 
+Step2. 字符串2 = 20150630000000011646034877{
+    "from": "en",
+    "to": "zh",
+    "input": {
+        "content": "6L+Z5piv5LiA5Liq5rWL6K+V5paH5Lu2",
+        "fileId" :"xxxxx",
+        "format": "txt",
+        "filename": "test.txt"    
+    },
+    "output":{
+        "format" : "txt"
+    }
+}
+Step3. 字符串3 = hash_hmac('sha256', '字符串2', '12345678')
+Step4. X-Sign = base64encode(字符串3) = 0e0+HaVmzVJYuSgf6SmG/1hM+v3ItGEPva8ACw/jiXs=
+﻿
+回调参数加密方式
+生成方法：
+Step1: 将返回的所有参数(除了sign)按照a-z顺序，升序排序 ，按照K=V形式拼接中间使用&分割 (V需要做urlencode ) 字符串1。
+Step2. 对字符串1 做hmac_sha256加密，密钥使用平台分配的密钥(可在管理控制台查看) 得到字符串2。
+Step3. 对字符串2 做base64编码得到sign参数。
+
+案例
+appid=2015063000000001（请替换为您的appid）
+timestamp=1646034877（10位时间戳）
+平台分配的密钥 seckey= 12345678
+返回内容包含：
+{
+"code":0,
+"msg":"success",
+"requestId":123456,
+"notifyType":"trans",
+"amount":100,
+"charCount":100,
+"fileSrcUrl":"xxxxx",
+"lastFreeCharCount":100,
+"timestamp":1680257791,
+"sign":"xxxxxx"
+}
+
+# 加密过程
+Step1: 除了sign之外其他参数排序
+{
+    "amount":100,
+    "charCount":100,
+    "code":0,
+    "fileSrcUrl":"xxxxx",
+    "lastFreeCharCount":100,
+    "msg":"success",
+    "notifyType":"trans",
+    "requestId":123456,
+    "timestamp":1680257791
+}
+字符串1 = amount=100&charCount=100&code=0&fileSrcUrl=xxxxx&lastFreeCharCount=100&msg=success&notifyType=trans&requestId=123456&timestamp=1680257791
+Step2: 字符串2 = hash_hmac('sha256', '字符串1', '12345678')
+Step3: 对字符串2 做base64编码得到sign参数。
+文件格式支持类型
+输入类型	支持输出类型	默认类型
+doc	docx,pdf	docx
+docx	docx,pdf	docx
+pdf	docx,pdf	docx
+xls	xlsx	xlsx
+xlsx	xlsx	xlsx
+html	html	html
+htm	html	html
+ppt	pptx	pptx
+pptx	pptx	pptx
+txt	txt	txt
+xml	xml	xml
+错误码说明
+
+ 错误码 	 含义 	 解决方案 
+ 0 	 成功 	
+ 10001 	 必填参数为空或固定参数有误 	 检查参数是否误传 
+ 10004 	 访问频率受限 	 请降低您的调用频率 
+ 10005 	 签名失败 	 检查签名规则 
+ 10006 	 用户未授权 	 申请服务 
+ 20100 	 报价查询信息已经过期 	 重新提交报价任务获取文件ID 
+ 20101 	 查询翻译记录过期 	 重新提交报价任务获取文件ID 
+ 20102 	 文档类型不正确 	 检查文件格式、输出格式是否符合要求 
+ 20103 	 文档大小不符合要求 	 检查文件信息 
+ 20104 	 创建任务失败 	 重试 
+ 20105 	 加密文档解析失败 	 不支持加密文档翻译 
+ 70205 	 文档翻译失败 	 重试 
+ 70207 	 文档内未检测到字符 	 请检查文档是否为纯图片/PDF扫描件 
+ 70208 	 下载文件失败 	 系统错误，请稍后重试 
+ 70209 	 文档解析超时 	 拆分文档或优化文档内容后重试 
+ 70210 	 PDF转Word失败 	 文档是否损坏或者打不开，文档内容系统无法处理 
+ 70211 	 文档解析失败 	 文档是否损坏或者打不开，文档内容系统无法处理 
+ 70212 	 译文文档生成失败 	 系统错误，请稍后重试 
+错误码说明（旧版）
+
+ 错误码 	 含义 	 解决方案 
+ 52000 	 成功 	
+ 52001 	 请求超时 	 请重试 
+ 52002 	 服务端系统错误 	 请重试 
+ 52003 	 未授权用户 	 请检查appid是否正确或者服务是否开通 
+ 54001 	 签名错误 	 请检查您的签名生成方法 
+ 54003 	 访问频率受限 	 请降低您的调用频率 
+ 54004 	 账户余额不足 	 请前往管理控制台为账户充值 
+ 54010 	 预扣金额不足 	 余额不足以支付本次翻译费用，请前往管理控制台为账户充值 
+ 58000 	 客户端IP非法 	 检查个人资料里填写的IP地址是否正确 
+ 66000 	 参数错误 	 检查传递参数 
+ 70201 	 找不到文件信息 	 检查是否上传文件 
+ 70202 	 生成远程文件失败 	 重试 
+ 70203 	 上传文件大小超限 	 拆分文件重试 
+ 70204 	 缓存文件失效 	 重新提交翻译文件 
+ 70205 	 文档翻译失败 	 重试 
+ 70206 	 文件类型不支持 	 检查文件 
+ 70207 	 文件内容无法翻译 	 检查文件 
+
+完整语种列表
+
+中文首字母	名称	代码	语种检测	名称	代码	语种检测	名称	代码	语种检测
+A	阿拉伯语	ara	是	爱尔兰语	gle	是	奥克语	oci	是
+阿尔巴尼亚语	alb	是	阿尔及利亚阿拉伯语	arq	否	阿肯语	aka	否
+阿拉贡语	arg	否	阿姆哈拉语	amh	是	阿萨姆语	asm	是
+艾马拉语	aym	否	阿塞拜疆语	aze	是	阿斯图里亚斯语	ast	是
+奥塞梯语	oss	否	爱沙尼亚语	est	是	奥杰布瓦语	oji	否
+奥里亚语	ori	是	奥罗莫语	orm	否			
+B
+波兰语	pl	是	波斯语	per	是	布列塔尼语	bre	是
+巴什基尔语	bak	否	巴斯克语	baq	是	巴西葡萄牙语	pot	否
+白俄罗斯语	bel	是	柏柏尔语	ber	是	邦板牙语	pam	否
+保加利亚语	bul	是	北方萨米语	sme	否	北索托语	ped	否
+本巴语	bem	否	比林语	bli	否	比斯拉马语	bis	否
+俾路支语	bal	否	冰岛语	ice	是	波斯尼亚语	bos	是
+博杰普尔语	bho	否						
+C	楚瓦什语	chv	否	聪加语	tso	否			
+D	丹麦语	dan	是	德语	de	是	鞑靼语	tat	是
+掸语	sha	否	德顿语	tet	否	迪维希语	div	否
+低地德语	log	是						
+E	俄语	ru	是						
+F	法语	fra	是	菲律宾语	fil	是	芬兰语	fin	是
+梵语	san	否	弗留利语	fri	否	富拉尼语	ful	否
+法罗语	fao	否						
+G	盖尔语	gla	否	刚果语	kon	否	高地索布语	ups	否
+高棉语	hkm	是	格陵兰语	kal	否	格鲁吉亚语	geo	是
+古吉拉特语	guj	是	古希腊语	gra	否	古英语	eno	否
+瓜拉尼语	grn	否						
+H	韩语	kor	是	荷兰语	nl	是	胡帕语	hup	否
+哈卡钦语	hak	否	海地语	ht	否	黑山语	mot	否
+豪萨语	hau	否						
+J	吉尔吉斯语	kir	否	加利西亚语	glg	是	加拿大法语	frn	否
+加泰罗尼亚语	cat	是	捷克语	cs	是			
+K	卡拜尔语	kab	是	卡纳达语	kan	是	卡努里语	kau	否
+卡舒比语	kah	否	康瓦尔语	cor	否	科萨语	xho	是
+科西嘉语	cos	否	克里克语	cre	否	克里米亚鞑靼语	cri	否
+克林贡语	kli	否	克罗地亚语	hrv	是	克丘亚语	que	否
+克什米尔语	kas	否	孔卡尼语	kok	否	库尔德语	kur	是
+L	拉丁语	lat	是	老挝语	lao	否	罗马尼亚语	rom	是
+拉特加莱语	lag	否	拉脱维亚语	lav	是	林堡语	lim	否
+林加拉语	lin	否	卢干达语	lug	否	卢森堡语	ltz	否
+卢森尼亚语	ruy	否	卢旺达语	kin	是	立陶宛语	lit	是
+罗曼什语	roh	否	罗姆语	ro	否	逻辑语	loj	否
+M	马来语	may	是	缅甸语	bur	是	马拉地语	mar	否
+马拉加斯语	mg	是	马拉雅拉姆语	mal	是	马其顿语	mac	是
+马绍尔语	mah	否	迈蒂利语	mai	是	曼克斯语	glv	否
+毛里求斯克里奥尔语	mau	否	毛利语	mao	否	孟加拉语	ben	是
+马耳他语	mlt	是	苗语	hmn	否			
+N	挪威语	nor	是	那不勒斯语	nea	否	南恩德贝莱语	nbl	否
+南非荷兰语	afr	是	南索托语	sot	否	尼泊尔语	nep	是
+P	葡萄牙语	pt	是	旁遮普语	pan	是	帕皮阿门托语	pap	否
+普什图语	pus	否						
+Q	齐切瓦语	nya	否	契维语	twi	否	切罗基语	chr	否
+R	日语	jp	是	瑞典语	swe	是			
+S	萨丁尼亚语	srd	否	萨摩亚语	sm	否	塞尔维亚-克罗地亚语	sec	否
+塞尔维亚语	srp	是	桑海语	sol	否	僧伽罗语	sin	是
+世界语	epo	是	书面挪威语	nob	是	斯洛伐克语	sk	是
+斯洛文尼亚语	slo	是	斯瓦希里语	swa	是	塞尔维亚语（西里尔）	src	否
+索马里语	som	是	苏格兰语	sco	否			
+T	泰语	th	是	土耳其语	tr	是	塔吉克语	tgk	是
+泰米尔语	tam	是	他加禄语	tgl	是	提格利尼亚语	tir	否
+泰卢固语	tel	是	突尼斯阿拉伯语	tua	否	土库曼语	tuk	否
+W	乌克兰语	ukr	是	瓦隆语	wln	是	威尔士语	wel	是
+文达语	ven	否	沃洛夫语	wol	否	乌尔都语	urd	是
+X	西班牙语	spa	是	希伯来语	heb	是	希腊语	el	是
+匈牙利语	hu	是	西弗里斯语	fry	是	西里西亚语	sil	否
+希利盖农语	hil	否	下索布语	los	否	夏威夷语	haw	否
+新挪威语	nno	是	西非书面语	nqo	否	信德语	snd	否
+修纳语	sna	否	宿务语	ceb	否	叙利亚语	syr	否
+巽他语	sun	否						
+Y	英语	en	是	印地语	hi	是	印尼语	id	是
+意大利语	it	是	越南语	vie	是	意第绪语	yid	否
+因特语	ina	否	亚齐语	ach	否	印古什语	ing	否
+伊博语	ibo	否	伊多语	ido	否	约鲁巴语	yor	否
+亚美尼亚语	arm	是	伊努克提图特语	iku	否			
+Z	中文(简体)	zh	是	中文(繁体)	cht	是	中文(文言文)	wyw	是
+中文(粤语)	yue	是	扎扎其语	zaz	否	中古法语	frm	否
+祖鲁语	zul	否	爪哇语	jav	否	自动检测	auto	是
+
+
+图片翻译API 
+接入方式
+图片翻译API HTTPS地址：
+
+https://fanyi-api.baidu.com/api/trans/sdk/picture
+
+集成指南
+请求url示例
+https://fanyi-api.baidu.com/api/trans/sdk/picture?
+from=zh&to=en&appid=20180905000111111&salt=1435660288&sign=bf7303b9be4191726f62c19115c9a165&cuid=APICUID&mac=mac&version=3
+
+
+请求方式：
+POST/GET
+
+
+输入参数
+
+字段名	类型	是否必填	描述
+image	files	是	请求翻译的图片数据
+from	string	是	目前源语种方向，参考附录1
+to	string	是	译文语种方向，参考附录2
+appid	string	是	APP ID，可在管理控制台查看
+salt	string	是	随机数
+cuid	string	是	固定值：APICUID
+mac	string	是	固定值：mac
+version	integer	是	固定值：3
+paste	integer	否	图片贴合类型：0 - 关闭文字贴合 1 - 返回整图贴合 2 - 返回块区贴合
+sign	string	是	签名，32位小写
+needIntervene	int	否	判断是否需要使用自定义术语库干预；0-否 1-是
+
+
+注：
+1）支持jpg、jpeg、png图片格式，注意均为小写。图片大小不超过4M，最短边至少30px，最长边最大4096px，长宽比3：1以内。
+2）签名规则：sign = md5(appid+md5(image)+salt+cuid+mac+密钥)。
+3）md5(image) 中的image是原始图片数据，不加任何编码，32位小写。
+4）image图片上传Content-Type=multipart/form-data。
+
+输出参数
+
+字段名	描述	备注
+error_code	错误码	详见错误码列表
+error_msg	错误信息	以错误码54001为例，其返回的错误信息是Invalid Sign
+data	返回数据集合	data是一个对象
+from	源语种方向	参考支持语种列表
+to	目标语种方向	参考支持语种列表
+content	分段内容	Content内部是一个数组形式，每个数据格式见下方详细说明
+sumSrc	未分段翻译原文	接入举例中的“这是一个测试 这是一个例子”
+sumDst	未分段翻译译文	接入举例中的“This is a test. This is an example.”
+pasteImg	图片贴合 (整屏贴合)	paste=1有效，base64格式
+
+注：Content内部是一个数组形式，详情如下：
+
+字段名	类型	描述	备注
+src	STRING	分段翻译的原文	
+dst	STRING	分段翻译的译文	
+rect	STRING	表示识别出的文字的位置	坐标为左上角，依次是left、top、width、height
+lineCount	INT	表示该分段信息是原文的多少行合并在一起	
+points	ARRAY	译文矩形坐标	坐标为左上角，坐标顺序左上，右上，右下，左下
+
+格式：
+[
+{"x": 254,"y": 280},
+{"x": 506,"y": 278},
+{"x": 506,"y": 303},
+{"x": 254,"y": 305}
+]
+pasteImg	STRING	图片贴合 (分块贴合)	分段贴合图片，paste=2有效，base64格式
+
+
+语种列表
+源语种支持方向：
+
+ 语言简写 	 名称 
+ auto 	 自动检测 
+ zh 	 中文 
+ en 	 英语 
+ jp 	 日语 
+ kor 	 韩语 
+ fra 	 法语 
+ spa 	 西班牙语 
+ ru 	 俄语 
+ pt 	 葡萄牙语 
+ de 	 德语 
+ it 	 意大利语 
+ dan 	 丹麦语 
+ nl 	 荷兰语 
+ may 	 马来语 
+ swe 	 瑞典语 
+ id 	 印尼语 
+ pl 	 波兰语 
+ rom 	 罗马尼亚语 
+ tr 	 土耳其语 
+ el 	 希腊语 
+ hu 	 匈牙利语 
+
+
+目标语种支持方向：
+
+
+
+ 语言简写 	 名称 
+ zh 	 中文 
+ en 	 英语 
+ jp 	 日语 
+ kor 	 韩语 
+ fra 	 法语 
+ spa 	 西班牙语 
+ ru 	 俄语 
+ pt 	 葡萄牙语 
+ de 	 德语 
+ it 	 意大利语 
+ dan 	 丹麦语 
+ nl 	 荷兰语 
+ may 	 马来语 
+ swe 	 瑞典语 
+ id 	 印尼语 
+ pl 	 波兰语 
+ rom 	 罗马尼亚语 
+ tr 	 土耳其语 
+ el 	 希腊语 
+ hu 	 匈牙利语 
+
+
+错误码列表
+
+
+举例：（以下为传入的图片）
+
+返回内容如下：
+
+{
+    "error_code":"0",
+    "error_msg":"success",
+    "data":{
+        "from":"zh",
+        "to":"en",
+        "content":[
+            {
+                "src":"这是一个测试 ",
+                "dst":"This is a test.",
+                "rect":"79 23 246 43",
+                "lineCount":1,
+                "pasteImg":"xxx",
+                "points":[
+                    {
+                        "x":0,
+                        "y":0
+                    },
+                    {
+                        "x":0,
+                        "y":0
+                    },
+                    {
+                        "x":20,
+                        "y":20
+                    },
+                    {
+                        "x":10,
+                        "y":10
+                    }
+                ]
+            },
+            {
+                "src":"这是一个例子 ",
+                "dst":"This is an example.",
+                "rect":"79 122 201 37",
+                "lineCount":1,
+                "pasteImg":"xxx",
+                "points":[
+                    {
+                        "x":50,
+                        "y":50
+                    },
+                    {
+                        "x":50,
+                        "y":50
+                    },
+                    {
+                        "x":20,
+                        "y":20
+                    },
+                    {
+                        "x":10,
+                        "y":10
+                    }
+                ]
+            }
+        ],
+        "sumSrc":"这是一个测试 这是一个例子 ",
+        "sumDst":"This is a test. This is an example.",
+        "pasteImg":"xxx"
+    }
+}
+

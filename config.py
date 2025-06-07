@@ -113,6 +113,163 @@ class DifyAPIConfig:
         return f"{cls.BASE_URL}{endpoint}"
 
 # =============================================================================
+# 翻译API配置
+# =============================================================================
+
+class TranslationAPIConfig:
+    """翻译API配置类 - 支持多种翻译服务提供商"""
+    
+    # 当前使用的翻译服务提供商（baidu/dify/google/tencent等）
+    CURRENT_PROVIDER = "dify"  # 由于百度翻译IP白名单限制，默认使用Dify API
+    
+    # =============================================================================
+    # 百度翻译API配置
+    # 官方文档：https://api.fanyi.baidu.com/doc/21
+    # =============================================================================
+    BAIDU_CONFIG = {
+        'app_id': '20250607002376039',  # 百度翻译APP ID
+        'app_key': 'AsP5BitqawDJ1LgBWfXU',  # 百度翻译密钥
+        'base_url': 'https://fanyi-api.baidu.com',  # 百度翻译API基础地址
+        'translate_path': '/api/trans/vip/translate',  # 翻译接口路径
+        'timeout': 10,  # 请求超时时间（秒）
+        'max_query_length': 6000,  # 单次翻译最大字符数
+    }
+    
+    # =============================================================================
+    # 语言代码映射表（百度翻译支持的语言）
+    # 完整列表参考：https://api.fanyi.baidu.com/doc/21
+    # =============================================================================
+    LANGUAGE_CODES = {
+        # 中文相关
+        'auto': 'auto',  # 自动检测
+        'zh': 'zh',      # 中文
+        'zh-cn': 'zh',   # 简体中文
+        'zh-tw': 'cht',  # 繁体中文
+        
+        # 英语相关
+        'en': 'en',      # 英语
+        
+        # 其他常用语言
+        'ja': 'jp',      # 日语
+        'ko': 'kor',     # 韩语
+        'fr': 'fra',     # 法语
+        'de': 'de',      # 德语
+        'es': 'spa',     # 西班牙语
+        'it': 'it',      # 意大利语
+        'ru': 'ru',      # 俄语
+        'pt': 'pt',      # 葡萄牙语
+        'ar': 'ara',     # 阿拉伯语
+        'th': 'th',      # 泰语
+        'vi': 'vie',     # 越南语
+    }
+    
+    # =============================================================================
+    # 翻译功能配置
+    # =============================================================================
+    TRANSLATION_FEATURES = {
+        'enable_translation': True,      # 启用翻译功能
+        'enable_grammar_check': True,    # 启用语法检查
+        'enable_summary': True,          # 启用总结功能
+        'enable_rewrite': True,          # 启用改写优化功能
+        
+        # 默认翻译设置
+        'default_from_lang': 'auto',     # 默认源语言（自动检测）
+        'default_to_lang': 'zh',         # 默认目标语言（中文）
+        
+        # 功能顺序配置
+        'feature_order': [
+            'translation',      # 翻译
+            'grammar_check',    # 语法检查
+            'summary',          # 总结
+            'rewrite'           # 改写优化
+        ]
+    }
+    
+    # =============================================================================
+    # 预设翻译场景
+    # =============================================================================
+    TRANSLATION_SCENARIOS = {
+        'academic': {
+            'name': '学术文献',
+            'description': '适用于学术论文、研究报告等专业文献的翻译',
+            'style': 'formal',
+            'terminology': 'academic'
+        },
+        'business': {
+            'name': '商务文档',
+            'description': '适用于商务合同、报告、邮件等商务文档的翻译',
+            'style': 'formal',
+            'terminology': 'business'
+        },
+        'technical': {
+            'name': '技术文档',
+            'description': '适用于技术手册、API文档等技术资料的翻译',
+            'style': 'technical',
+            'terminology': 'technical'
+        },
+        'general': {
+            'name': '通用文本',
+            'description': '适用于一般性文本的翻译',
+            'style': 'normal',
+            'terminology': 'general'
+        }
+    }
+    
+    # =============================================================================
+    # 类方法
+    # =============================================================================
+    @classmethod
+    def get_translation_headers(cls):
+        """获取翻译API请求头"""
+        return {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    
+    @classmethod
+    def set_provider(cls, provider: str):
+        """设置翻译服务提供商"""
+        if provider in ['baidu', 'dify']:
+            cls.CURRENT_PROVIDER = provider
+            print(f"翻译服务提供商已切换为: {provider.upper()}")
+        else:
+            print(f"不支持的翻译服务提供商: {provider}")
+    
+    @classmethod
+    def get_provider_status(cls):
+        """获取当前翻译服务提供商状态"""
+        return {
+            'current_provider': cls.CURRENT_PROVIDER,
+            'available_providers': ['baidu', 'dify'],
+            'note': 'baidu需要IP白名单配置，dify使用AI智能翻译'
+        }
+    
+    @classmethod
+    def get_translation_url(cls):
+        """获取完整的翻译API URL"""
+        config = cls.BAIDU_CONFIG
+        return f"{config['base_url']}{config['translate_path']}"
+    
+    @classmethod
+    def get_language_code(cls, lang):
+        """获取语言代码"""
+        return cls.LANGUAGE_CODES.get(lang.lower(), lang)
+    
+    @classmethod
+    def is_translation_enabled(cls):
+        """检查翻译功能是否启用"""
+        return cls.TRANSLATION_FEATURES['enable_translation']
+    
+    @classmethod
+    def get_max_query_length(cls):
+        """获取单次翻译最大字符数"""
+        return cls.BAIDU_CONFIG['max_query_length']
+    
+    @classmethod
+    def get_supported_languages(cls):
+        """获取支持的语言列表"""
+        return list(cls.LANGUAGE_CODES.keys())
+
+# =============================================================================
 # 默认设置
 # =============================================================================
 
@@ -139,6 +296,10 @@ class DefaultSettings:
     # 分页设置
     DEFAULT_PAGE_SIZE = 20
     DEFAULT_PAGE = 1
+    
+    # 翻译设置
+    DEFAULT_TRANSLATION_SCENARIO = "general"  # 默认翻译场景
+    DEFAULT_TRANSLATION_BATCH_SIZE = 10      # 批量翻译时的批次大小
 
 # =============================================================================
 # 环境变量支持
@@ -165,6 +326,16 @@ class EnvConfig:
         
         if os.getenv('APP_DEBUG'):
             AppConfig.DEBUG = os.getenv('APP_DEBUG').lower() == 'true'
+        
+        # 翻译API环境变量支持
+        if os.getenv('BAIDU_TRANSLATE_APP_ID'):
+            TranslationAPIConfig.BAIDU_CONFIG['app_id'] = os.getenv('BAIDU_TRANSLATE_APP_ID')
+        
+        if os.getenv('BAIDU_TRANSLATE_APP_KEY'):
+            TranslationAPIConfig.BAIDU_CONFIG['app_key'] = os.getenv('BAIDU_TRANSLATE_APP_KEY')
+        
+        if os.getenv('TRANSLATION_PROVIDER'):
+            TranslationAPIConfig.CURRENT_PROVIDER = os.getenv('TRANSLATION_PROVIDER')
 
 # =============================================================================
 # 配置验证
@@ -192,6 +363,15 @@ class ConfigValidator:
         # 验证端口
         if not (1 <= AppConfig.PORT <= 65535):
             errors.append("端口号无效")
+        
+        # 验证翻译API配置（仅在启用翻译功能时）
+        if TranslationAPIConfig.is_translation_enabled():
+            if TranslationAPIConfig.CURRENT_PROVIDER == 'baidu':
+                baidu_config = TranslationAPIConfig.BAIDU_CONFIG
+                if not baidu_config['app_id']:
+                    errors.append("百度翻译APP ID未配置")
+                if not baidu_config['app_key']:
+                    errors.append("百度翻译密钥未配置")
         
         if errors:
             raise ValueError(f"配置验证失败: {'; '.join(errors)}")
@@ -221,6 +401,15 @@ def init_config():
     print(f"   上传目录: {AppConfig.UPLOAD_FOLDER}")
     print(f"   最大文件大小: {AppConfig.MAX_CONTENT_LENGTH // (1024*1024)}MB")
     print(f"   支持文件类型: {', '.join(AppConfig.ALLOWED_EXTENSIONS)}")
+    
+    # 翻译功能配置信息
+    if TranslationAPIConfig.is_translation_enabled():
+        print(f"   翻译服务: {TranslationAPIConfig.CURRENT_PROVIDER.upper()}")
+        print(f"   支持语言: {len(TranslationAPIConfig.get_supported_languages())}种")
+        print(f"   翻译场景: {len(TranslationAPIConfig.TRANSLATION_SCENARIOS)}种")
+    else:
+        print("   翻译功能: 已禁用")
+    
     print("✅ 配置初始化完成")
 
 # 自动初始化（当导入此模块时）

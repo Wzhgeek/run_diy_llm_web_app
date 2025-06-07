@@ -41,11 +41,7 @@
                             在线
                         </div>
                     </div>
-                    <div class="user-actions">
-                        <button class="user-action-btn" onclick="toggleTheme()" title="切换主题" id="themeToggle">
-                            <i class="fas fa-sun" id="themeIcon"></i>
-                        </button>
-                    </div>
+
                 </div>
                 
                 <!-- 主要功能导航 -->
@@ -163,6 +159,12 @@
                     <div class="header-actions">
                         <button class="header-btn" title="新建对话" onclick="goToChat()">
                             <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="header-btn" title="切换手机版" onclick="toggleMobileView()">
+                            <i class="fas fa-mobile-alt"></i>
+                        </button>
+                        <button class="header-btn" onclick="toggleTheme()" title="切换主题" id="themeToggle">
+                            <i class="fas fa-sun" id="themeIcon"></i>
                         </button>
                         <button class="header-btn" title="通知" data-bs-toggle="dropdown">
                             <i class="fas fa-bell"></i>
@@ -458,10 +460,54 @@
             }
         }
 
+        // 手机版切换
+        function toggleMobileView() {
+            const body = document.body;
+            const isMobile = body.classList.contains('mobile-view');
+            const mobileBtn = document.querySelector('[onclick="toggleMobileView()"]');
+            const icon = mobileBtn.querySelector('i');
+            
+            if (isMobile) {
+                body.classList.remove('mobile-view');
+                localStorage.setItem('view-mode', 'desktop');
+                icon.className = 'fas fa-mobile-alt';
+                mobileBtn.title = '切换手机版';
+                showToast('已切换到桌面版', 'success');
+            } else {
+                body.classList.add('mobile-view');
+                localStorage.setItem('view-mode', 'mobile');
+                icon.className = 'fas fa-desktop';
+                mobileBtn.title = '切换桌面版';
+                showToast('已切换到手机版', 'success');
+            }
+        }
+
+        // 初始化视图模式
+        function initViewMode() {
+            const savedViewMode = localStorage.getItem('view-mode') || 'desktop';
+            const mobileBtn = document.querySelector('[onclick="toggleMobileView()"]');
+            
+            if (savedViewMode === 'mobile') {
+                document.body.classList.add('mobile-view');
+                if (mobileBtn) {
+                    const icon = mobileBtn.querySelector('i');
+                    icon.className = 'fas fa-desktop';
+                    mobileBtn.title = '切换桌面版';
+                }
+            } else {
+                if (mobileBtn) {
+                    const icon = mobileBtn.querySelector('i');
+                    icon.className = 'fas fa-mobile-alt';
+                    mobileBtn.title = '切换手机版';
+                }
+            }
+        }
+
         // 初始化主题
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             setTheme(savedTheme);
+            initViewMode();
         });
     </script>
     

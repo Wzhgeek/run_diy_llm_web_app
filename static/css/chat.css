@@ -997,6 +997,15 @@
     color: inherit !important;
 }
 
+/* 深色模式下聊天头部和输入区域的阴影优化 */
+[data-theme="dark"] .chat-header {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3); /* 深色模式下阴影加深 */
+}
+
+[data-theme="dark"] .chat-input {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3); /* 深色模式下阴影加深 */
+}
+
 /* 侧边栏显示按钮样式 */
 .sidebar-show-btn {
     left: 0;
@@ -1087,12 +1096,12 @@
 .chat-header {
     padding: 20px 24px; /* 与底部输入区域保持一致的内边距 */
     border-bottom: 1px solid var(--border-color);
-    border-radius: 0 0 16px 16px; /* 圆润的底部边角，与输入区域呼应 */
+    border-radius: 16px; /* 四周圆润 */
     background: var(--sidebar-bg);
     flex-shrink: 0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.08); /* 简约向下阴影 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06); /* 简约阴影 */
     backdrop-filter: blur(10px); /* 轻微毛玻璃效果 */
-    margin: 0;
+    margin: 16px; /* 添加外边距，让圆角更明显 */
     position: relative;
     min-height: 84px; /* 固定最小高度，与底部输入区域保持一致 */
 }
@@ -1526,12 +1535,12 @@
     padding: 20px 24px; /* 与顶部头部区域保持一致的内边距 */
     background: var(--sidebar-bg);
     border-top: 1px solid var(--border-color);
-    border-radius: 16px 16px 0 0; /* 圆润的顶部边角 */
+    border-radius: 16px; /* 四周圆润 */
     position: relative;
     flex-shrink: 0;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06), 0 -2px 6px rgba(0, 0, 0, 0.08); /* 简约向上阴影 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06); /* 简约阴影 */
     backdrop-filter: blur(10px); /* 轻微毛玻璃效果 */
-    margin: 0;
+    margin: 16px; /* 添加外边距，让圆角更明显 */
     min-height: 84px; /* 固定最小高度，与顶部头部区域保持一致 */
 }
 
@@ -1823,11 +1832,15 @@
     .chat-input {
         padding: 16px 20px;
         min-height: 70px;
+        margin: 12px; /* 小屏幕下减小外边距 */
+        border-radius: 12px; /* 小屏幕下减小圆角 */
     }
     
     .chat-header {
         padding: 16px 20px;
         min-height: 70px;
+        margin: 12px; /* 小屏幕下减小外边距 */
+        border-radius: 12px; /* 小屏幕下减小圆角 */
     }
     
     .chat-title-section h5 {
@@ -1946,11 +1959,15 @@
     .chat-header {
         padding: 12px 16px;
         min-height: 60px;
+        margin: 8px; /* 超小屏幕下进一步减小外边距 */
+        border-radius: 10px; /* 超小屏幕下进一步减小圆角 */
     }
     
     .chat-input {
         padding: 12px 16px;
         min-height: 60px;
+        margin: 8px; /* 超小屏幕下进一步减小外边距 */
+        border-radius: 10px; /* 超小屏幕下进一步减小圆角 */
     }
     
     .chat-title-section h5 {

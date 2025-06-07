@@ -17,6 +17,8 @@ import time
 
 # 导入配置
 from config import AppConfig, DifyAPIConfig, DefaultSettings
+# 导入翻译功能
+from translation_utils import document_processor, quick_translate, get_supported_languages, TranslationError
 
 app = Flask(__name__)
 app.secret_key = AppConfig.SECRET_KEY
@@ -720,62 +722,326 @@ def upload_file():
 
 @app.route('/api/document/process', methods=['POST'])
 def process_document():
-    """处理文档API"""
-    data = request.get_json()
-    task_type = data.get('type', 'translate')  # translate, summary, rewrite
-    content = data.get('content', '')
-    language = data.get('language', 'zh')
-    
-    if not content.strip():
-        return jsonify({'error': '内容不能为空'}), 400
-    
-    # 根据任务类型构建输入
-    if task_type == 'translate':
-        inputs = {
-            "query": f"请将以下内容翻译成{language}：\n\n{content}"
-        }
-    elif task_type == 'summary':
-        inputs = {
-            "query": f"请总结以下内容的要点：\n\n{content}"
-        }
-    elif task_type == 'rewrite':
-        inputs = {
-            "query": f"请改写以下内容，使其更加清晰易懂：\n\n{content}"
-        }
+    """处理文档API - 集成多种翻译功能"""
+    # 根据请求类型获取参数
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        # FormData请求（图片翻译）
+        task_type = request.form.get('type', 'translate')
+        content = request.form.get('content', '')
+        from_lang = request.form.get('from_lang', 'auto')
+        to_lang = request.form.get('to_lang', 'zh')
+        domain = request.form.get('domain', 'academic')
+        scenario = request.form.get('scenario', 'general')
+        image_file = request.files.get('image')
     else:
-        return jsonify({'error': '不支持的处理类型'}), 400
+        # JSON请求（其他类型）
+        data = request.get_json()
+        task_type = data.get('type', 'translate')
+        content = data.get('content', '')
+        from_lang = data.get('from_lang', 'auto')
+        to_lang = data.get('to_lang', 'zh')
+        domain = data.get('domain', 'academic')
+        scenario = data.get('scenario', 'general')
+        image_file = None
+    
+    # 验证输入
+    if task_type == 'image_translate':
+        if not image_file:
+            return jsonify({'error': '图片翻译需要上传图片文件'}), 400
+    else:
+        if not content.strip():
+            return jsonify({'error': '内容不能为空'}), 400
     
     def generate():
-        response = dify_client.completion_message(inputs, stream=True)
-        if not response:
-            yield f"data: {json.dumps({'error': 'API请求失败'})}\n\n"
-            return
-        
-        current_answer = ""
-        
-        for line in response.iter_lines():
-            if line:
-                line_str = line.decode('utf-8')
-                if line_str.startswith('data: '):
-                    try:
-                        json_data = json.loads(line_str[6:])
+        try:
+            if task_type == 'translate':
+                # 使用百度翻译API进行翻译
+                try:
+                    result = quick_translate(content, from_lang, to_lang)
+                    response_data = {
+                        'type': 'translation_result',
+                        'content': result,
+                        'full_content': result,
+                        'from_lang': from_lang,
+                        'to_lang': to_lang,
+                        'original_content': content
+                    }
+                    yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                except TranslationError as e:
+                    yield f"data: {json.dumps({'error': f'翻译失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'domain_translate':
+                # 领域翻译
+                try:
+                    result = document_processor.domain_translate(content, domain, from_lang, to_lang)
+                    if result['success']:
+                        response_data = {
+                            'type': 'domain_translation_result',
+                            'content': result['translated_text'],
+                            'full_content': result['translated_text'],
+                            'from_lang': result['from_lang'],
+                            'to_lang': result['to_lang'],
+                            'domain': result['domain'],
+                            'original_content': content
+                        }
+                        yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                        yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                    else:
+                        error_msg = result.get('error', '未知错误')
+                        yield f"data: {json.dumps({'error': f'领域翻译失败: {error_msg}'}, ensure_ascii=False)}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'领域翻译失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'image_translate':
+                # 图片翻译
+                try:
+                    image_data = image_file.read()
+                    result = document_processor.image_translate(image_data, from_lang, to_lang)
+                    if result['success']:
+                        response_data = {
+                            'type': 'image_translation_result',
+                            'content': result,
+                            'full_content': result,
+                            'from_lang': result['from_lang'],
+                            'to_lang': result['to_lang']
+                        }
+                        yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                        yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                    else:
+                        error_msg = result.get('error', '未知错误')
+                        yield f"data: {json.dumps({'error': f'图片翻译失败: {error_msg}'}, ensure_ascii=False)}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'图片翻译失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'api_translate':
+                # AI翻译（通过Dify）
+                try:
+                    result = document_processor.api_translate(content, from_lang, to_lang)
+                    if result['success']:
+                        response_data = {
+                            'type': 'api_translation_result',
+                            'content': result['translated_text'],
+                            'full_content': result['translated_text'],
+                            'from_lang': result['from_lang'],
+                            'to_lang': result['to_lang'],
+                            'method': result['method'],
+                            'original_content': content
+                        }
+                        yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                        yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                    else:
+                        error_msg = result.get('error', '未知错误')
+                        yield f"data: {json.dumps({'error': f'AI翻译失败: {error_msg}'}, ensure_ascii=False)}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'AI翻译失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'complete':
+                # 完整文档处理流程
+                try:
+                    result = document_processor.process_document_complete(
+                        text=content,
+                        from_lang=from_lang,
+                        to_lang=to_lang,
+                        scenario=scenario,
+                        summary_length=200,
+                        rewrite_style='formal'
+                    )
+                    
+                    # 分步骤返回结果
+                    for step_info in result['processing_steps']:
+                        step_name = step_info['step']
+                        step_result = step_info['result']
                         
-                        if 'answer' in json_data:
-                            current_answer += json_data.get('answer', '')
-                            response_data = {
-                                'type': 'message',
-                                'content': json_data.get('answer', ''),
-                                'full_content': current_answer
-                            }
-                            yield f"data: {json.dumps(response_data)}\n\n"
-                            
-                        elif json_data.get('event') == 'message_end':
-                            yield f"data: {json.dumps({'type': 'end'})}\n\n"
-                            
-                    except json.JSONDecodeError:
-                        continue
+                        response_data = {
+                            'type': 'processing_step',
+                            'step': step_name,
+                            'success': step_result['success'],
+                            'content': step_result if step_result['success'] else {'error': step_result.get('error', '处理失败')},
+                            'step_name_cn': {
+                                'translation': '翻译',
+                                'grammar_check': '语法检查', 
+                                'summary': '总结',
+                                'rewrite': '改写优化'
+                            }.get(step_name, step_name)
+                        }
+                        yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                    
+                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                    
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'文档处理失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'grammar_check':
+                # 语法检查
+                try:
+                    result = document_processor.check_grammar(content)
+                    response_data = {
+                        'type': 'grammar_result',
+                        'content': result,
+                        'full_content': result
+                    }
+                    yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'语法检查失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'summary':
+                # 文本总结
+                try:
+                    result = document_processor.summarize_text(content, max_length=200)
+                    response_data = {
+                        'type': 'summary_result',
+                        'content': result,
+                        'full_content': result
+                    }
+                    yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'总结失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'rewrite':
+                # 改写优化
+                try:
+                    style = data.get('style', 'formal')
+                    result = document_processor.rewrite_text(content, style)
+                    response_data = {
+                        'type': 'rewrite_result',
+                        'content': result,
+                        'full_content': result
+                    }
+                    yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'error': f'改写失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            else:
+                # 不支持的类型，回退到原有的Dify API处理
+                inputs = {
+                    "query": f"请处理以下内容：\n\n{content}"
+                }
+                
+                response = dify_client.completion_message(inputs, stream=True)
+                if not response:
+                    yield f"data: {json.dumps({'error': 'API请求失败'})}\n\n"
+                    return
+                
+                current_answer = ""
+                
+                for line in response.iter_lines():
+                    if line:
+                        line_str = line.decode('utf-8')
+                        if line_str.startswith('data: '):
+                            try:
+                                json_data = json.loads(line_str[6:])
+                                
+                                if 'answer' in json_data:
+                                    current_answer += json_data.get('answer', '')
+                                    response_data = {
+                                        'type': 'message',
+                                        'content': json_data.get('answer', ''),
+                                        'full_content': current_answer
+                                    }
+                                    yield f"data: {json.dumps(response_data)}\n\n"
+                                    
+                                elif json_data.get('event') == 'message_end':
+                                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                                    
+                            except json.JSONDecodeError:
+                                continue
+                                
+        except Exception as e:
+            yield f"data: {json.dumps({'error': f'处理失败: {str(e)}'}, ensure_ascii=False)}\n\n"
     
     return app.response_class(generate(), mimetype='text/plain')
+
+@app.route('/api/translation/languages', methods=['GET'])
+def get_translation_languages():
+    """获取支持的翻译语言列表API"""
+    try:
+        languages = get_supported_languages()
+        return jsonify({
+            'success': True,
+            'languages': languages,
+            'count': len(languages)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取语言列表失败: {str(e)}'
+        }), 500
+
+@app.route('/api/translation/scenarios', methods=['GET'])
+def get_translation_scenarios():
+    """获取翻译场景列表API"""
+    try:
+        from config import TranslationAPIConfig
+        scenarios = TranslationAPIConfig.TRANSLATION_SCENARIOS
+        return jsonify({
+            'success': True,
+            'scenarios': scenarios
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取翻译场景失败: {str(e)}'
+        }), 500
+
+@app.route('/api/translation/provider', methods=['GET'])
+def get_translation_provider():
+    """获取当前翻译服务提供商状态API"""
+    try:
+        from config import TranslationAPIConfig
+        status = TranslationAPIConfig.get_provider_status()
+        return jsonify({
+            'success': True,
+            'provider': status
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取翻译提供商状态失败: {str(e)}'
+        }), 500
+
+@app.route('/api/translation/domains', methods=['GET'])
+def get_translation_domains():
+    """获取翻译领域列表API"""
+    try:
+        from config import TranslationAPIConfig
+        domains = TranslationAPIConfig.BAIDU_EXTENDED_CONFIG['supported_domains']
+        domain_names = {
+            'it': '信息技术',
+            'finance': '金融财经',
+            'medicine': '生物医药',
+            'mechanics': '机械制造',
+            'senimed': '法律政府',
+            'novel': '影视文学',
+            'academic': '学术论文',
+            'aerospace': '航空航天',
+            'wiki': '人文社科',
+            'news': '新闻资讯',
+            'contract': '合同文档'
+        }
+        
+        domain_list = [{'code': domain, 'name': domain_names.get(domain, domain)} for domain in domains]
+        
+        return jsonify({
+            'success': True,
+            'domains': domain_list
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取翻译领域失败: {str(e)}'
+        }), 500
 
 @app.route('/knowledge')
 def knowledge():
