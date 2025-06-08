@@ -20,6 +20,33 @@ function initializeChat() {
     // 自动调节输入框高度
     const messageInput = document.getElementById('messageInput');
     messageInput.addEventListener('input', autoResize);
+    
+    // 初始化markdown渲染
+    initializeMarkdown();
+}
+
+// 初始化Markdown渲染
+function initializeMarkdown() {
+    console.log('🔧 初始化Markdown渲染...');
+    
+    // 检查依赖库加载情况
+    const checks = [
+        { name: 'Marked.js', loaded: typeof marked !== 'undefined' },
+        { name: 'DOMPurify', loaded: typeof DOMPurify !== 'undefined' },
+        { name: 'Highlight.js', loaded: typeof hljs !== 'undefined' }
+    ];
+    
+    checks.forEach(check => {
+        if (check.loaded) {
+            console.log(`✅ ${check.name} 已加载`);
+        } else {
+            console.warn(`⚠️ ${check.name} 未加载`);
+        }
+    });
+    
+    // 注意：Marked.js的配置现在在base.html中的initializeMarkedJS()函数中完成
+    // 这里主要用于检查状态
+    console.log('📝 Markdown配置已在全局脚本中完成');
 }
 
 // 初始化侧边栏拖拽调节
@@ -580,6 +607,14 @@ function updateMessageContent(messageElement, content) {
     
     if (textElement) {
         textElement.innerHTML = formatMessageContent(content);
+        
+        // 触发代码块的语法高亮
+        if (typeof hljs !== 'undefined') {
+            const codeBlocks = textElement.querySelectorAll('pre code');
+            codeBlocks.forEach(block => {
+                hljs.highlightElement(block);
+            });
+        }
     }
     
     if (typingIndicator && content) {
@@ -596,6 +631,14 @@ function finalizeMessage(messageElement, messageId = null) {
     const typingIndicator = messageElement.querySelector('.typing-indicator');
     if (typingIndicator) {
         typingIndicator.remove();
+    }
+    
+    // 对完成的消息进行代码高亮处理
+    if (typeof hljs !== 'undefined') {
+        const codeBlocks = messageElement.querySelectorAll('pre code');
+        codeBlocks.forEach(block => {
+            hljs.highlightElement(block);
+        });
     }
     
     // 如果是AI消息且有messageId，加载建议问题
@@ -615,13 +658,137 @@ function finalizeMessage(messageElement, messageId = null) {
     }
 }
 
+// 渲染Markdown内容
+function renderMarkdown(content) {
+    console.log('🔧 渲染Markdown内容:', content.substring(0, 100) + '...');
+    
+    // 检查marked是否已加载
+    if (typeof marked === 'undefined') {
+        console.warn('⚠️ Marked.js未加载，使用基本格式化');
+        return content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+    }
+    
+    try {
+        console.log('✅ 使用Marked.js渲染...');
+        
+        // 按照官网文档标准使用marked.parse()
+        const htmlContent = marked.parse(content);
+        console.log('✅ Markdown解析成功，HTML长度:', htmlContent.length);
+        
+        // 如果DOMPurify可用，进行安全清理
+        if (typeof DOMPurify !== 'undefined') {
+            const cleanHtml = DOMPurify.sanitize(htmlContent, {
+                ALLOWED_TAGS: [
+                    'p', 'br', 'strong', 'em', 'u', 'strike', 'del', 'code', 'pre', 'blockquote', 
+                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 
+                    'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'span', 'sup', 'sub',
+                    'hr', 'mark', 'small', 'b', 'i', 's'
+                ],
+                ALLOWED_ATTR: [
+                    'href', 'title', 'src', 'alt', 'class', 'id', 'target', 'rel', 
+                    'colspan', 'rowspan', 'align', 'valign', 'width', 'height'
+                ],
+                // 允许数据属性和style属性（受限）
+                ALLOW_DATA_ATTR: true,
+                ADD_ATTR: ['style'],
+                ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+            });
+            console.log('🛡️ HTML安全清理完成，最终长度:', cleanHtml.length);
+            return cleanHtml;
+        } else {
+            console.warn('⚠️ DOMPurify未加载，直接返回HTML（存在安全风险）');
+            return htmlContent;
+        }
+        
+    } catch (error) {
+        console.error('❌ Markdown渲染失败:', error);
+        console.error('错误详情:', error.stack);
+        
+        // 降级处理：基本markdown语法替换
+        return content
+            .replace(/### (.*?)$/gm, '<h3>$1</h3>')
+            .replace(/## (.*?)$/gm, '<h2>$1</h2>')
+            .replace(/# (.*?)$/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/```([^```]+)```/g, '<pre><code>$1</code></pre>')
+            .replace(/> (.*?)$/gm, '<blockquote>$1</blockquote>')
+            .replace(/\n/g, '<br>');
+    }
+}
+
 // 格式化消息内容
 function formatMessageContent(content) {
-    // 简单的markdown渲染
-    return content
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n/g, '<br>');
+    return renderMarkdown(content);
+}
+
+// 测试markdown渲染（用于调试）
+function testMarkdownRendering() {
+    const testContent = `# 复数的模（绝对值）计算方法
+
+## 一、代数形式的复数计算
+对于复数 \\( z = a + bi \\)（其中 \\( a,b \\in \\mathbb{R} \\)），其模定义为：
+\\[
+|z| = \\sqrt{a^2 + b^2}
+\\]
+
+**计算示例**：
+\\[
+|3 + 4i| = \\sqrt{3^2 + 4^2} = \\sqrt{9 + 16} = 5
+\\]
+
+## 二、几何解释
+在复平面上，复数 \\( z = a + bi \\) 对应点 \\( (a,b) \\)，其模即为该点到原点的距离。
+
+## 三、极坐标形式的模
+当复数表示为极坐标形式 \\( z = r(\\cos\\theta + i\\sin\\theta) \\) 或指数形式 \\( z = re^{i\\theta} \\) 时：
+\\[
+|z| = r
+\\]
+
+**性质验证**：
+1. 非负性：\\( |z| \\geq 0 \\)
+2. 乘法性质：\\( |z_1 \\cdot z_2| = |z_1| \\cdot |z_2| \\)
+3. 共轭性质：\\( |\\overline{z}| = |z| \\)
+4. 三角不等式：\\( |z_1 + z_2| \\leq |z_1| + |z_2| \\)
+
+## 四、应用实例
+
+\`\`\`javascript
+// JavaScript中计算复数模的函数
+function complexMod(real, imag) {
+    return Math.sqrt(real * real + imag * imag);
+}
+
+// 示例
+console.log(complexMod(3, 4)); // 输出: 5
+\`\`\`
+
+> **提示**：复数的模是实数，且始终非负。在物理学中，复数的模常表示振幅或强度。
+
+**测试完成！**`;
+
+    console.log('🧪 开始测试markdown渲染...');
+    console.log('📝 原始内容长度:', testContent.length);
+    
+    // 检查关键库是否加载
+    const libStatus = {
+        marked: typeof marked !== 'undefined',
+        hljs: typeof hljs !== 'undefined',
+        DOMPurify: typeof DOMPurify !== 'undefined'
+    };
+    console.log('📚 库加载状态:', libStatus);
+    
+    const result = renderMarkdown(testContent);
+    console.log('🎯 渲染结果长度:', result.length);
+    console.log('🎯 渲染结果预览:', result.substring(0, 200) + '...');
+    
+    return result;
 }
 
 // 渲染消息列表

@@ -1,0 +1,960 @@
+/* ========================================
+   移动端专用样式 - 简约大气线条优雅设计
+   ======================================== */
+
+/* 移动端基础变量 */
+:root {
+    --mobile-primary: #2563eb;
+    --mobile-primary-light: #3b82f6;
+    --mobile-accent: #10b981;
+    --mobile-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --mobile-surface: #ffffff;
+    --mobile-surface-elevated: #fafafa;
+    --mobile-border: #e5e7eb;
+    --mobile-text-primary: #111827;
+    --mobile-text-secondary: #6b7280;
+    --mobile-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --mobile-radius: 12px;
+    --mobile-spacing: 16px;
+}
+
+/* 深色模式变量 */
+[data-theme="dark"] {
+    --mobile-surface: #111827;
+    --mobile-surface-elevated: #1f2937;
+    --mobile-border: #374151;
+    --mobile-text-primary: #f9fafb;
+    --mobile-text-secondary: #d1d5db;
+}
+
+/* ========================================
+   移动端布局重构
+   ======================================== */
+
+.mobile-device,
+.mobile-optimized,
+.mobile-view {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* 移动端应用容器 */
+.mobile-device .app-container,
+.mobile-optimized .app-container,
+.mobile-view .app-container {
+    position: relative;
+    min-height: 100vh;
+    background: var(--mobile-surface);
+    overflow-x: hidden;
+}
+
+/* ========================================
+   移动端侧边栏 - 简约设计
+   ======================================== */
+
+.mobile-device .sidebar,
+.mobile-optimized .sidebar,
+.mobile-view .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100vh;
+    background: var(--mobile-surface);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--mobile-border);
+    z-index: 1050;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.mobile-device .sidebar.show,
+.mobile-optimized .sidebar.show,
+.mobile-view .sidebar.show {
+    transform: translateX(0);
+}
+
+/* 侧边栏头部 - 渐变设计 */
+.mobile-device .sidebar-header,
+.mobile-optimized .sidebar-header,
+.mobile-view .sidebar-header {
+    height: 80px;
+    padding: 0 24px;
+    background: var(--mobile-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.mobile-device .sidebar-header::after,
+.mobile-optimized .sidebar-header::after,
+.mobile-view .sidebar-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 24px;
+    right: 24px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+}
+
+.mobile-device .brand-logo,
+.mobile-optimized .brand-logo,
+.mobile-view .brand-logo {
+    color: white;
+    font-weight: 700;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mobile-device .brand-logo i,
+.mobile-optimized .brand-logo i,
+.mobile-view .brand-logo i {
+    font-size: 28px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+/* 用户信息区域 - 优雅设计 */
+.mobile-device .user-profile,
+.mobile-optimized .user-profile,
+.mobile-view .user-profile {
+    margin: 24px 16px;
+    padding: 20px;
+    background: var(--mobile-surface-elevated);
+    border-radius: var(--mobile-radius);
+    border: 1px solid var(--mobile-border);
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-device .user-profile::before,
+.mobile-optimized .user-profile::before,
+.mobile-view .user-profile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--mobile-gradient);
+}
+
+.mobile-device .user-avatar,
+.mobile-optimized .user-avatar,
+.mobile-view .user-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--mobile-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    box-shadow: var(--mobile-shadow);
+}
+
+/* 导航菜单 - 精简线条 */
+.mobile-device .nav-section,
+.mobile-optimized .nav-section,
+.mobile-view .nav-section {
+    margin: 24px 0;
+    padding: 0 16px;
+}
+
+.mobile-device .nav-title,
+.mobile-optimized .nav-title,
+.mobile-view .nav-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mobile-text-secondary);
+    margin: 0 20px 12px;
+    position: relative;
+    padding-left: 16px;
+}
+
+.mobile-device .nav-title::before,
+.mobile-optimized .nav-title::before,
+.mobile-view .nav-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 14px;
+    background: var(--mobile-primary);
+    border-radius: 2px;
+}
+
+.mobile-device .nav-link,
+.mobile-optimized .nav-link,
+.mobile-view .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    margin: 4px 16px;
+    border-radius: 10px;
+    color: var(--mobile-text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-device .nav-link::before,
+.mobile-optimized .nav-link::before,
+.mobile-view .nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--mobile-gradient);
+    transition: width 0.25s ease;
+}
+
+.mobile-device .nav-link:hover,
+.mobile-optimized .nav-link:hover,
+.mobile-view .nav-link:hover {
+    background: var(--mobile-surface-elevated);
+    transform: translateX(6px);
+}
+
+.mobile-device .nav-link:hover::before,
+.mobile-optimized .nav-link:hover::before,
+.mobile-view .nav-link:hover::before {
+    width: 4px;
+}
+
+.mobile-device .nav-link.active,
+.mobile-optimized .nav-link.active,
+.mobile-view .nav-link.active {
+    background: var(--mobile-gradient);
+    color: white;
+    box-shadow: var(--mobile-shadow);
+}
+
+.mobile-device .nav-link i,
+.mobile-optimized .nav-link i,
+.mobile-view .nav-link i {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+/* ========================================
+   移动端主内容区域
+   ======================================== */
+
+.mobile-device .main-content,
+.mobile-optimized .main-content,
+.mobile-view .main-content {
+    margin-left: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 顶部导航栏 - 简约线条 */
+.mobile-device .top-header,
+.mobile-optimized .top-header,
+.mobile-view .top-header {
+    height: 64px;
+    padding: 0 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--mobile-border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+[data-theme="dark"] .mobile-device .top-header,
+[data-theme="dark"] .mobile-optimized .top-header,
+[data-theme="dark"] .mobile-view .top-header {
+    background: rgba(17, 24, 39, 0.95);
+}
+
+.mobile-device .top-header::after,
+.mobile-optimized .top-header::after,
+.mobile-view .top-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--mobile-primary), transparent);
+}
+
+.mobile-device .header-left,
+.mobile-optimized .header-left,
+.mobile-view .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.mobile-device .sidebar-toggle,
+.mobile-optimized .sidebar-toggle,
+.mobile-view .sidebar-toggle {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: none;
+    border-radius: 10px;
+    color: var(--mobile-text-primary);
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+.mobile-device .sidebar-toggle:hover,
+.mobile-optimized .sidebar-toggle:hover,
+.mobile-view .sidebar-toggle:hover {
+    background: var(--mobile-surface-elevated);
+    transform: scale(1.05);
+}
+
+.mobile-device .page-title,
+.mobile-optimized .page-title,
+.mobile-view .page-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--mobile-text-primary);
+}
+
+.mobile-device .header-actions,
+.mobile-optimized .header-actions,
+.mobile-view .header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mobile-device .header-btn,
+.mobile-optimized .header-btn,
+.mobile-view .header-btn {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--mobile-border);
+    background: var(--mobile-surface);
+    border-radius: 10px;
+    color: var(--mobile-text-primary);
+    font-size: 16px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-device .header-btn:hover,
+.mobile-optimized .header-btn:hover,
+.mobile-view .header-btn:hover {
+    background: var(--mobile-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: var(--mobile-shadow);
+}
+
+/* ========================================
+   内容区域美化
+   ======================================== */
+
+.mobile-device .content-wrapper,
+.mobile-optimized .content-wrapper,
+.mobile-view .content-wrapper {
+    flex: 1;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, var(--mobile-surface) 0%, var(--mobile-surface-elevated) 100%);
+}
+
+.mobile-device .card,
+.mobile-optimized .card,
+.mobile-view .card {
+    background: var(--mobile-surface);
+    border: 1px solid var(--mobile-border);
+    border-radius: var(--mobile-radius);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.mobile-device .card::before,
+.mobile-optimized .card::before,
+.mobile-view .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--mobile-gradient);
+}
+
+.mobile-device .card-header,
+.mobile-optimized .card-header,
+.mobile-view .card-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--mobile-border);
+    background: var(--mobile-surface-elevated);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.mobile-device .card-body,
+.mobile-optimized .card-body,
+.mobile-view .card-body {
+    padding: 20px;
+}
+
+/* ========================================
+   表单和按钮优化
+   ======================================== */
+
+.mobile-device .btn,
+.mobile-optimized .btn,
+.mobile-view .btn {
+    min-height: 48px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-device .btn-primary,
+.mobile-optimized .btn-primary,
+.mobile-view .btn-primary {
+    background: var(--mobile-gradient);
+    color: white;
+    box-shadow: var(--mobile-shadow);
+}
+
+.mobile-device .btn-primary:hover,
+.mobile-optimized .btn-primary:hover,
+.mobile-view .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-device .form-control,
+.mobile-optimized .form-control,
+.mobile-view .form-control {
+    min-height: 48px;
+    padding: 14px 16px;
+    border: 1px solid var(--mobile-border);
+    border-radius: 10px;
+    background: var(--mobile-surface);
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.mobile-device .form-control:focus,
+.mobile-optimized .form-control:focus,
+.mobile-view .form-control:focus {
+    border-color: var(--mobile-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ========================================
+   聊天界面专门优化
+   ======================================== */
+
+.mobile-device .chat-container,
+.mobile-optimized .chat-container,
+.mobile-view .chat-container {
+    height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-device .chat-messages,
+.mobile-optimized .chat-messages,
+.mobile-view .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+[data-theme="dark"] .mobile-device .chat-messages,
+[data-theme="dark"] .mobile-optimized .chat-messages,
+[data-theme="dark"] .mobile-view .chat-messages {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.mobile-device .message,
+.mobile-optimized .message,
+.mobile-view .message {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-device .user-message,
+.mobile-optimized .user-message,
+.mobile-view .user-message {
+    align-items: flex-end;
+}
+
+.mobile-device .user-message .message-content,
+.mobile-optimized .user-message .message-content,
+.mobile-view .user-message .message-content {
+    background: var(--mobile-gradient);
+    color: white;
+    max-width: 80%;
+    padding: 14px 18px;
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
+}
+
+.mobile-device .assistant-message .message-content,
+.mobile-optimized .assistant-message .message-content,
+.mobile-view .assistant-message .message-content {
+    background: var(--mobile-surface);
+    border: 1px solid var(--mobile-border);
+    max-width: 80%;
+    padding: 14px 18px;
+    border-radius: 18px 18px 18px 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-device .chat-input,
+.mobile-optimized .chat-input,
+.mobile-view .chat-input {
+    padding: 16px;
+    background: var(--mobile-surface);
+    border-top: 1px solid var(--mobile-border);
+    backdrop-filter: blur(20px);
+}
+
+.mobile-device .chat-input textarea,
+.mobile-optimized .chat-input textarea,
+.mobile-view .chat-input textarea {
+    border-radius: 12px;
+    border: 1px solid var(--mobile-border);
+    padding: 12px 16px;
+    min-height: 44px;
+    resize: none;
+    font-size: 16px;
+}
+
+/* ========================================
+   响应式适配
+   ======================================== */
+
+@media (max-width: 480px) {
+    .mobile-device .sidebar,
+    .mobile-optimized .sidebar,
+    .mobile-view .sidebar {
+        width: 280px;
+    }
+    
+    .mobile-device .content-wrapper,
+    .mobile-optimized .content-wrapper,
+    .mobile-view .content-wrapper {
+        padding: 16px 12px;
+    }
+    
+    .mobile-device .user-message .message-content,
+    .mobile-optimized .user-message .message-content,
+    .mobile-view .user-message .message-content,
+    .mobile-device .assistant-message .message-content,
+    .mobile-optimized .assistant-message .message-content,
+    .mobile-view .assistant-message .message-content {
+        max-width: 85%;
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+}
+
+/* ========================================
+   动画效果
+   ======================================== */
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobile-device .card,
+.mobile-optimized .card,
+.mobile-view .card {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.mobile-device .nav-link,
+.mobile-optimized .nav-link,
+.mobile-view .nav-link {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* ========================================
+   特殊功能区域优化
+   ======================================== */
+
+.mobile-device .file-upload-area,
+.mobile-optimized .file-upload-area,
+.mobile-view .file-upload-area {
+    border: 2px dashed var(--mobile-border);
+    border-radius: var(--mobile-radius);
+    padding: 24px;
+    text-align: center;
+    background: var(--mobile-surface-elevated);
+    transition: all 0.3s ease;
+}
+
+.mobile-device .file-upload-area:hover,
+.mobile-optimized .file-upload-area:hover,
+.mobile-view .file-upload-area:hover {
+    border-color: var(--mobile-primary);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(16, 185, 129, 0.05));
+    transform: scale(1.02);
+}
+
+/* 表格移动端优化 */
+.mobile-device .table-responsive,
+.mobile-optimized .table-responsive,
+.mobile-view .table-responsive {
+    border-radius: var(--mobile-radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.mobile-device table,
+.mobile-optimized table,
+.mobile-view table {
+    font-size: 14px;
+}
+
+/* 模态框优化 */
+.mobile-device .modal-content,
+.mobile-optimized .modal-content,
+.mobile-view .modal-content {
+    border-radius: var(--mobile-radius);
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-device .modal-header,
+.mobile-optimized .modal-header,
+.mobile-view .modal-header {
+    border-bottom: 1px solid var(--mobile-border);
+    padding: 20px;
+}
+
+.mobile-device .modal-body,
+.mobile-optimized .modal-body,
+.mobile-view .modal-body {
+    padding: 20px;
+}
+
+/* 通知下拉框 */
+.mobile-device .notification-dropdown,
+.mobile-optimized .notification-dropdown,
+.mobile-view .notification-dropdown {
+    width: calc(100vw - 32px);
+    max-width: 360px;
+    border-radius: var(--mobile-radius);
+    border: 1px solid var(--mobile-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* ========================================
+   移动端首页专用优化
+   ======================================== */
+
+/* 欢迎区域 */
+.mobile-device .welcome-section,
+.mobile-optimized .welcome-section,
+.mobile-view .welcome-section {
+    margin-bottom: 24px;
+}
+
+.mobile-device .welcome-section .card,
+.mobile-optimized .welcome-section .card,
+.mobile-view .welcome-section .card {
+    background: var(--mobile-gradient);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+.mobile-device .welcome-section .card::before,
+.mobile-optimized .welcome-section .card::before,
+.mobile-view .welcome-section .card::before {
+    display: none;
+}
+
+.mobile-device .welcome-section .card::after,
+.mobile-optimized .welcome-section .card::after,
+.mobile-view .welcome-section .card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -20%;
+    width: 40%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.3;
+}
+
+.mobile-device .welcome-avatar,
+.mobile-optimized .welcome-avatar,
+.mobile-view .welcome-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 28px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.mobile-device .welcome-section h4,
+.mobile-optimized .welcome-section h4,
+.mobile-view .welcome-section h4 {
+    color: white;
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.mobile-device .welcome-section .text-muted,
+.mobile-optimized .welcome-section .text-muted,
+.mobile-view .welcome-section .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 14px;
+}
+
+.mobile-device .welcome-section .lead,
+.mobile-optimized .welcome-section .lead,
+.mobile-view .welcome-section .lead {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.mobile-device .welcome-section .btn,
+.mobile-optimized .welcome-section .btn,
+.mobile-view .welcome-section .btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 16px;
+    margin: 4px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.mobile-device .welcome-section .btn-primary,
+.mobile-optimized .welcome-section .btn-primary,
+.mobile-view .welcome-section .btn-primary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.mobile-device .welcome-section .btn-outline-primary,
+.mobile-optimized .welcome-section .btn-outline-primary,
+.mobile-view .welcome-section .btn-outline-primary,
+.mobile-device .welcome-section .btn-outline-info,
+.mobile-optimized .welcome-section .btn-outline-info,
+.mobile-view .welcome-section .btn-outline-info,
+.mobile-device .welcome-section .btn-outline-secondary,
+.mobile-optimized .welcome-section .btn-outline-secondary,
+.mobile-view .welcome-section .btn-outline-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 快速操作卡片 */
+.mobile-device .quick-actions,
+.mobile-optimized .quick-actions,
+.mobile-view .quick-actions {
+    margin-bottom: 24px;
+}
+
+.mobile-device .action-card,
+.mobile-optimized .action-card,
+.mobile-view .action-card {
+    border: 1px solid var(--mobile-border);
+    border-radius: var(--mobile-radius);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    background: var(--mobile-surface);
+}
+
+.mobile-device .action-card::before,
+.mobile-optimized .action-card::before,
+.mobile-view .action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--mobile-gradient);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.mobile-device .action-card:hover,
+.mobile-optimized .action-card:hover,
+.mobile-view .action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.mobile-device .action-card:hover::before,
+.mobile-optimized .action-card:hover::before,
+.mobile-view .action-card:hover::before {
+    transform: scaleX(1);
+}
+
+.mobile-device .action-icon,
+.mobile-optimized .action-icon,
+.mobile-view .action-icon {
+    font-size: 48px;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+}
+
+.mobile-device .action-card:hover .action-icon,
+.mobile-optimized .action-card:hover .action-icon,
+.mobile-view .action-card:hover .action-icon {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.mobile-device .action-badge,
+.mobile-optimized .action-badge,
+.mobile-view .action-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 统计卡片 */
+.mobile-device .stats-overview,
+.mobile-optimized .stats-overview,
+.mobile-view .stats-overview {
+    margin-bottom: 24px;
+}
+
+.mobile-device .stat-item,
+.mobile-optimized .stat-item,
+.mobile-view .stat-item {
+    padding: 16px;
+    border-radius: var(--mobile-radius);
+    background: var(--mobile-surface-elevated);
+    margin-bottom: 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.mobile-device .stat-item:hover,
+.mobile-optimized .stat-item:hover,
+.mobile-view .stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mobile-shadow);
+}
+
+.mobile-device .stat-value,
+.mobile-optimized .stat-value,
+.mobile-view .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.mobile-device .stat-label,
+.mobile-optimized .stat-label,
+.mobile-view .stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mobile-text-secondary);
+    font-weight: 600;
+}
+
+/* 功能特性 */
+.mobile-device .features-section,
+.mobile-optimized .features-section,
+.mobile-view .features-section {
+    margin-bottom: 24px;
+}
+
+.mobile-device .feature-icon,
+.mobile-optimized .feature-icon,
+.mobile-view .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--mobile-gradient);
+    color: white;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--mobile-shadow);
+}
+
+.mobile-device .features-section .card,
+.mobile-optimized .features-section .card,
+.mobile-view .features-section .card {
+    border: 1px solid var(--mobile-border);
+    transition: all 0.3s ease;
+}
+
+.mobile-device .features-section .card:hover,
+.mobile-optimized .features-section .card:hover,
+.mobile-view .features-section .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+} 

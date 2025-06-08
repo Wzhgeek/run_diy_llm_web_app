@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}AI学术研究助手{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
@@ -11,10 +11,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- 自定义CSS -->
     <link href="{{ url_for('static', filename='custom.css') }}" rel="stylesheet">
+    <!-- 移动端专用CSS -->
+    <link href="{{ url_for('static', filename='mobile.css') }}" rel="stylesheet">
+    
+    <!-- Highlight.js CSS (需要在head中) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" id="hljs-light">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-dark" disabled>
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-light">
+<body class="bg-light {% block body_class %}{% endblock %}">
     <div class="app-container">
         <!-- 侧边栏 -->
         <nav class="sidebar" id="sidebar">
@@ -122,9 +128,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#helpModal">
-                                <i class="fas fa-question-circle"></i>
-                                <span>帮助</span>
+                            <a href="{{ url_for('user_guide') }}" class="nav-link {% if request.endpoint == 'user_guide' %}active{% endif %}">
+                                <i class="fas fa-book"></i>
+                                <span>使用文档</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                                <i class="fas fa-info-circle"></i>
+                                <span>关于</span>
                             </a>
                         </li>
                     </ul>
@@ -138,7 +150,7 @@
                         <i class="fas fa-circle text-success"></i>
                         <span>API正常</span>
                     </div>
-                    <div class="version-info">v2.0.0</div>
+                    <div class="version-info">v2.0.1</div>
                 </div>
             </div>
         </nav>
@@ -179,7 +191,7 @@
                                 <i class="fas fa-info-circle text-primary"></i>
                                 <div>
                                     <div class="notification-title">系统更新</div>
-                                    <div class="notification-text">AI学术助手已更新至v2.0.0</div>
+                                    <div class="notification-text">AI学术助手已更新至v2.0.1</div>
                                     <div class="notification-time">2小时前</div>
                                 </div>
                             </div>
@@ -279,65 +291,153 @@
         </div>
     </div>
 
-    <!-- 帮助模态框 -->
-    <div class="modal fade" id="helpModal" tabindex="-1">
+    <!-- 关于模态框 -->
+    <div class="modal fade" id="aboutModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-question-circle me-2"></i>使用帮助
+                        <i class="fas fa-info-circle me-2"></i>关于 AI学术研究助手
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
+                    <!-- 产品信息 -->
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-brain text-primary" style="font-size: 4rem;"></i>
+                        </div>
+                        <h4 class="fw-bold text-primary mb-2">AI学术研究助手</h4>
+                        <p class="lead text-muted mb-3">基于Dify ChatFlow API的一站式智能学术研究平台</p>
+                        <span class="badge bg-primary fs-6 px-3 py-2">Version 2.0.1</span>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- 核心功能 -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="feature-icon bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-comments text-primary fs-4"></i>
+                            </div>
+                            <h6 class="fw-bold">AI智能对话</h6>
+                            <small class="text-muted">多轮对话 • 图片识别 • 专业解答</small>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="feature-icon bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-file-alt text-success fs-4"></i>
+                            </div>
+                            <h6 class="fw-bold">文献处理</h6>
+                            <small class="text-muted">智能翻译 • 自动总结 • 内容改写</small>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="feature-icon bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-database text-info fs-4"></i>
+                            </div>
+                            <h6 class="fw-bold">知识库管理</h6>
+                            <small class="text-muted">文档管理 • 智能检索 • 语义分析</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- 技术信息 -->
+                    <div class="row mb-4">
                         <div class="col-md-6">
                             <h6 class="fw-bold mb-3">
-                                <i class="fas fa-comments text-primary me-2"></i>AI对话
+                                <i class="fas fa-code text-primary me-2"></i>技术架构
                             </h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">• 支持多轮对话，记忆上下文</li>
-                                <li class="mb-2">• 可上传图片、文档进行分析</li>
-                                <li class="mb-2">• 支持学术论文讨论和解答</li>
-                                <li class="mb-2">• 提供专业的研究建议</li>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Flask + Python 后端框架</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Bootstrap 5 响应式前端</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Dify API 深度集成</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>流式响应和实时交互</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>多模态文件处理支持</li>
                             </ul>
                         </div>
                         <div class="col-md-6">
                             <h6 class="fw-bold mb-3">
-                                <i class="fas fa-file-alt text-success me-2"></i>文献处理
+                                <i class="fas fa-shield-alt text-success me-2"></i>安全特性
                             </h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">• 智能文献翻译</li>
-                                <li class="mb-2">• 自动生成论文摘要</li>
-                                <li class="mb-2">• 文献综述生成</li>
-                                <li class="mb-2">• 批量文档处理</li>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-lock text-warning me-2"></i>API密钥安全管理</li>
+                                <li class="mb-2"><i class="fas fa-lock text-warning me-2"></i>文件类型严格验证</li>
+                                <li class="mb-2"><i class="fas fa-lock text-warning me-2"></i>上传大小智能限制</li>
+                                <li class="mb-2"><i class="fas fa-lock text-warning me-2"></i>会话数据本地加密</li>
+                                <li class="mb-2"><i class="fas fa-lock text-warning me-2"></i>隐私保护机制完善</li>
                             </ul>
                         </div>
                     </div>
-                    <hr>
+
+                    <hr class="my-4">
+
+                    <!-- 开发者信息 -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-user-tie text-info me-2"></i>开发者信息
+                            </h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user-graduate text-info fs-5"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">王梓涵 (wangzihan)</h6>
+                                    <p class="text-muted mb-1 small">AI应用开发者 • 学术研究助手</p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-envelope text-muted me-1"></i>
+                                        <a href="mailto:wangzh011031@163.com" class="text-decoration-none small">wangzh011031@163.com</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-calendar-alt text-warning me-2"></i>版本信息
+                            </h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><strong>当前版本：</strong> v2.0.1</li>
+                                <li class="mb-2"><strong>发布日期：</strong> 2025年6月</li>
+                                <li class="mb-2"><strong>最后更新：</strong> <span id="current-date-about"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- 版权声明 -->
                     <div class="text-center">
-                        <h6 class="fw-bold mb-3">版权信息</h6>
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-copyright text-primary me-2"></i>版权声明
+                        </h6>
                         <p class="text-muted mb-2">
-                            <strong>AI学术研究助手 v2.0.0</strong>
+                            <strong>Copyright © 2025 王梓涵 (wangzihan) 保留所有权利</strong>
                         </p>
-                        <p class="text-muted mb-2">
-                            Copyright © 2024 王梓涵 (wangzihan) 版权所有
+                        <p class="text-muted mb-3 small">
+                            本软件基于现代Web技术栈开发，集成Dify大语言模型API，为学术研究提供智能化工具支持。
+                            软件设计遵循用户体验优先原则，致力于为研究者提供高效、便捷的AI辅助服务。
                         </p>
-                        <p class="text-muted mb-2">
-                            基于大语言模型技术的学术研究平台
-                        </p>
-                        <p class="text-muted">
-                            联系邮箱: <a href="mailto:wangzh011031@163.com" class="text-decoration-none">wangzh011031@163.com</a>
-                        </p>
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                本软件仅供学术研究使用，请遵守相关法律法规
+                        <div class="alert alert-warning py-2">
+                            <small>
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                <strong>使用声明：</strong> 本软件仅供学术研究和学习使用，请遵守相关法律法规和学术道德规范。
+                                使用过程中产生的内容和数据，请用户自行承担相应责任。
                             </small>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">了解了</button>
+                <div class="modal-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <small class="text-muted">
+                            <i class="fas fa-heart text-danger me-1"></i>
+                            感谢使用 AI学术研究助手
+                        </small>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            <i class="fas fa-check me-1"></i>了解了
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -458,33 +558,84 @@
             if (themeToggle) {
                 themeToggle.title = theme === 'dark' ? '切换到浅色模式' : '切换到深色模式';
             }
+            
+            // 切换代码高亮主题
+            const lightTheme = document.getElementById('hljs-light');
+            const darkTheme = document.getElementById('hljs-dark');
+            if (lightTheme && darkTheme) {
+                if (theme === 'dark') {
+                    lightTheme.disabled = true;
+                    darkTheme.disabled = false;
+                } else {
+                    lightTheme.disabled = false;
+                    darkTheme.disabled = true;
+                }
+            }
+        }
+
+        // 检测设备类型
+        function detectDevice() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
+            const isMobile = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            
+            return {
+                isMobile: isMobile && !isTablet,
+                isTablet: isTablet,
+                isDesktop: !isMobile && !isTablet,
+                screenWidth: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
+            };
+        }
+
+        // 自动应用设备适配
+        function applyDeviceAdaptation() {
+            const device = detectDevice();
+            const body = document.body;
+            
+            // 移除之前的设备类
+            body.classList.remove('mobile-device', 'tablet-device', 'desktop-device');
+            
+            // 根据设备类型添加对应的类
+            if (device.isMobile || device.screenWidth <= 768) {
+                body.classList.add('mobile-device');
+                // 在小屏幕上自动应用移动优化
+                if (device.screenWidth <= 768) {
+                    body.classList.add('mobile-optimized');
+                }
+            } else if (device.isTablet || (device.screenWidth > 768 && device.screenWidth <= 1024)) {
+                body.classList.add('tablet-device');
+            } else {
+                body.classList.add('desktop-device');
+            }
         }
 
         // 手机版切换
         function toggleMobileView() {
             const body = document.body;
-            const isMobile = body.classList.contains('mobile-view');
+            const isMobileForced = body.classList.contains('mobile-view');
             const mobileBtn = document.querySelector('[onclick="toggleMobileView()"]');
             const icon = mobileBtn.querySelector('i');
             
-            if (isMobile) {
+            if (isMobileForced) {
                 body.classList.remove('mobile-view');
-                localStorage.setItem('view-mode', 'desktop');
+                localStorage.setItem('view-mode', 'auto');
                 icon.className = 'fas fa-mobile-alt';
-                mobileBtn.title = '切换手机版';
-                showToast('已切换到桌面版', 'success');
+                mobileBtn.title = '强制手机版';
+                showToast('已恢复自动适配', 'success');
+                // 重新应用自动适配
+                applyDeviceAdaptation();
             } else {
                 body.classList.add('mobile-view');
                 localStorage.setItem('view-mode', 'mobile');
                 icon.className = 'fas fa-desktop';
-                mobileBtn.title = '切换桌面版';
-                showToast('已切换到手机版', 'success');
+                mobileBtn.title = '取消手机版';
+                showToast('已强制手机版', 'success');
             }
         }
 
         // 初始化视图模式
         function initViewMode() {
-            const savedViewMode = localStorage.getItem('view-mode') || 'desktop';
+            const savedViewMode = localStorage.getItem('view-mode') || 'auto';
             const mobileBtn = document.querySelector('[onclick="toggleMobileView()"]');
             
             if (savedViewMode === 'mobile') {
@@ -492,23 +643,247 @@
                 if (mobileBtn) {
                     const icon = mobileBtn.querySelector('i');
                     icon.className = 'fas fa-desktop';
-                    mobileBtn.title = '切换桌面版';
+                    mobileBtn.title = '取消手机版';
                 }
             } else {
+                // 自动检测并应用设备适配
+                applyDeviceAdaptation();
                 if (mobileBtn) {
                     const icon = mobileBtn.querySelector('i');
                     icon.className = 'fas fa-mobile-alt';
-                    mobileBtn.title = '切换手机版';
+                    mobileBtn.title = '强制手机版';
                 }
             }
         }
+
+        // 处理屏幕方向和尺寸变化
+        function handleScreenChange() {
+            const savedViewMode = localStorage.getItem('view-mode') || 'auto';
+            
+            // 只有在自动模式下才重新检测
+            if (savedViewMode === 'auto') {
+                applyDeviceAdaptation();
+            }
+            
+            // 确保侧边栏在屏幕变化时正确隐藏
+            const device = detectDevice();
+            if (device.screenWidth > 992) {
+                closeSidebar();
+            }
+        }
+
+        // 更新当前日期
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            const dateString = now.toLocaleDateString('zh-CN', options);
+            
+            // 更新关于模态框中的日期
+            const aboutDateElement = document.getElementById('current-date-about');
+            if (aboutDateElement) {
+                aboutDateElement.textContent = dateString;
+            }
+        }
+
+
 
         // 初始化主题
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             setTheme(savedTheme);
             initViewMode();
+            updateCurrentDate();
+            
+            // 监听屏幕尺寸变化
+            window.addEventListener('resize', handleScreenChange);
+            
+            // 监听屏幕方向变化 (移动设备)
+            window.addEventListener('orientationchange', function() {
+                setTimeout(handleScreenChange, 100); // 延迟一点确保尺寸更新完成
+            });
+            
+            // 防止双击缩放 (移动设备)
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            });
+            
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
         });
+    </script>
+    
+    <!-- JavaScript库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Marked.js 官网推荐CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js 代码高亮 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- DOMPurify XSS防护 -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    
+    <!-- Markdown渲染初始化脚本 -->
+    <script>
+        // 检查库加载状态
+        function checkLibraryLoading() {
+            const checks = [
+                { name: 'Marked.js', check: () => typeof marked !== 'undefined', timeout: 5000 },
+                { name: 'Highlight.js', check: () => typeof hljs !== 'undefined', timeout: 5000 },
+                { name: 'DOMPurify', check: () => typeof DOMPurify !== 'undefined', timeout: 5000 }
+            ];
+            
+            checks.forEach(lib => {
+                const startTime = Date.now();
+                
+                function waitForLibrary() {
+                    if (lib.check()) {
+                        console.log(`✅ ${lib.name} 加载成功`);
+                        if (lib.name === 'Marked.js') {
+                            initializeMarkedJS();
+                        }
+                    } else if (Date.now() - startTime < lib.timeout) {
+                        setTimeout(waitForLibrary, 100);
+                    } else {
+                        console.error(`❌ ${lib.name} 加载超时`);
+                    }
+                }
+                
+                waitForLibrary();
+            });
+        }
+        
+        // 按照官网标准初始化Marked.js
+        function initializeMarkedJS() {
+            if (typeof marked === 'undefined') {
+                console.error('❌ Marked.js 未加载');
+                return;
+            }
+            
+            console.log('🔧 初始化Marked.js...');
+            
+            try {
+                // 按照官网文档配置选项
+                marked.use({
+                    pedantic: false,
+                    gfm: true,           // GitHub风格markdown
+                    breaks: true,        // 支持换行
+                    sanitize: false,     // 我们使用DOMPurify进行清理
+                    smartLists: true,
+                    smartypants: false,
+                    headerIds: false,    // 不自动生成标题ID
+                    mangle: false        // 不混淆邮箱地址
+                });
+                
+                // 代码高亮配置
+                if (typeof hljs !== 'undefined') {
+                    marked.use({
+                        highlight: function(code, lang) {
+                            try {
+                                if (lang && hljs.getLanguage(lang)) {
+                                    return hljs.highlight(code, { language: lang }).value;
+                                } else {
+                                    return hljs.highlightAuto(code).value;
+                                }
+                            } catch (err) {
+                                console.warn('代码高亮失败:', err);
+                                return code;
+                            }
+                        }
+                    });
+                    console.log('✅ 代码高亮已配置');
+                }
+                
+                console.log('✅ Marked.js 初始化完成');
+                
+                // 测试渲染功能
+                window.testMarkdownRendering = function() {
+                    const testContent = `# 复数的模（绝对值）计算方法
+
+## 一、代数形式的复数计算
+对于复数 \\( z = a + bi \\)（其中 \\( a,b \\in \\mathbb{R} \\)），其模定义为：
+\\[
+|z| = \\sqrt{a^2 + b^2}
+\\]
+
+**计算示例**：
+\\[
+|3 + 4i| = \\sqrt{3^2 + 4^2} = \\sqrt{9 + 16} = 5
+\\]
+
+## 二、几何解释
+在复平面上，复数 \\( z = a + bi \\) 对应点 \\( (a,b) \\)，其模即为该点到原点的距离：
+
+![复数的几何表示](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Complex_number_illustration_modarg.svg/380px-Complex_number_illustration_modarg.svg)
+*图源：复数 \\( z = a + bi \\) 的模 \\( |z| \\) 表示为向量长度*
+
+## 三、极坐标形式的模
+当复数表示为极坐标形式 \\( z = r(\\cos\\theta + i\\sin\\theta) \\) 或指数形式 \\( z = re^{i\\theta} \\) 时：
+\\[
+|z| = r
+\\]
+
+**性质验证**：
+1. 非负性：\\( |z| \\geq 0 \\)
+2. 乘法性质：\\( |z_1 + z_2| = |z_1|/|z_2| \\)
+3. 共轭性质：\\( |\\overline{z}| = |z| \\)
+4. 三角不等式：\\( |z_1 + z_2| \\leq |z_1| + |z_2| \\)
+
+## 四、应用实例
+
+\`\`\`javascript
+// JavaScript中计算复数模的函数
+function complexMod(real, imag) {
+    return Math.sqrt(real * real + imag * imag);
+}
+
+// 示例
+console.log(complexMod(3, 4)); // 输出: 5
+\`\`\`
+
+> **提示**：复数的模是实数，且始终非负。在物理学中，复数的模常表示振幅或强度。`;
+
+                    console.log('🧪 开始测试markdown渲染...');
+                    
+                    try {
+                        const result = marked.parse(testContent);
+                        console.log('🎯 渲染成功，HTML长度:', result.length);
+                        
+                        if (typeof DOMPurify !== 'undefined') {
+                            const cleanResult = DOMPurify.sanitize(result);
+                            console.log('🛡️ 安全清理完成，最终长度:', cleanResult.length);
+                            return cleanResult;
+                        }
+                        
+                        return result;
+                    } catch (error) {
+                        console.error('❌ 测试渲染失败:', error);
+                        return null;
+                    }
+                };
+                
+            } catch (error) {
+                console.error('❌ Marked.js 初始化失败:', error);
+            }
+        }
+        
+        // 等待DOM加载完成后检查库
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkLibraryLoading);
+        } else {
+            checkLibraryLoading();
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

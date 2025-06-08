@@ -11,6 +11,8 @@ import json
 import time
 import base64
 import os
+import hmac
+import hashlib
 from hashlib import md5
 from typing import Dict, List, Optional, Tuple
 from config import TranslationAPIConfig, DifyAPIConfig
@@ -33,6 +35,10 @@ class BaiduTranslator:
         self.translate_path = self.config['translate_path']
         self.timeout = self.config['timeout']
         self.max_query_length = self.config['max_query_length']
+        
+        # 文档翻译配置
+        self.doc_translate_base_url = "https://fanyi-api.baidu.com/transapi/doctrans"
+        self.field_translate_path = "/api/trans/vip/fieldtranslate"
     
     def _make_md5(self, s: str, encoding: str = 'utf-8') -> str:
         """生成MD5签名"""
@@ -42,6 +48,21 @@ class BaiduTranslator:
         """生成百度翻译API签名"""
         sign_str = self.app_id + query + str(salt) + self.app_key
         return self._make_md5(sign_str)
+        
+    def _generate_field_sign(self, query: str, salt: int, domain: str) -> str:
+        """生成领域翻译API签名"""
+        sign_str = self.app_id + query + str(salt) + domain + self.app_key
+        return self._make_md5(sign_str)
+        
+    def _generate_doc_sign(self, body: str, timestamp: int) -> str:
+        """生成文档翻译API签名（使用HMAC-SHA256）"""
+        string_to_sign = self.app_id + str(timestamp) + body
+        signature = hmac.new(
+            self.app_key.encode('utf-8'),
+            string_to_sign.encode('utf-8'),
+            hashlib.sha256
+        ).digest()
+        return base64.b64encode(signature).decode('utf-8')
     
     def translate(self, query: str, from_lang: str = 'auto', to_lang: str = 'zh') -> Dict:
         """
@@ -122,6 +143,98 @@ class BaiduTranslator:
         except Exception as e:
             raise TranslationError(f"翻译过程发生错误: {str(e)}")
     
+    def field_translate(self, query: str, domain: str, from_lang: str = 'auto', to_lang: str = 'zh') -> Dict:
+        """
+        领域翻译 - 针对特定领域的专业翻译
+        
+        Args:
+            query: 待翻译的文本
+            domain: 翻译领域（it/finance/senimed/machinery/novel/academic/aerospace/wiki/news/law/contract）
+            from_lang: 源语言代码
+            to_lang: 目标语言代码
+        
+        Returns:
+            翻译结果字典
+        
+        Raises:
+            TranslationError: 翻译过程中出现错误
+        """
+        try:
+            # 检查文本长度
+            if len(query) > self.max_query_length:
+                raise TranslationError(f"文本长度超过限制({self.max_query_length}字符)")
+            
+            # 转换语言代码
+            from_lang = TranslationAPIConfig.get_language_code(from_lang)
+            to_lang = TranslationAPIConfig.get_language_code(to_lang)
+            
+            # 领域代码映射
+            domain_map = {
+                'academic': 'academic',     # 学术论文
+                'business': 'finance',      # 金融财经
+                'technical': 'it',          # 信息技术
+                'medical': 'senimed',       # 生物医药
+                'legal': 'law',             # 法律法规
+                'finance': 'finance',       # 金融财经
+                'it': 'it',                 # 信息技术
+                'machinery': 'machinery',   # 机械制造
+                'novel': 'novel',           # 网络文学
+                'aerospace': 'aerospace',   # 航空航天
+                'wiki': 'wiki',             # 人文社科
+                'news': 'news',             # 新闻资讯
+                'contract': 'contract',     # 合同
+                'general': 'it'             # 默认使用IT领域
+            }
+            
+            domain_code = domain_map.get(domain, 'it')
+            
+            # 生成盐值和签名
+            salt = random.randint(32768, 65536)
+            sign = self._generate_field_sign(query, salt, domain_code)
+            
+            # 构建请求数据
+            data = {
+                'appid': self.app_id,
+                'q': query,
+                'from': from_lang,
+                'to': to_lang,
+                'salt': salt,
+                'domain': domain_code,
+                'sign': sign
+            }
+            
+            # 发送请求
+            url = f"{self.base_url}{self.field_translate_path}"
+            headers = TranslationAPIConfig.get_translation_headers()
+            
+            response = requests.post(
+                url=url,
+                data=data,
+                headers=headers,
+                timeout=self.timeout
+            )
+            
+            # 处理响应
+            if response.status_code != 200:
+                raise TranslationError(f"领域翻译API请求失败，状态码: {response.status_code}")
+            
+            result = response.json()
+            
+            # 检查API返回的错误
+            if 'error_code' in result:
+                error_code = result['error_code']
+                error_msg = result.get('error_msg', '未知错误')
+                raise TranslationError(f"领域翻译API错误 {error_code}: {error_msg}")
+            
+            return result
+            
+        except requests.exceptions.RequestException as e:
+            raise TranslationError(f"领域翻译网络请求错误: {str(e)}")
+        except json.JSONDecodeError as e:
+            raise TranslationError(f"领域翻译响应解析错误: {str(e)}")
+        except Exception as e:
+            raise TranslationError(f"领域翻译过程发生错误: {str(e)}")
+    
     def translate_text(self, text: str, from_lang: str = 'auto', to_lang: str = 'zh') -> str:
         """
         翻译文本并返回翻译结果
@@ -145,19 +258,11 @@ class BaiduTranslator:
             else:
                 raise TranslationError("翻译结果为空")
         except TranslationError as e:
-            # 如果百度翻译API失败，回退到Dify API
+            # 不再使用回退机制，直接报错并提示用户
             if 'INVALID_CLIENT_IP' in str(e) or '58000' in str(e) or 'IP白名单限制' in str(e):
-                print(f"百度翻译API不可用 ({e})，回退到Dify API")
-                try:
-                    dify_result = self.api_translate_via_dify(text, from_lang, to_lang)
-                    if dify_result.get('success') and 'translated_text' in dify_result:
-                        return dify_result['translated_text']
-                    else:
-                        raise TranslationError("Dify API翻译也失败了")
-                except Exception as dify_e:
-                    raise TranslationError(f"百度翻译和Dify翻译都失败了: 百度({e}), Dify({dify_e})")
+                raise TranslationError(f"百度翻译服务暂时不可用: {str(e)}。如需使用AI翻译，请点击'AI翻译'功能。")
             else:
-                raise e
+                raise TranslationError(f"百度翻译失败: {str(e)}。如需使用AI翻译，请点击'AI翻译'功能。")
     
     def batch_translate(self, texts: List[str], from_lang: str = 'auto', to_lang: str = 'zh', 
                        delay: float = 1.0) -> List[str]:
@@ -192,29 +297,173 @@ class BaiduTranslator:
     
     def domain_translate(self, query: str, domain: str, from_lang: str = 'auto', to_lang: str = 'zh') -> Dict:
         """
-        领域翻译 - 针对特定领域的专业翻译（暂时使用通用翻译）
+        领域翻译 - 针对特定领域的专业翻译（使用领域翻译API）
         
         Args:
             query: 待翻译的文本
             domain: 翻译领域（it/finance/medicine/mechanics等）
             from_lang: 源语言代码
             to_lang: 目标语言代码
-            
+        
         Returns:
             翻译结果字典
-            
+        
         Raises:
             TranslationError: 翻译过程中出现错误
         """
-        # 暂时使用通用翻译功能，在查询中添加领域提示
-        domain_hint = f"[{domain}领域翻译]"
-        enhanced_query = f"{domain_hint} {query}"
-        
-        return self.translate(enhanced_query, from_lang, to_lang)
+        try:
+            # 首先尝试使用领域翻译API
+            result = self.field_translate(query, domain, from_lang, to_lang)
+            return result
+        except TranslationError as e:
+            print(f"领域翻译API失败 ({e})，回退到通用翻译API")
+            # 回退到通用翻译，在查询中添加领域提示
+            domain_hint = f"[{domain}领域翻译]"
+            modified_query = f"{domain_hint} {query}"
+            return self.translate(modified_query, from_lang, to_lang)
     
+    def document_translate_async(self, content: str, format_type: str, filename: str, 
+                                   from_lang: str = 'auto', to_lang: str = 'zh') -> Dict:
+        """
+        异步文档翻译 - 提交翻译任务
+        
+        Args:
+            content: 文档内容（base64编码）
+            format_type: 文档格式（doc/docx/pdf/txt/html等）
+            filename: 文件名
+            from_lang: 源语言代码
+            to_lang: 目标语言代码
+        
+        Returns:
+            翻译任务结果字典
+        
+        Raises:
+            TranslationError: 翻译过程中出现错误
+        """
+        try:
+            # 转换语言代码
+            from_lang = TranslationAPIConfig.get_language_code(from_lang)
+            to_lang = TranslationAPIConfig.get_language_code(to_lang)
+            
+            # 构建请求数据
+            request_data = {
+                "from": from_lang,
+                "to": to_lang,
+                "input": {
+                    "content": content,
+                    "format": format_type.lower(),
+                    "filename": filename,
+                    "transImage": 0,  # 不翻译图片中的文字
+                    "needIntervene": 0  # 不使用自定义术语库
+                },
+                "output": {
+                    "format": format_type.lower()  # 输出格式与输入格式相同
+                }
+            }
+            
+            # 生成时间戳和签名
+            timestamp = int(time.time())
+            body = json.dumps(request_data, separators=(',', ':'))
+            sign = self._generate_doc_sign(body, timestamp)
+            
+            # 构建请求头
+            headers = {
+                'Content-Type': 'application/json',
+                'X-Appid': self.app_id,
+                'X-Sign': sign,
+                'X-Timestamp': str(timestamp)
+            }
+            
+            # 发送请求
+            url = f"{self.doc_translate_base_url}/createjob/trans"
+            
+            response = requests.post(
+                url=url,
+                json=request_data,
+                headers=headers,
+                timeout=self.timeout
+            )
+            
+            # 处理响应
+            if response.status_code != 200:
+                raise TranslationError(f"文档翻译API请求失败，状态码: {response.status_code}")
+            
+            result = response.json()
+            
+            # 检查API返回的错误
+            if result.get('code') != 0:
+                error_msg = result.get('msg', '未知错误')
+                raise TranslationError(f"文档翻译API错误: {error_msg}")
+            
+            return result
+            
+        except requests.exceptions.RequestException as e:
+            raise TranslationError(f"文档翻译网络请求错误: {str(e)}")
+        except json.JSONDecodeError as e:
+            raise TranslationError(f"文档翻译响应解析错误: {str(e)}")
+        except Exception as e:
+            raise TranslationError(f"文档翻译过程发生错误: {str(e)}")
+    
+    def query_translate_progress(self, request_id: int) -> Dict:
+        """
+        查询文档翻译进度
+        
+        Args:
+            request_id: 翻译任务ID
+        
+        Returns:
+            翻译进度结果字典
+        """
+        try:
+            # 构建请求数据
+            request_data = {"requestId": request_id}
+            
+            # 生成时间戳和签名
+            timestamp = int(time.time())
+            body = json.dumps(request_data, separators=(',', ':'))
+            sign = self._generate_doc_sign(body, timestamp)
+            
+            # 构建请求头
+            headers = {
+                'Content-Type': 'application/json',
+                'X-Appid': self.app_id,
+                'X-Sign': sign,
+                'X-Timestamp': str(timestamp)
+            }
+            
+            # 发送请求
+            url = f"{self.doc_translate_base_url}/query/trans"
+            
+            response = requests.post(
+                url=url,
+                json=request_data,
+                headers=headers,
+                timeout=self.timeout
+            )
+            
+            # 处理响应
+            if response.status_code != 200:
+                raise TranslationError(f"查询翻译进度API请求失败，状态码: {response.status_code}")
+            
+            result = response.json()
+            
+            # 检查API返回的错误
+            if result.get('code') != 0:
+                error_msg = result.get('msg', '未知错误')
+                raise TranslationError(f"查询翻译进度API错误: {error_msg}")
+            
+            return result
+            
+        except requests.exceptions.RequestException as e:
+            raise TranslationError(f"查询翻译进度网络请求错误: {str(e)}")
+        except json.JSONDecodeError as e:
+            raise TranslationError(f"查询翻译进度响应解析错误: {str(e)}")
+        except Exception as e:
+            raise TranslationError(f"查询翻译进度过程发生错误: {str(e)}")
+
     def image_translate(self, image_data: bytes, from_lang: str = 'auto', to_lang: str = 'zh') -> Dict:
         """
-        图片翻译 - 识别图片中的文字并翻译（暂时不支持，返回提示信息）
+        图片翻译 - 识别图片中的文字并翻译
         
         Args:
             image_data: 图片数据（字节）
@@ -227,12 +476,91 @@ class BaiduTranslator:
         Raises:
             TranslationError: 翻译过程中出现错误
         """
-        # 暂时不支持图片翻译，返回提示信息
-        return {
-            'success': False,
-            'error': '图片翻译功能暂时不可用，请使用文本翻译功能',
-            'method': 'image_translate'
-        }
+        try:
+            import hashlib
+            import json
+            
+            # 检查图片大小（4MB限制）
+            if len(image_data) > 4 * 1024 * 1024:
+                raise TranslationError("图片大小不能超过4MB")
+            
+            # 转换语言代码
+            from_lang = TranslationAPIConfig.get_language_code(from_lang)
+            to_lang = TranslationAPIConfig.get_language_code(to_lang)
+            
+            # 生成图片MD5
+            image_md5 = hashlib.md5(image_data).hexdigest()
+            
+            # 生成盐值
+            salt = str(random.randint(32768, 65536))
+            
+            # 生成签名：sign = md5(appid+md5(image)+salt+cuid+mac+密钥)
+            cuid = "APICUID"
+            mac = "mac"
+            sign_str = f"{self.app_id}{image_md5}{salt}{cuid}{mac}{self.app_key}"
+            sign = hashlib.md5(sign_str.encode('utf-8')).hexdigest()
+            
+            # 调试信息
+            print(f"调试：图片翻译 从 {from_lang} 到 {to_lang}")
+            print(f"调试：AppID={self.app_id}, Salt={salt}, ImageMD5={image_md5[:10]}...")
+            print(f"调试：Sign={sign[:10]}...")
+            
+            # 准备请求数据
+            url = "https://fanyi-api.baidu.com/api/trans/sdk/picture"
+            
+            # 构建参数
+            params = {
+                'from': from_lang,
+                'to': to_lang,
+                'appid': self.app_id,
+                'salt': salt,
+                'cuid': cuid,
+                'mac': mac,
+                'version': '3',
+                'sign': sign,
+                'paste': '0'  # 关闭文字贴合
+            }
+            
+            # 构建文件数据
+            files = {
+                'image': ('image.jpg', image_data, 'image/jpeg')
+            }
+            
+            # 发送请求
+            response = requests.post(
+                url=url,
+                params=params,
+                files=files,
+                timeout=30
+            )
+            
+            print(f"调试：图片翻译响应状态：{response.status_code}")
+            
+            if response.status_code != 200:
+                raise TranslationError(f"API请求失败，状态码: {response.status_code}")
+            
+            # 解析响应
+            result = response.json()
+            print(f"调试：图片翻译响应：{json.dumps(result, ensure_ascii=False)[:200]}...")
+            
+            # 检查错误
+            if 'error_code' in result and result['error_code'] != '0':
+                error_msg = result.get('error_msg', '未知错误')
+                raise TranslationError(f"图片翻译失败: {error_msg} (错误码: {result['error_code']})")
+            
+            # 返回成功结果
+            return {
+                'success': True,
+                'data': result.get('data', {}),
+                'method': 'baidu_image'
+            }
+            
+        except requests.exceptions.RequestException as e:
+            print(f"调试：图片翻译网络错误：{str(e)}")
+            raise TranslationError(f"网络请求失败: {str(e)}")
+        except Exception as e:
+            print(f"调试：图片翻译错误：{str(e)}")
+            raise TranslationError(f"图片翻译失败: {str(e)}")
     
     def api_translate_via_dify(self, text: str, from_lang: str = 'auto', to_lang: str = 'zh') -> Dict:
         """
@@ -421,7 +749,7 @@ class DocumentProcessor:
     
     def summarize_text(self, text: str, max_length: int = 200) -> Dict:
         """
-        文本总结
+        文本总结 - 使用Dify服务DeepSeek
         
         Args:
             text: 待总结的文本
@@ -431,25 +759,44 @@ class DocumentProcessor:
             总结结果
         """
         try:
-            # 简单的文本总结实现
-            sentences = text.replace('。', '。\n').replace('!', '!\n').replace('？', '？\n').split('\n')
-            sentences = [s.strip() for s in sentences if s.strip()]
+            # 构建总结提示词
+            prompt = f"请对以下文本进行智能总结，要求简明扼要，不超过{max_length}字：\n\n{text}"
             
-            # 选择前几个句子作为总结
-            summary_sentences = sentences[:3] if len(sentences) > 3 else sentences
-            summary = '。'.join(summary_sentences)
-            
-            if len(summary) > max_length:
-                summary = summary[:max_length] + '...'
-            
-            return {
-                'success': True,
-                'original_length': len(text),
-                'summary': summary,
-                'summary_length': len(summary),
-                'compression_ratio': len(summary) / len(text) if text else 0,
-                'timestamp': time.time()
+            # 调用Dify API
+            headers = DifyAPIConfig.get_chat_headers()
+            data = {
+                "inputs": {},
+                "query": prompt,
+                "response_mode": "blocking",
+                "conversation_id": "",
+                "user": "summary_user"
             }
+            
+            response = requests.post(
+                DifyAPIConfig.get_full_url('chat_messages'),
+                headers=headers,
+                json=data,
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                raise TranslationError(f"Dify API请求失败，状态码: {response.status_code}")
+            
+            result = response.json()
+            
+            if 'answer' in result:
+                summary = result['answer'].strip()
+                return {
+                    'success': True,
+                    'original_length': len(text),
+                    'summary': summary,
+                    'summary_length': len(summary),
+                    'compression_ratio': len(summary) / len(text) if text else 0,
+                    'method': 'dify_deepseek',
+                    'timestamp': time.time()
+                }
+            else:
+                raise TranslationError("Dify API返回格式异常")
             
         except Exception as e:
             return {
@@ -459,7 +806,7 @@ class DocumentProcessor:
     
     def rewrite_text(self, text: str, style: str = 'formal') -> Dict:
         """
-        改写优化文本
+        改写优化文本 - 使用Dify服务DeepSeek
         
         Args:
             text: 待改写的文本
@@ -469,36 +816,52 @@ class DocumentProcessor:
             改写结果
         """
         try:
-            # 简单的文本改写实现
-            # 这里可以集成更复杂的改写逻辑
-            
-            improvements = []
-            rewritten_text = text
-            
-            # 基本的改写建议
-            if style == 'formal':
-                # 正式化改写建议
-                if '你' in text:
-                    rewritten_text = rewritten_text.replace('你', '您')
-                    improvements.append('将"你"改为"您"以提升正式程度')
-                
-                if '很' in text:
-                    rewritten_text = rewritten_text.replace('很', '非常')
-                    improvements.append('使用"非常"替代"很"以增强正式感')
-            
-            elif style == 'academic':
-                # 学术化改写建议
-                improvements.append('建议使用更多专业术语')
-                improvements.append('建议增加逻辑连接词')
-            
-            return {
-                'success': True,
-                'original_text': text,
-                'rewritten_text': rewritten_text,
-                'style': style,
-                'improvements': improvements,
-                'timestamp': time.time()
+            # 构建改写提示词
+            style_descriptions = {
+                'formal': '正式、礼貌、专业',
+                'casual': '轻松、自然、口语化',
+                'academic': '学术性、严谨、客观',
+                'business': '商务、简洁、高效'
             }
+            
+            style_desc = style_descriptions.get(style, '正式、专业')
+            prompt = f"请将以下文本改写为{style_desc}的风格，保持原意不变，使表达更加优雅得体：\n\n{text}"
+            
+            # 调用Dify API
+            headers = DifyAPIConfig.get_chat_headers()
+            data = {
+                "inputs": {},
+                "query": prompt,
+                "response_mode": "blocking",
+                "conversation_id": "",
+                "user": "rewrite_user"
+            }
+            
+            response = requests.post(
+                DifyAPIConfig.get_full_url('chat_messages'),
+                headers=headers,
+                json=data,
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                raise TranslationError(f"Dify API请求失败，状态码: {response.status_code}")
+            
+            result = response.json()
+            
+            if 'answer' in result:
+                rewritten_text = result['answer'].strip()
+                return {
+                    'success': True,
+                    'original_text': text,
+                    'rewritten_text': rewritten_text,
+                    'style': style,
+                    'style_description': style_desc,
+                    'method': 'dify_deepseek',
+                    'timestamp': time.time()
+                }
+            else:
+                raise TranslationError("Dify API返回格式异常")
             
         except Exception as e:
             return {
@@ -624,26 +987,38 @@ class DocumentProcessor:
         try:
             result = self.translator.image_translate(image_data, from_lang, to_lang)
             
-            if 'data' in result and 'trans_result' in result['data']:
-                trans_results = result['data']['trans_result']
+            if result['success'] and 'data' in result:
+                data = result['data']
+                
+                # 处理百度图片翻译返回的内容
                 translated_texts = []
                 original_texts = []
                 
-                for item in trans_results:
-                    if 'dst' in item and 'src' in item:
-                        translated_texts.append(item['dst'])
-                        original_texts.append(item['src'])
+                # 检查是否有分段内容
+                if 'content' in data and isinstance(data['content'], list):
+                    for item in data['content']:
+                        if 'dst' in item and 'src' in item:
+                            translated_texts.append(item['dst'])
+                            original_texts.append(item['src'])
+                
+                # 如果有整体翻译结果
+                sum_src = data.get('sumSrc', '')
+                sum_dst = data.get('sumDst', '')
                 
                 return {
                     'success': True,
-                    'translated_texts': translated_texts,
-                    'original_texts': original_texts,
-                    'from_lang': result['data'].get('from', from_lang),
-                    'to_lang': result['data'].get('to', to_lang),
-                    'method': 'baidu_image'
+                    'translated_texts': translated_texts if translated_texts else [sum_dst] if sum_dst else [],
+                    'original_texts': original_texts if original_texts else [sum_src] if sum_src else [],
+                    'from_lang': data.get('from', from_lang),
+                    'to_lang': data.get('to', to_lang),
+                    'method': 'baidu_image',
+                    'content_details': data.get('content', []),  # 详细的分段信息
+                    'sum_src': sum_src,
+                    'sum_dst': sum_dst
                 }
             else:
-                raise TranslationError("图片翻译结果为空")
+                error_msg = result.get('error', '图片翻译结果为空')
+                return {'success': False, 'error': error_msg}
                 
         except Exception as e:
             return {'success': False, 'error': str(e)}

@@ -31,8 +31,11 @@
                         <a href="{{ url_for('document') }}" class="btn btn-outline-primary">
                             <i class="fas fa-upload me-2"></i>处理文档
                         </a>
-                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#helpModal">
-                            <i class="fas fa-question-circle me-2"></i>使用指南
+                        <a href="{{ url_for('user_guide') }}" class="btn btn-outline-info">
+                            <i class="fas fa-book me-2"></i>使用文档
+                        </a>
+                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                            <i class="fas fa-info-circle me-2"></i>关于
                         </button>
                     </div>
                 </div>

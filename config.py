@@ -14,10 +14,10 @@ import os
 class AppConfig:
     """应用基础配置"""
     # Flask应用配置
-    SECRET_KEY = 'dify_web_app_secret_key_2024'
+    SECRET_KEY = 'dify_web_app_secret_key_2025'
     DEBUG = True
     HOST = '0.0.0.0'
-    PORT = 8888
+    PORT = 8080
     
     # 文件上传配置
     UPLOAD_FOLDER = 'uploads'
@@ -122,6 +122,9 @@ class TranslationAPIConfig:
     # 当前使用的翻译服务提供商（baidu/dify/google/tencent等）
     CURRENT_PROVIDER = "dify"  # 由于百度翻译IP白名单限制，默认使用Dify API
     
+    # 图片翻译强制使用百度API（图片翻译功能仅百度支持）
+    IMAGE_TRANSLATE_PROVIDER = "baidu"
+    
     # =============================================================================
     # 百度翻译API配置
     # 官方文档：https://api.fanyi.baidu.com/doc/21
@@ -168,6 +171,9 @@ class TranslationAPIConfig:
     # =============================================================================
     TRANSLATION_FEATURES = {
         'enable_translation': True,      # 启用翻译功能
+        'enable_domain_translation': True,  # 启用领域翻译
+        'enable_document_translation': True,  # 启用文档翻译
+        'enable_image_translation': True,    # 启用图片翻译
         'enable_grammar_check': True,    # 启用语法检查
         'enable_summary': True,          # 启用总结功能
         'enable_rewrite': True,          # 启用改写优化功能
@@ -176,42 +182,77 @@ class TranslationAPIConfig:
         'default_from_lang': 'auto',     # 默认源语言（自动检测）
         'default_to_lang': 'zh',         # 默认目标语言（中文）
         
-        # 功能顺序配置
+        # 功能顺序配置（按照用户要求的顺序）
         'feature_order': [
-            'translation',      # 翻译
-            'grammar_check',    # 语法检查
-            'summary',          # 总结
-            'rewrite'           # 改写优化
+            'text_translation',     # 文本翻译
+            'document_translation', # 文档翻译
+            'image_translation',    # 图片翻译
+            'domain_translation',   # 领域翻译
+            'ai_translation',       # AI翻译
+            'grammar_check',        # 语法检查
+            'summary',              # 智能总结
+            'rewrite'               # 文段改写
         ]
     }
     
     # =============================================================================
-    # 预设翻译场景
+    # 翻译领域配置
     # =============================================================================
-    TRANSLATION_SCENARIOS = {
+    TRANSLATION_DOMAINS = {
+        'it': {
+            'name': '信息技术',
+            'description': '适用于IT、软件、网络技术等领域',
+            'baidu_code': 'it'
+        },
+        'finance': {
+            'name': '金融财经',
+            'description': '适用于金融、经济、投资等领域',
+            'baidu_code': 'finance'
+        },
+        'machinery': {
+            'name': '机械制造',
+            'description': '适用于机械、制造、工程等领域',
+            'baidu_code': 'machinery'
+        },
+        'senimed': {
+            'name': '生物医药',
+            'description': '适用于医学、生物、药学等领域',
+            'baidu_code': 'senimed'
+        },
+        'novel': {
+            'name': '网络文学',
+            'description': '适用于小说、文学作品等',
+            'baidu_code': 'novel'
+        },
         'academic': {
-            'name': '学术文献',
-            'description': '适用于学术论文、研究报告等专业文献的翻译',
-            'style': 'formal',
-            'terminology': 'academic'
+            'name': '学术论文',
+            'description': '适用于学术研究、论文等',
+            'baidu_code': 'academic'
         },
-        'business': {
-            'name': '商务文档',
-            'description': '适用于商务合同、报告、邮件等商务文档的翻译',
-            'style': 'formal',
-            'terminology': 'business'
+        'aerospace': {
+            'name': '航空航天',
+            'description': '适用于航空、航天技术等领域',
+            'baidu_code': 'aerospace'
         },
-        'technical': {
-            'name': '技术文档',
-            'description': '适用于技术手册、API文档等技术资料的翻译',
-            'style': 'technical',
-            'terminology': 'technical'
+        'wiki': {
+            'name': '人文社科',
+            'description': '适用于历史、文化、社会科学等',
+            'baidu_code': 'wiki'
         },
-        'general': {
-            'name': '通用文本',
-            'description': '适用于一般性文本的翻译',
-            'style': 'normal',
-            'terminology': 'general'
+        'news': {
+            'name': '新闻资讯',
+            'description': '适用于新闻、媒体、时事等',
+            'baidu_code': 'news'
+        },
+        'law': {
+            'name': '法律法规',
+            'description': '适用于法律、法规、条例等',
+            'baidu_code': 'law'
+        },
+        'contract': {
+            'name': '合同协议',
+            'description': '适用于合同、协议、条款等',
+            'baidu_code': 'contract'
         }
     }
     
@@ -298,7 +339,6 @@ class DefaultSettings:
     DEFAULT_PAGE = 1
     
     # 翻译设置
-    DEFAULT_TRANSLATION_SCENARIO = "general"  # 默认翻译场景
     DEFAULT_TRANSLATION_BATCH_SIZE = 10      # 批量翻译时的批次大小
 
 # =============================================================================
@@ -406,7 +446,7 @@ def init_config():
     if TranslationAPIConfig.is_translation_enabled():
         print(f"   翻译服务: {TranslationAPIConfig.CURRENT_PROVIDER.upper()}")
         print(f"   支持语言: {len(TranslationAPIConfig.get_supported_languages())}种")
-        print(f"   翻译场景: {len(TranslationAPIConfig.TRANSLATION_SCENARIOS)}种")
+        print(f"   专业领域: {len(TranslationAPIConfig.TRANSLATION_DOMAINS)}种")
     else:
         print("   翻译功能: 已禁用")
     

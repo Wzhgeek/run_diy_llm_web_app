@@ -239,9 +239,35 @@ https://api.fanyi.baidu.com/doc/26
 
 领域翻译：API参考文档：https://api.fanyi.baidu.com/doc/22
 
+文档翻译API参考文档：https://api.fanyi.baidu.com/doc/27  
+
+图片翻译API：https://api.fanyi.baidu.com/doc/26
+
+通用翻译api文档：https://api.fanyi.baidu.com/doc/21
+
+文献处理的各个功能名应该是如下顺序：
+文本翻译：使用百度API，服务为百度翻译
+文档翻译：使用百度API，服务为百度翻译
+图片翻译：使用百度API，服务为百度翻译
+领域翻译: 使用百度API，服务为百度翻译
+AI翻译: 使用dify，服务DeppSeek，与用户输入一并添加一个提示词
+语法检查： 开发中
+智能总结:  使用dify，服务DeppSeek，与用户输入一并添加一个提示词
+文段改写:  使用dify，服务DeppSeek，与用户输入一并添加一个提示词
+
+领域翻译：API参考文档：https://api.fanyi.baidu.com/doc/22
 
 文档翻译API参考文档：https://api.fanyi.baidu.com/doc/27  
 
 图片翻译API：https://api.fanyi.baidu.com/doc/26
 
 通用翻译api文档：https://api.fanyi.baidu.com/doc/21
+
+
+你是一个具有丰富APP和移动端安卓程序开发经验的工程师
+我现在需要你重构移动端的前端页面
+移动端页面的样式主要是要求：简约，大气，线条，优雅
+移动端主要包括的功能和PC端一样，这点很重要
+需要格外注意移动端的显示兼容适配问题
+
+AI对话功能中，ai的回答结果是markdown格式，需要你进行渲染显示

@@ -252,7 +252,7 @@
         <div class="container-fluid">
             <div class="text-center">
                 <small class="text-muted">
-                    © 2024 AI学术研究助手 | 开发者：王梓涵 | 
+                    © 2025 AI学术研究助手 | 开发者：王梓涵 | 
                     <a href="mailto:wangzh011031@163.com" class="text-decoration-none">wangzh011031@163.com</a>
                 </small>
                 </div>
@@ -264,4 +264,55 @@
 {% block extra_js %}
 <!-- 引入聊天页面专用JavaScript -->
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+// 页面加载完成后初始化聊天功能
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 页面DOM加载完成，开始初始化...');
+    
+    // 等待库加载完成的函数
+    function waitForLibraries() {
+        return new Promise((resolve) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 最多等待5秒
+            
+            function checkLibraries() {
+                attempts++;
+                
+                const markedLoaded = typeof marked !== 'undefined';
+                const dompurifyLoaded = typeof DOMPurify !== 'undefined';
+                const hljsLoaded = typeof hljs !== 'undefined';
+                
+                console.log(`🔍 检查库加载状态 (${attempts}/${maxAttempts}):`, {
+                    marked: markedLoaded,
+                    DOMPurify: dompurifyLoaded,
+                    hljs: hljsLoaded
+                });
+                
+                if (markedLoaded && dompurifyLoaded && hljsLoaded) {
+                    console.log('✅ 所有库已加载完成');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ 库加载超时，继续初始化');
+                    resolve();
+                } else {
+                    setTimeout(checkLibraries, 100);
+                }
+            }
+            
+            checkLibraries();
+        });
+    }
+    
+    // 等待库加载后初始化
+    waitForLibraries().then(() => {
+        console.log('🎯 开始初始化聊天功能...');
+        initializeChat();
+        loadConversations();
+        showWelcomeScreen();
+        
+        // 添加测试按钮到控制台
+        console.log('💡 提示：可以在控制台运行 testMarkdownRendering() 来测试markdown渲染');
+    });
+});
+</script>
 {% endblock %} 

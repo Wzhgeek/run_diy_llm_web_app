@@ -18,7 +18,8 @@ import time
 # 导入配置
 from config import AppConfig, DifyAPIConfig, DefaultSettings
 # 导入翻译功能
-from translation_utils import document_processor, quick_translate, get_supported_languages, TranslationError
+from translation_utils import document_processor, BaiduTranslator, quick_translate, get_supported_languages, TranslationError
+import base64
 
 app = Flask(__name__)
 app.secret_key = AppConfig.SECRET_KEY
@@ -730,8 +731,7 @@ def process_document():
         content = request.form.get('content', '')
         from_lang = request.form.get('from_lang', 'auto')
         to_lang = request.form.get('to_lang', 'zh')
-        domain = request.form.get('domain', 'academic')
-        scenario = request.form.get('scenario', 'general')
+        domain = request.form.get('domain', 'it')
         image_file = request.files.get('image')
     else:
         # JSON请求（其他类型）
@@ -740,17 +740,20 @@ def process_document():
         content = data.get('content', '')
         from_lang = data.get('from_lang', 'auto')
         to_lang = data.get('to_lang', 'zh')
-        domain = data.get('domain', 'academic')
-        scenario = data.get('scenario', 'general')
+        domain = data.get('domain', 'it')
         image_file = None
     
     # 验证输入
     if task_type == 'image_translate':
         if not image_file:
             return jsonify({'error': '图片翻译需要上传图片文件'}), 400
+        # 提前读取图片数据到内存，避免在生成器中访问已关闭的文件
+        image_data = image_file.read()
+        print(f"调试：预读取图片数据大小: {len(image_data)} 字节")
     else:
         if not content.strip():
             return jsonify({'error': '内容不能为空'}), 400
+        image_data = None
     
     def generate():
         try:
@@ -798,7 +801,8 @@ def process_document():
             elif task_type == 'image_translate':
                 # 图片翻译
                 try:
-                    image_data = image_file.read()
+                    print(f"调试：开始处理图片翻译，数据大小: {len(image_data)} 字节")
+                    
                     result = document_processor.image_translate(image_data, from_lang, to_lang)
                     if result['success']:
                         response_data = {
@@ -814,7 +818,29 @@ def process_document():
                         error_msg = result.get('error', '未知错误')
                         yield f"data: {json.dumps({'error': f'图片翻译失败: {error_msg}'}, ensure_ascii=False)}\n\n"
                 except Exception as e:
+                    print(f"调试：图片翻译异常: {str(e)}")
                     yield f"data: {json.dumps({'error': f'图片翻译失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
+                    
+            elif task_type == 'document_translate':
+                # 文档翻译（使用百度文档翻译API）
+                try:
+                    # 对于文本形式的文档翻译，我们使用百度的通用翻译API
+                    # 因为百度文档翻译API主要用于文件上传的场景
+                    result = quick_translate(content, from_lang, to_lang)
+                    response_data = {
+                        'type': 'document_translation_result',
+                        'content': result,
+                        'full_content': result,
+                        'from_lang': from_lang,
+                        'to_lang': to_lang,
+                        'original_content': content,
+                        'method': 'baidu_api'
+                    }
+                    yield f"data: {json.dumps(response_data, ensure_ascii=False)}\n\n"
+                    yield f"data: {json.dumps({'type': 'end'})}\n\n"
+                except TranslationError as e:
+                    yield f"data: {json.dumps({'error': f'文档翻译失败: {str(e)}'}, ensure_ascii=False)}\n\n"
                     return
                     
             elif task_type == 'api_translate':
@@ -847,7 +873,6 @@ def process_document():
                         text=content,
                         from_lang=from_lang,
                         to_lang=to_lang,
-                        scenario=scenario,
                         summary_length=200,
                         rewrite_style='formal'
                     )
@@ -979,28 +1004,72 @@ def get_translation_languages():
             'error': f'获取语言列表失败: {str(e)}'
         }), 500
 
-@app.route('/api/translation/scenarios', methods=['GET'])
-def get_translation_scenarios():
-    """获取翻译场景列表API"""
-    try:
-        from config import TranslationAPIConfig
-        scenarios = TranslationAPIConfig.TRANSLATION_SCENARIOS
-        return jsonify({
-            'success': True,
-            'scenarios': scenarios
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'获取翻译场景失败: {str(e)}'
-        }), 500
+
 
 @app.route('/api/translation/provider', methods=['GET'])
 def get_translation_provider():
     """获取当前翻译服务提供商状态API"""
     try:
-        from config import TranslationAPIConfig
+        from config import TranslationAPIConfig, DifyAPIConfig
         status = TranslationAPIConfig.get_provider_status()
+        
+        # 检测Dify后端实际使用的模型
+        actual_model = "unknown"
+        api_type = "dify"
+        
+        if status['current_provider'] == 'dify':
+            # 通过API URL或配置推断实际使用的模型
+            api_url = DifyAPIConfig.BASE_URL
+            api_key = DifyAPIConfig.CHAT_API_KEY
+            
+            # 根据不同的线索判断模型类型
+            if "deepseek" in api_key.lower() or "deepseek" in api_url.lower():
+                actual_model = "deepseek"
+                api_type = "deepseek"
+            elif "118.196.22.104" in api_url:
+                # 这个IP通常部署deepseek模型
+                actual_model = "deepseek"
+                api_type = "deepseek"
+            else:
+                # 尝试通过API响应判断
+                try:
+                    # 发送一个简单的测试请求
+                    headers = DifyAPIConfig.get_chat_headers()
+                    data = {
+                        "inputs": {},
+                        "query": "hello",
+                        "response_mode": "blocking",
+                        "conversation_id": "",
+                        "user": "test_user"
+                    }
+                    
+                    response = requests.post(
+                        DifyAPIConfig.get_full_url('chat_messages'),
+                        headers=headers,
+                        json=data,
+                        timeout=5
+                    )
+                    
+                    if response.status_code == 200:
+                        # 检查响应头或响应体中的模型信息
+                        response_data = response.json()
+                        if "deepseek" in str(response_data).lower():
+                            actual_model = "deepseek"
+                            api_type = "deepseek"
+                        else:
+                            actual_model = "dify"
+                            api_type = "dify"
+                    
+                except Exception:
+                    # 如果检测失败，使用默认值
+                    actual_model = "dify"
+                    api_type = "dify"
+        
+        # 更新状态信息
+        status['actual_model'] = actual_model
+        status['api_type'] = api_type
+        status['api_url'] = DifyAPIConfig.BASE_URL
+        
         return jsonify({
             'success': True,
             'provider': status
@@ -1011,31 +1080,57 @@ def get_translation_provider():
             'error': f'获取翻译提供商状态失败: {str(e)}'
         }), 500
 
+@app.route('/api/translation/test_ip', methods=['GET'])
+def test_translation_ip():
+    """测试当前服务器IP和百度翻译连接"""
+    try:
+        import requests
+        
+        # 获取服务器公网IP
+        try:
+            # 尝试多个IP获取服务
+            for url in ['https://api.ipify.org', 'https://ifconfig.me', 'https://httpbin.org/ip']:
+                try:
+                    ip_response = requests.get(url, timeout=5)
+                    if url == 'https://httpbin.org/ip':
+                        server_ip = ip_response.json()['origin']
+                    else:
+                        server_ip = ip_response.text.strip()
+                    break
+                except:
+                    continue
+            else:
+                server_ip = "无法获取"
+        except:
+            server_ip = "无法获取"
+        
+        # 测试百度翻译API连接
+        test_url = "https://fanyi-api.baidu.com/api/trans/vip/translate"
+        try:
+            test_response = requests.head(test_url, timeout=10)
+            api_accessible = test_response.status_code in [200, 405]  # 405也表示可访问，只是方法不对
+        except:
+            api_accessible = False
+        
+        return jsonify({
+            'server_ip': server_ip,
+            'api_accessible': api_accessible,
+            'baidu_translate_url': test_url,
+            'note': '如果图片翻译出现58000错误，需要将服务器IP添加到百度翻译控制台的IP白名单中'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/translation/domains', methods=['GET'])
 def get_translation_domains():
     """获取翻译领域列表API"""
     try:
         from config import TranslationAPIConfig
-        domains = TranslationAPIConfig.BAIDU_EXTENDED_CONFIG['supported_domains']
-        domain_names = {
-            'it': '信息技术',
-            'finance': '金融财经',
-            'medicine': '生物医药',
-            'mechanics': '机械制造',
-            'senimed': '法律政府',
-            'novel': '影视文学',
-            'academic': '学术论文',
-            'aerospace': '航空航天',
-            'wiki': '人文社科',
-            'news': '新闻资讯',
-            'contract': '合同文档'
-        }
-        
-        domain_list = [{'code': domain, 'name': domain_names.get(domain, domain)} for domain in domains]
+        domains = TranslationAPIConfig.TRANSLATION_DOMAINS
         
         return jsonify({
             'success': True,
-            'domains': domain_list
+            'domains': domains
         })
     except Exception as e:
         return jsonify({
@@ -1043,10 +1138,119 @@ def get_translation_domains():
             'error': f'获取翻译领域失败: {str(e)}'
         }), 500
 
+@app.route('/api/translation/document/upload', methods=['POST'])
+def upload_document_for_translation():
+    """上传文档进行翻译"""
+    try:
+        # 检查是否有文件上传
+        if 'file' not in request.files:
+            return jsonify({'error': '没有上传文件'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '文件名为空'}), 400
+        
+        # 获取翻译参数
+        from_lang = request.form.get('from_lang', 'auto')
+        to_lang = request.form.get('to_lang', 'zh')
+        
+        # 读取文件内容并进行base64编码
+        file_content = file.read()
+        file_base64 = base64.b64encode(file_content).decode('utf-8')
+        
+        # 获取文件格式
+        filename = file.filename
+        file_ext = filename.split('.')[-1].lower()
+        
+        # 检查文件格式是否支持
+        supported_formats = ['doc', 'docx', 'pdf', 'txt', 'html', 'htm', 'xls', 'xlsx', 'ppt', 'pptx', 'xml']
+        if file_ext not in supported_formats:
+            return jsonify({'error': f'不支持的文件格式: {file_ext}'}), 400
+        
+        # 提交文档翻译任务
+        translator = BaiduTranslator()
+        result = translator.document_translate_async(
+            content=file_base64,
+            format_type=file_ext,
+            filename=filename,
+            from_lang=from_lang,
+            to_lang=to_lang
+        )
+        
+        return jsonify({
+            'success': True,
+            'request_id': result['data']['requestId'],
+            'message': '文档翻译任务已提交，请稍后查询翻译进度'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'文档上传翻译失败: {str(e)}'}), 500
+
+@app.route('/api/translation/document/progress/<int:request_id>', methods=['GET'])
+def query_document_translation_progress(request_id):
+    """查询文档翻译进度"""
+    try:
+        translator = BaiduTranslator()
+        result = translator.query_translate_progress(request_id)
+        
+        return jsonify({
+            'success': True,
+            'data': result['data']
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'查询翻译进度失败: {str(e)}'}), 500
+
 @app.route('/knowledge')
 def knowledge():
     """知识库管理页面"""
     return render_template('knowledge.html')
+
+@app.route('/user-guide')
+def user_guide():
+    """使用文档页面 - 使用前端marked.js渲染"""
+    try:
+        # 读取markdown文档内容
+        doc_path = os.path.join('docs', 'user_guide.md')
+        with open(doc_path, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+        
+        # 将markdown内容传递给前端，由marked.js进行渲染
+        return render_template('user_guide.html', markdown_content=markdown_content)
+        
+    except Exception as e:
+        print(f"文档加载错误: {e}")
+        # 如果文档读取失败，返回基本的markdown格式说明
+        fallback_markdown = """# 📚 AI学术研究助手使用文档
+
+## 🚀 快速开始
+
+欢迎使用AI学术研究助手！这是一个基于Dify ChatFlow API的智能学术研究平台。
+
+### 主要功能
+
+- **AI智能对话：** 支持多轮对话、图片识别、专业学术问答
+- **文献处理：** 提供翻译、总结、改写、语法检查等功能  
+- **知识库管理：** 构建和管理学术资料知识库
+
+### 使用方式
+
+1. 点击左侧导航栏选择相应功能模块
+2. 在AI对话中输入问题获得专业回答
+3. 上传文档进行智能处理
+4. 管理知识库构建个人学术资源
+
+## 📞 联系支持
+
+如果您在使用过程中遇到问题，请通过以下方式联系我们：
+
+- 📧 邮箱：support@example.com
+- 📱 电话：400-123-4567
+- 💬 在线客服：点击右下角客服图标
+
+> **提示：** 文档内容正在加载中，请稍后刷新页面查看完整内容。
+"""
+        return render_template('user_guide.html', markdown_content=fallback_markdown)
 
 @app.route('/api/datasets')
 def get_datasets():

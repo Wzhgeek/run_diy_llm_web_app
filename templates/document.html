@@ -1,378 +1,287 @@
 {% extends "base.html" %}
 
-{% block title %}文档处理 - Dify智能助手{% endblock %}
+{% block title %}智能翻译 - Dify智能助手{% endblock %}
+
+{% block page_title %}📄 文献处理{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
+    <!-- 顶部标题区域 -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-file-alt me-2"></i>文档处理
-                            </h5>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1 text-dark fw-bold">
+                        <i class="fas fa-language me-2 text-primary"></i>文献翻译助手
+                    </h3>
+                    <p class="text-muted mb-0">支持多种翻译模式和AI智能处理</p>
+                </div>
+                <div class="d-flex align-items-center">
+                    <small class="text-muted me-2">当前服务：</small>
+                    <span class="badge bg-secondary" id="provider-status">
+                        <i class="fas fa-spinner fa-spin me-1"></i>检测中...
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能选择区域 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <!-- 功能模式选择 -->
+                    <div class="d-flex flex-wrap gap-2 mb-4" id="mode-selector">
+                        <button type="button" class="btn btn-outline-primary active px-4 rounded-pill" data-mode="translate">
+                            <i class="fas fa-language me-2"></i>文本翻译
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-mode="document_translate">
+                            <i class="fas fa-file-alt me-2"></i>文档翻译
+                        </button>
+                        <button type="button" class="btn btn-outline-success px-4 rounded-pill" data-mode="image_translate">
+                            <i class="fas fa-image me-2"></i>图片翻译
+                        </button>
+                        <button type="button" class="btn btn-outline-warning px-4 rounded-pill" data-mode="domain_translate">
+                            <i class="fas fa-graduation-cap me-2"></i>领域翻译
+                        </button>
+                        <button type="button" class="btn btn-outline-info px-4 rounded-pill" data-mode="ai_translate">
+                            <i class="fas fa-brain me-2"></i>AI翻译
+                        </button>
+                        <button type="button" class="btn btn-outline-danger px-4 rounded-pill" data-mode="grammar_check">
+                            <i class="fas fa-spell-check me-2"></i>语法检查
+                        </button>
+                        <button type="button" class="btn btn-outline-dark px-4 rounded-pill" data-mode="summary">
+                            <i class="fas fa-compress-alt me-2"></i>智能总结
+                        </button>
+                        <button type="button" class="btn btn-outline-purple px-4 rounded-pill" data-mode="rewrite">
+                            <i class="fas fa-edit me-2"></i>文段改写
+                        </button>
+                    </div>
+
+                    <!-- 语言选择区域 -->
+                    <div class="row g-3" id="language-controls">
+                        <div class="col-lg-5">
+                            <label class="form-label text-muted fw-semibold">源语言</label>
+                            <select class="form-select form-select-lg border-2" id="from-language">
+                                <option value="auto">自动检测语言</option>
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <div class="text-end">
-                                <small class="text-muted">翻译服务：</small>
-                                <span class="badge bg-success ms-1" id="provider-status">
-                                    <i class="fas fa-robot me-1"></i>DIFY AI
-                                </span>
+                        <div class="col-lg-2 d-flex align-items-end justify-content-center">
+                            <button type="button" class="btn btn-outline-primary btn-lg rounded-circle" id="swap-languages" title="交换语言 (双击语言选择框或按Ctrl+Shift+S)">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                        </div>
+                        <div class="col-lg-5">
+                            <label class="form-label text-muted fw-semibold">目标语言</label>
+                            <select class="form-select form-select-lg border-2" id="to-language">
+                                <option value="zh">中文（简体）</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 领域选择（仅在领域翻译时显示） -->
+                    <div class="row g-3 mt-2 d-none" id="domain-selection">
+                        <div class="col-12">
+                            <label class="form-label text-muted fw-semibold">
+                                <i class="fas fa-graduation-cap me-2"></i>专业领域
+                            </label>
+                            <select class="form-select" id="translation-domain">
+                                <option value="it">信息技术</option>
+                                <option value="finance">金融财经</option>
+                                <option value="machinery">机械制造</option>
+                                <option value="senimed">生物医药</option>
+                                <option value="academic">学术论文</option>
+                                <option value="aerospace">航空航天</option>
+                                <option value="wiki">人文社科</option>
+                                <option value="news">新闻资讯</option>
+                                <option value="law">法律法规</option>
+                                <option value="contract">合同协议</option>
+                                <option value="novel">网络文学</option>
+                            </select>
+                            <small class="text-muted">选择专业领域可获得更准确的翻译结果</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要工作区域 -->
+    <div class="row g-4">
+        <!-- 输入区域 -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 text-muted fw-semibold">
+                        <i class="fas fa-edit me-2"></i>输入内容
+                    </h6>
+                    <div class="d-flex align-items-center gap-3">
+                        <small class="text-muted">
+                            <span id="char-count">0</span> / 5000 字符
+                        </small>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="clear-input" title="清空">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="paste-text" title="粘贴">
+                                <i class="fas fa-paste"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body pt-2 pb-2">
+                    <!-- 图片上传区域 -->
+                    <div id="image-upload-area" class="d-none">
+                        <div class="border-2 border-dashed border-primary rounded-3 p-4 text-center mb-3 upload-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <p class="mb-2 fw-semibold">拖拽图片到此处或点击上传</p>
+                            <input type="file" class="form-control" id="image-upload" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-primary btn-lg px-4" onclick="document.getElementById('image-upload').click()">
+                                <i class="fas fa-upload me-2"></i>选择图片
+                            </button>
+                            <small class="d-block text-muted mt-3">支持 JPG、PNG、GIF 格式，最大 10MB</small>
+                        </div>
+                        <div id="image-preview" class="d-none text-center">
+                            <img class="img-fluid rounded shadow" style="max-height: 300px;">
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeImage()">
+                                    <i class="fas fa-trash me-1"></i>移除图片
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文档上传区域 -->
+                    <div id="document-upload-area" class="d-none">
+                        <div class="border-2 border-dashed border-secondary rounded-3 p-4 text-center mb-3 upload-zone">
+                            <i class="fas fa-file-upload fa-3x text-secondary mb-3"></i>
+                            <p class="mb-2 fw-semibold">拖拽文档到此处或点击上传</p>
+                            <input type="file" class="form-control" id="document-upload" accept=".doc,.docx,.pdf,.txt,.html,.htm,.xls,.xlsx,.ppt,.pptx,.xml" style="display: none;">
+                            <button type="button" class="btn btn-secondary btn-lg px-4" onclick="document.getElementById('document-upload').click()">
+                                <i class="fas fa-upload me-2"></i>选择文档
+                            </button>
+                            <small class="d-block text-muted mt-3">支持 DOC、DOCX、PDF、TXT、HTML、XLS、XLSX、PPT、PPTX、XML 格式，最大 50MB</small>
+                        </div>
+                        <div id="document-preview" class="d-none">
+                            <div class="card border-secondary">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file fa-2x text-secondary me-3"></i>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1" id="document-name">文件名.docx</h6>
+                                            <small class="text-muted" id="document-size">文件大小: 0 KB</small>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeDocument()">
+                                            <i class="fas fa-trash me-1"></i>移除
+                                        </button>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="progress" style="height: 3px;">
+                                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%" id="upload-progress"></div>
+                                        </div>
+                                        <small class="text-muted" id="upload-status">准备上传...</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文本输入区域 -->
+                    <div id="text-input-area">
+                        <textarea class="form-control border-0" 
+                                 id="input-text" 
+                                 rows="16" 
+                                 placeholder="在此输入需要处理的文本内容..."
+                                 style="font-size: 16px; line-height: 1.6; box-shadow: none;"></textarea>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="voice-input" title="语音输入">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="file-upload" title="上传文件">
+                                <i class="fas fa-file-upload"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="clear-input-btn" title="清空输入">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-lg px-5 fw-semibold" id="process-btn">
+                            <i class="fas fa-arrow-right me-2"></i>开始翻译
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输出区域 -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 text-muted fw-semibold">
+                        <i class="fas fa-check-circle me-2"></i>处理结果
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="copy-result" title="复制结果">
+                            <i class="fas fa-copy me-1"></i>复制
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="download-result" title="下载结果">
+                            <i class="fas fa-download me-1"></i>下载
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm d-none" id="clear-result-btn" title="清空结果">
+                            <i class="fas fa-trash-alt me-1"></i>清空
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body pt-2 pb-2">
+                    <div id="result-area">
+                        <!-- 默认提示 -->
+                        <div id="result-placeholder" class="text-center py-5">
+                            <i class="fas fa-magic fa-4x text-muted mb-4"></i>
+                            <h5 class="text-muted fw-bold">处理结果将在这里显示</h5>
+                            <p class="text-muted mb-0">选择功能并输入内容开始使用</p>
+                        </div>
+
+                        <!-- 加载状态 -->
+                        <div id="loading-state" class="text-center py-5 d-none">
+                            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                                <span class="visually-hidden">处理中...</span>
+                            </div>
+                            <h6 class="text-muted fw-bold">正在处理中...</h6>
+                            <p class="text-muted mb-0">请稍候，正在翻译，请稍等……</p>
+                        </div>
+
+                        <!-- 结果显示 - 仅包含可滚动的文本内容 -->
+                        <div id="result-content" class="d-none">
+                            <div class="result-text p-4 rounded-3" style="font-size: 16px; line-height: 1.7; min-height: 350px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #dee2e6;">
+                                <!-- 结果内容 -->
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <!-- 功能选择标签页 -->
-                    <ul class="nav nav-tabs mb-4" id="taskTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="translate-tab" data-bs-toggle="tab" data-bs-target="#translate" type="button" role="tab">
-                                <i class="fas fa-language me-2"></i>通用翻译
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="domain_translate-tab" data-bs-toggle="tab" data-bs-target="#domain_translate" type="button" role="tab">
-                                <i class="fas fa-industry me-2"></i>领域翻译
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="image_translate-tab" data-bs-toggle="tab" data-bs-target="#image_translate" type="button" role="tab">
-                                <i class="fas fa-image me-2"></i>图片翻译
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="api_translate-tab" data-bs-toggle="tab" data-bs-target="#api_translate" type="button" role="tab">
-                                <i class="fas fa-robot me-2"></i>AI翻译
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="grammar_check-tab" data-bs-toggle="tab" data-bs-target="#grammar_check" type="button" role="tab">
-                                <i class="fas fa-spell-check me-2"></i>语法检查
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
-                                <i class="fas fa-compress-alt me-2"></i>总结
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="rewrite-tab" data-bs-toggle="tab" data-bs-target="#rewrite" type="button" role="tab">
-                                <i class="fas fa-edit me-2"></i>改写
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="complete-tab" data-bs-toggle="tab" data-bs-target="#complete" type="button" role="tab">
-                                <i class="fas fa-magic me-2"></i>完整处理
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="row">
-                        <!-- 输入区域 -->
-                        <div class="col-lg-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="card-title mb-0">
-                                        <i class="fas fa-upload me-2"></i>输入内容
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <!-- 文本输入区域 -->
-                                    <div class="mb-3">
-                                        <label for="input-text" class="form-label">输入文本内容</label>
-                                        <textarea class="form-control" id="input-text" 
-                                                 rows="15" 
-                                                 placeholder="请输入需要处理的文本内容..."
-                                                 style="resize: vertical;"></textarea>
-                                        <div class="form-text">
-                                            <span id="char-count">0</span> 字符
-                                        </div>
-                                    </div>
-
-                                    <!-- 选项配置 -->
-                                    <div class="tab-content" id="optionsContent">
-                                        <!-- 翻译选项 -->
-                                        <div class="tab-pane fade show active" id="translate" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">源语言</label>
-                                                    <select class="form-select" id="from-language">
-                                                        <option value="auto" selected>自动检测</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">目标语言</label>
-                                                    <select class="form-select" id="to-language">
-                                                        <option value="zh" selected>中文（简体）</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <label class="form-label">翻译场景</label>
-                                                    <select class="form-select" id="translation-scenario">
-                                                        <option value="general" selected>通用文本</option>
-                                                    </select>
-                                                    <div class="form-text" id="scenario-description">适用于一般性文本的翻译</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 领域翻译选项 -->
-                                        <div class="tab-pane fade" id="domain_translate" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">源语言</label>
-                                                    <select class="form-select" id="domain-from-language">
-                                                        <option value="auto" selected>自动检测</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">目标语言</label>
-                                                    <select class="form-select" id="domain-to-language">
-                                                        <option value="zh" selected>中文（简体）</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <label class="form-label">专业领域</label>
-                                                    <select class="form-select" id="translation-domain">
-                                                        <option value="it">信息技术</option>
-                                                        <option value="finance">金融财经</option>
-                                                        <option value="medicine">生物医药</option>
-                                                        <option value="mechanics">机械制造</option>
-                                                        <option value="senimed">法律政府</option>
-                                                        <option value="novel">影视文学</option>
-                                                        <option value="academic" selected>学术论文</option>
-                                                        <option value="aerospace">航空航天</option>
-                                                        <option value="wiki">人文社科</option>
-                                                        <option value="news">新闻资讯</option>
-                                                        <option value="contract">合同文档</option>
-                                                    </select>
-                                                    <div class="form-text">选择专业领域可获得更准确的术语翻译</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 图片翻译选项 -->
-                                        <div class="tab-pane fade" id="image_translate" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">源语言</label>
-                                                    <select class="form-select" id="image-from-language">
-                                                        <option value="auto" selected>自动检测</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">目标语言</label>
-                                                    <select class="form-select" id="image-to-language">
-                                                        <option value="zh" selected>中文（简体）</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <label class="form-label">上传图片</label>
-                                                    <input type="file" class="form-control" id="image-upload" accept=".jpg,.jpeg,.png,.bmp">
-                                                    <div class="form-text">支持JPG、PNG、BMP格式，最大4MB</div>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3" id="image-preview-container" style="display: none;">
-                                                <div class="col-md-12">
-                                                    <label class="form-label">图片预览</label>
-                                                    <div class="border rounded p-2">
-                                                        <img id="image-preview" class="img-fluid" style="max-height: 300px;">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- AI翻译选项 -->
-                                        <div class="tab-pane fade" id="api_translate" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">源语言</label>
-                                                    <select class="form-select" id="api-from-language">
-                                                        <option value="auto" selected>自动检测</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">目标语言</label>
-                                                    <select class="form-select" id="api-to-language">
-                                                        <option value="zh" selected>中文（简体）</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <div class="alert alert-success">
-                                                        <i class="fas fa-robot me-2"></i>
-                                                        <strong>AI智能翻译：</strong> 使用Dify大模型进行翻译，提供更自然、准确的翻译结果
-                                                        <br><small>适用于复杂语境、创意文本和需要理解上下文的内容翻译</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 语法检查选项 -->
-                                        <div class="tab-pane fade" id="grammar_check" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <div class="alert alert-info">
-                                                        <i class="fas fa-info-circle me-2"></i>
-                                                        语法检查功能将分析文本中的标点符号、括号匹配等问题，并给出改进建议。
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 总结选项 -->
-                                        <div class="tab-pane fade" id="summary" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <label class="form-label">总结类型</label>
-                                                    <select class="form-select" id="summary-type">
-                                                        <option value="要点">要点提取</option>
-                                                        <option value="摘要" selected>内容摘要</option>
-                                                        <option value="大纲">结构大纲</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 改写选项 -->
-                                        <div class="tab-pane fade" id="rewrite" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-12">
-                                                    <label class="form-label">改写风格</label>
-                                                    <select class="form-select" id="rewrite-style">
-                                                        <option value="formal" selected>正式文体</option>
-                                                        <option value="casual">通俗易懂</option>
-                                                        <option value="academic">学术风格</option>
-                                                        <option value="business">商务风格</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 完整处理选项 -->
-                                        <div class="tab-pane fade" id="complete" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">源语言</label>
-                                                    <select class="form-select" id="complete-from-language">
-                                                        <option value="auto" selected>自动检测</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">目标语言</label>
-                                                    <select class="form-select" id="complete-to-language">
-                                                        <option value="zh" selected>中文（简体）</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">翻译场景</label>
-                                                    <select class="form-select" id="complete-scenario">
-                                                        <option value="general" selected>通用文本</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">改写风格</label>
-                                                    <select class="form-select" id="complete-style">
-                                                        <option value="formal" selected>正式文体</option>
-                                                        <option value="casual">通俗易懂</option>
-                                                        <option value="academic">学术风格</option>
-                                                        <option value="business">商务风格</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <div class="alert alert-success">
-                                                        <i class="fas fa-magic me-2"></i>
-                                                        <strong>完整处理流程：</strong> 翻译 → 语法检查 → 总结 → 改写优化
-                                                        <br><small>将按顺序执行所有处理步骤，为您提供最完整的文档处理服务。</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- 处理按钮 -->
-                                    <div class="d-grid gap-2 mt-4">
-                                        <button class="btn btn-primary" id="process-btn" onclick="processDocument()">
-                                            <i class="fas fa-cogs me-2"></i>开始处理
-                                        </button>
-                                        <button class="btn btn-outline-secondary" onclick="clearInput()">
-                                            <i class="fas fa-eraser me-2"></i>清空内容
-                                        </button>
-                                    </div>
-                                </div>
+                
+                <!-- 结果统计 - 固定在底部，不参与滚动 -->
+                <div class="card-footer bg-transparent border-0 pt-2" id="result-stats" style="display: none;">
+                    <div class="row g-3">
+                        <div class="col-4 text-center">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">处理时间</small>
+                                <div class="fw-bold text-primary" id="process-time">-</div>
                             </div>
                         </div>
-
-                        <!-- 输出区域 -->
-                        <div class="col-lg-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-success text-white">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="card-title mb-0">
-                                            <i class="fas fa-download me-2"></i>处理结果
-                                        </h6>
-                                        <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-light btn-sm" onclick="copyResult()" title="复制结果">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div id="output-area" class="h-100">
-                                        <div class="text-center text-muted py-5" id="placeholder">
-                                            <i class="fas fa-magic fa-3x mb-3"></i>
-                                            <h5>等待处理</h5>
-                                            <p>请在左侧输入内容并选择处理类型</p>
-                                        </div>
-                                        
-                                        <!-- 处理中状态 -->
-                                        <div id="processing" class="text-center py-5 d-none">
-                                            <div class="spinner-border text-primary mb-3" role="status">
-                                                <span class="visually-hidden">处理中...</span>
-                                            </div>
-                                            <h5>正在处理中</h5>
-                                            <p class="text-muted">请稍候，AI正在分析和处理您的内容...</p>
-                                        </div>
-
-                                        <!-- 结果显示区域 -->
-                                        <div id="result-content" class="d-none">
-                                            <div class="border rounded p-3 bg-light" 
-                                                 style="min-height: 400px; white-space: pre-wrap; font-family: inherit;">
-                                                <div id="result-text"></div>
-                                            </div>
-                                            
-                                            <!-- 结果统计 -->
-                                            <div class="mt-3">
-                                                <div class="row text-center">
-                                                    <div class="col-6">
-                                                        <div class="border-end">
-                                                            <div class="fw-bold text-primary" id="result-chars">0</div>
-                                                            <small class="text-muted">字符数</small>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <div class="fw-bold text-info" id="task-type">翻译</div>
-                                                        <small class="text-muted">处理类型</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="col-4 text-center">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">字符数</small>
+                                <div class="fw-bold text-success" id="result-chars">-</div>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">服务</small>
+                                <div class="fw-bold text-info" id="service-used">-</div>
                             </div>
                         </div>
                     </div>
@@ -380,658 +289,1446 @@
             </div>
         </div>
     </div>
+
+    <!-- 快捷示例区域 -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 pb-2">
+                    <h6 class="mb-0 text-muted fw-semibold">
+                        <i class="fas fa-bolt me-2"></i>快捷示例
+                    </h6>
+                </div>
+                <div class="card-body pt-2">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-light w-100 h-100 text-start p-3" onclick="setQuickText('Hello, how are you today?')">
+                                <i class="fas fa-comment text-primary mb-2 fa-lg"></i>
+                                <div class="fw-bold mb-1">日常对话</div>
+                                <small class="text-muted">Hello, how are you today?</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-light w-100 h-100 text-start p-3" onclick="setQuickText('Artificial intelligence is transforming various industries.')">
+                                <i class="fas fa-graduation-cap text-success mb-2 fa-lg"></i>
+                                <div class="fw-bold mb-1">学术文本</div>
+                                <small class="text-muted">Artificial intelligence is...</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-light w-100 h-100 text-start p-3" onclick="setQuickText('The meeting is scheduled for tomorrow at 2 PM.')">
+                                <i class="fas fa-briefcase text-warning mb-2 fa-lg"></i>
+                                <div class="fw-bold mb-1">商务用语</div>
+                                <small class="text-muted">The meeting is scheduled...</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-light w-100 h-100 text-start p-3" onclick="setQuickText('深度学习是机器学习的一个重要分支，它模拟人脑的神经网络结构。')">
+                                <i class="fas fa-cogs text-info mb-2 fa-lg"></i>
+                                <div class="fw-bold mb-1">技术文档</div>
+                                <small class="text-muted">深度学习是机器学习...</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock %}
 
+<style>
+/* 自定义样式 */
+.card {
+    transition: all 0.3s ease;
+    border-radius: 1rem !important;
+}
 
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
 
-{% block extra_js %}
+.btn[data-mode] {
+    transition: all 0.3s ease;
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.btn[data-mode].active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+}
+
+.btn[data-mode]:hover {
+    transform: translateY(-1px);
+}
+
+.form-select, .form-control {
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 0.2rem rgba(77,171,247,0.25);
+    transform: translateY(-1px);
+}
+
+.upload-zone {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover {
+    background-color: rgba(13,110,253,0.1);
+    border-color: #4dabf7 !important;
+}
+
+#input-text {
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+#input-text:focus {
+    background: rgba(248,249,250,0.5);
+}
+
+.result-text {
+    transition: all 0.3s ease;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.spinner-border {
+    border-width: 3px;
+}
+
+/* 语言交换按钮样式 */
+#swap-languages {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+#swap-languages:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+}
+
+#swap-languages:active {
+    transform: scale(0.95);
+}
+
+#swap-languages::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+#swap-languages:hover::before {
+    width: 100px;
+    height: 100px;
+}
+
+#swap-languages i {
+    transition: transform 0.3s ease;
+    z-index: 1;
+    position: relative;
+}
+
+/* 深色模式下的语言交换按钮 */
+[data-theme="dark"] #swap-languages {
+    border-color: #60a5fa !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] #swap-languages:hover {
+    background-color: #60a5fa !important;
+    border-color: #60a5fa !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(96, 165, 250, 0.4);
+}
+
+[data-theme="dark"] #swap-languages::before {
+    background: rgba(96, 165, 250, 0.2);
+}
+
+/* ===========================================
+   深色模式样式 - 文献处理页面专用
+   =========================================== */
+
+/* 深色模式基础调整 */
+[data-theme="dark"] .card:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+}
+
+[data-theme="dark"] .btn[data-mode].active {
+    box-shadow: 0 4px 15px rgba(77,171,247,0.4);
+}
+
+/* 深色模式文本颜色 */
+[data-theme="dark"] .text-dark {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .fw-bold {
+    color: #f1f5f9 !important;
+}
+
+/* 徽章和状态指示器 */
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .badge.bg-primary {
+    background-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-info {
+    background-color: #06b6d4 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-success {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+/* 功能模式按钮 */
+[data-theme="dark"] .btn-outline-secondary {
+    border-color: #64748b !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+    background-color: #64748b !important;
+    border-color: #64748b !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-outline-success {
+    border-color: #22c55e !important;
+    color: #22c55e !important;
+}
+
+[data-theme="dark"] .btn-outline-success:hover {
+    background-color: #22c55e !important;
+    border-color: #22c55e !important;
+}
+
+[data-theme="dark"] .btn-outline-warning {
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+}
+
+[data-theme="dark"] .btn-outline-warning:hover {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+
+[data-theme="dark"] .btn-outline-dark {
+    border-color: #6b7280 !important;
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .btn-outline-dark:hover {
+    background-color: #6b7280 !important;
+    border-color: #6b7280 !important;
+    color: #ffffff !important;
+}
+
+/* 输入框和选择框 */
+[data-theme="dark"] .form-select {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .form-select:focus {
+    background-color: #374151 !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25) !important;
+}
+
+[data-theme="dark"] #input-text {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+}
+
+[data-theme="dark"] #input-text:focus {
+    background-color: #374151 !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25) !important;
+}
+
+[data-theme="dark"] #input-text::placeholder {
+    color: #9ca3af !important;
+}
+
+/* 上传区域 */
+[data-theme="dark"] .upload-zone {
+    border-color: #4b5563 !important;
+    background-color: #1f2937 !important;
+}
+
+[data-theme="dark"] .upload-zone:hover {
+    background-color: rgba(96, 165, 250, 0.1) !important;
+    border-color: #60a5fa !important;
+}
+
+[data-theme="dark"] .border-primary {
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .border-secondary {
+    border-color: #6b7280 !important;
+}
+
+[data-theme="dark"] .text-primary {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .text-secondary {
+    color: #9ca3af !important;
+}
+
+/* 进度条 */
+[data-theme="dark"] .progress {
+    background-color: #374151 !important;
+}
+
+[data-theme="dark"] .progress-bar {
+    background-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .bg-secondary {
+    background-color: #6b7280 !important;
+}
+
+/* 结果区域 */
+[data-theme="dark"] .result-text {
+    color: #e5e7eb !important;
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] #result-placeholder {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] #result-placeholder i {
+    color: #6b7280 !important;
+}
+
+[data-theme="dark"] #result-placeholder h5 {
+    color: #9ca3af !important;
+}
+
+/* 快捷文本按钮 */
+[data-theme="dark"] .btn-light {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .btn-light:hover {
+    background-color: #4b5563 !important;
+    border-color: #6b7280 !important;
+    color: #f3f4f6 !important;
+}
+
+/* 图标颜色调整 */
+[data-theme="dark"] .text-success {
+    color: #22c55e !important;
+}
+
+[data-theme="dark"] .text-warning {
+    color: #f59e0b !important;
+}
+
+[data-theme="dark"] .text-info {
+    color: #06b6d4 !important;
+}
+
+[data-theme="dark"] .text-danger {
+    color: #ef4444 !important;
+}
+
+/* 加载状态 */
+[data-theme="dark"] .spinner-border {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] #loading-state {
+    color: #cbd5e1 !important;
+}
+
+/* 字符计数器 */
+[data-theme="dark"] #char-count {
+    color: #9ca3af !important;
+}
+
+/* 工具提示和小文本 */
+[data-theme="dark"] small {
+    color: #9ca3af !important;
+}
+
+/* 结果统计区域 */
+[data-theme="dark"] .bg-light {
+    background-color: #374151 !important;
+}
+
+[data-theme="dark"] .bg-light .text-muted {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .bg-light .fw-bold {
+    color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .result-text {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+    border-color: #6b7280 !important;
+}
+
+/* 图片预览 */
+[data-theme="dark"] #image-preview img {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 文档预览卡片 */
+[data-theme="dark"] .card.border-secondary {
+    border-color: #6b7280 !important;
+}
+
+/* 透明背景的卡片头部 */
+[data-theme="dark"] .card-header.bg-transparent {
+    background-color: transparent !important;
+    color: #e5e7eb !important;
+}
+
+/* 隐藏/显示元素的状态保持 */
+[data-theme="dark"] .d-none {
+    display: none !important;
+}
+
+/* 深色模式结果统计区域 */
+[data-theme="dark"] #result-stats {
+    border-top-color: #4b5563 !important;
+}
+
+/* 修复深色模式下的文字颜色问题 */
+[data-theme="dark"] .mb-0.text-muted.fw-semibold {
+    color: #e5e7eb !important;
+}
+
+[data-theme="dark"] h6.mb-0.text-muted.fw-semibold {
+    color: #e5e7eb !important;
+}
+
+/* 深色模式下标题图标颜色 */
+[data-theme="dark"] .card-header h6 i {
+    color: #9ca3af !important;
+}
+
+/* ===========================================
+   滚动区域样式
+   =========================================== */
+
+/* 输入和输出区域添加滚动条 */
+.col-lg-6 .card-body.pt-2.pb-2 {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 文本输入区域滚动 */
+#text-input-area {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+#input-text {
+    min-height: 400px;
+    max-height: none;
+    resize: vertical;
+}
+
+/* 结果区域滚动 */
+#result-area {
+    max-height: 470px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.result-text {
+    max-height: none;
+    min-height: 300px;
+}
+
+/* 结果统计区域固定样式 */
+#result-stats {
+    background-color: transparent;
+    border-top: 1px solid #dee2e6;
+    margin-top: 0;
+}
+
+/* 自定义滚动条样式 - 浅色模式 */
+.col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar,
+#text-input-area::-webkit-scrollbar,
+#result-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar-track,
+#text-input-area::-webkit-scrollbar-track,
+#result-area::-webkit-scrollbar-track {
+    background: #f1f3f4;
+    border-radius: 10px;
+}
+
+.col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar-thumb,
+#text-input-area::-webkit-scrollbar-thumb,
+#result-area::-webkit-scrollbar-thumb {
+    background: #c1c7cd;
+    border-radius: 10px;
+}
+
+.col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar-thumb:hover,
+#text-input-area::-webkit-scrollbar-thumb:hover,
+#result-area::-webkit-scrollbar-thumb:hover {
+    background: #a8b0b8;
+}
+
+/* 深色模式滚动条样式 */
+[data-theme="dark"] .col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar-track,
+[data-theme="dark"] #text-input-area::-webkit-scrollbar-track,
+[data-theme="dark"] #result-area::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+[data-theme="dark"] .col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar-thumb,
+[data-theme="dark"] #text-input-area::-webkit-scrollbar-thumb,
+[data-theme="dark"] #result-area::-webkit-scrollbar-thumb {
+    background: #6b7280;
+}
+
+[data-theme="dark"] .col-lg-6 .card-body.pt-2.pb-2::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] #text-input-area::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] #result-area::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .btn[data-mode] {
+        font-size: 0.875rem;
+        padding: 0.75rem 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .col-lg-5, .col-lg-2 {
+        margin-bottom: 1rem;
+    }
+    
+    #swap-languages {
+        margin: 0 auto 1rem auto;
+    }
+    
+    /* 移动端滚动区域高度调整 */
+    .col-lg-6 .card-body.pt-2.pb-2 {
+        max-height: 400px;
+    }
+    
+    #text-input-area {
+        max-height: 350px;
+    }
+    
+    #input-text {
+        min-height: 250px;
+    }
+    
+    #result-area {
+        max-height: 280px;
+    }
+    
+    .result-text {
+        min-height: 200px;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s ease;
+}
+
+#result-content {
+    animation: fadeInUp 0.4s ease;
+}
+</style>
+
 <script>
-    let isProcessing = false;
-    let startTime = 0;
+// 全局变量
+let isProcessing = false;
+let currentMode = 'translate';
+let startTime = 0;
 
-    // 页面加载完成后初始化
-    document.addEventListener('DOMContentLoaded', function() {
-        // 绑定字符计数
-        document.getElementById('input-text').addEventListener('input', updateCharCount);
-        
-        // 绑定标签页切换事件
-        document.querySelectorAll('#taskTabs button').forEach(tab => {
-            tab.addEventListener('shown.bs.tab', function(e) {
-                updateTaskTypeDisplay();
-            });
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+// 初始化应用
+function initializeApp() {
+    bindEvents();
+    loadTranslationConfig();
+    updateCharCount();
+    updateModeDisplay();
+    
+    // 延迟显示功能提示
+    setTimeout(() => {
+        if (document.getElementById('from-language').options.length > 1) {
+            showLanguageSwapHint();
+        }
+    }, 2000);
+}
+
+// 显示语言交换功能提示
+function showLanguageSwapHint() {
+    const swapButton = document.getElementById('swap-languages');
+    if (!swapButton) return;
+    
+    // 检查是否已经显示过提示
+    if (localStorage.getItem('languageSwapHintShown')) return;
+    
+    // 创建提示气泡
+    const hint = document.createElement('div');
+    hint.className = 'language-swap-hint';
+    hint.innerHTML = `
+        <div class="hint-content">
+            <i class="fas fa-lightbulb text-warning me-2"></i>
+            <strong>提示：</strong>点击中间按钮可快速交换源语言和目标语言！
+            <button type="button" class="btn-close btn-close-white ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    hint.style.cssText = `
+        position: absolute;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        opacity: 0;
+        animation: fadeInUp 0.5s ease forwards;
+        max-width: 300px;
+        white-space: nowrap;
+    `;
+    
+    // 添加箭头
+    const arrow = document.createElement('div');
+    arrow.style.cssText = `
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid #667eea;
+    `;
+    hint.appendChild(arrow);
+    
+    // 添加CSS动画
+    if (!document.querySelector('#language-swap-hint-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'language-swap-hint-styles';
+        styles.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+            .language-swap-hint .hint-content {
+                display: flex;
+                align-items: center;
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    // 添加到交换按钮容器
+    const buttonContainer = swapButton.parentElement;
+    buttonContainer.style.position = 'relative';
+    buttonContainer.appendChild(hint);
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+        if (hint.parentElement) {
+            hint.style.opacity = '0';
+            hint.style.transform = 'translateX(-50%) translateY(-10px)';
+            setTimeout(() => {
+                if (hint.parentElement) {
+                    hint.parentElement.removeChild(hint);
+                }
+            }, 300);
+        }
+    }, 5000);
+    
+    // 标记为已显示
+    localStorage.setItem('languageSwapHintShown', 'true');
+}
+
+// 绑定事件
+function bindEvents() {
+    // 字符计数
+    document.getElementById('input-text').addEventListener('input', updateCharCount);
+    
+    // 功能模式切换
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            switchMode(this.dataset.mode);
         });
-
-        // 绑定翻译场景变化事件
-        document.getElementById('translation-scenario').addEventListener('change', updateScenarioDescription);
-        document.getElementById('complete-scenario').addEventListener('change', updateCompleteScenarioDescription);
-        
-        // 绑定图片上传事件
-        document.getElementById('image-upload').addEventListener('change', handleImageUpload);
-
-        updateCharCount();
-        updateTaskTypeDisplay();
-        
-        // 加载翻译配置数据
-        loadTranslationConfig();
     });
+    
+    // 语言交换
+    document.getElementById('swap-languages').addEventListener('click', swapLanguages);
+    
+    // 双击语言选择框也可以交换语言
+    document.getElementById('from-language').addEventListener('dblclick', swapLanguages);
+    document.getElementById('to-language').addEventListener('dblclick', swapLanguages);
+    
+    // 处理按钮
+    document.getElementById('process-btn').addEventListener('click', processContent);
+    
+    // 工具按钮
+    document.getElementById('clear-input').addEventListener('click', clearInput);
+    document.getElementById('paste-text').addEventListener('click', pasteText);
+    document.getElementById('copy-result').addEventListener('click', copyResult);
+    document.getElementById('clear-input-btn').addEventListener('click', clearInput);
+    document.getElementById('clear-result-btn').addEventListener('click', clearResult);
+    
+    // 图片上传
+    document.getElementById('image-upload').addEventListener('change', handleImageUpload);
+    
+    // 文档上传
+    document.getElementById('document-upload').addEventListener('change', handleDocumentUpload);
+    
+    // 键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Shift+S 快速交换语言
+        if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+            e.preventDefault();
+            swapLanguages();
+        }
+    });
+}
 
-    // 更新字符计数
-    function updateCharCount() {
-        const text = document.getElementById('input-text').value;
-        document.getElementById('char-count').textContent = text.length;
+// 交换源语言和目标语言
+function swapLanguages() {
+    const fromSelect = document.getElementById('from-language');
+    const toSelect = document.getElementById('to-language');
+    
+    // 获取当前选中的值
+    const fromValue = fromSelect.value;
+    const toValue = toSelect.value;
+    
+    // 检查是否可以交换（auto不能作为目标语言）
+    if (fromValue === 'auto') {
+        showToast('自动检测语言不能作为目标语言', 'warning');
+        return;
     }
-
-    // 更新任务类型显示
-    function updateTaskTypeDisplay() {
-        const activeTab = document.querySelector('#taskTabs .nav-link.active');
-        const taskType = activeTab.textContent.trim();
-        document.getElementById('task-type').textContent = taskType;
+    
+    if (fromValue === toValue) {
+        showToast('源语言和目标语言相同，无需交换', 'info');
+        return;
     }
+    
+    // 执行交换
+    fromSelect.value = toValue;
+    toSelect.value = fromValue;
+    
+    // 添加视觉反馈动画
+    const swapButton = document.getElementById('swap-languages');
+    swapButton.style.transform = 'rotate(180deg)';
+    swapButton.style.transition = 'transform 0.3s ease';
+    
+    setTimeout(() => {
+        swapButton.style.transform = 'rotate(0deg)';
+    }, 300);
+    
+    // 显示成功提示
+    const fromLanguageName = fromSelect.options[fromSelect.selectedIndex].text;
+    const toLanguageName = toSelect.options[toSelect.selectedIndex].text;
+    
+    showToast(`已交换语言：${toLanguageName} ↔ ${fromLanguageName}`, 'success');
+    
+    console.log('🔄 语言交换完成:', {
+        从: toLanguageName + ' (' + toValue + ')',
+        到: fromLanguageName + ' (' + fromValue + ')'
+    });
+}
 
-    // 加载翻译配置数据
-    async function loadTranslationConfig() {
-        try {
-            // 加载支持的语言
-            const languagesResponse = await fetch('/api/translation/languages');
-            if (languagesResponse.ok) {
-                const languagesData = await languagesResponse.json();
-                populateLanguageSelects(languagesData.languages);
-            }
+// 切换功能模式
+function switchMode(mode) {
+    currentMode = mode;
+    
+    // 更新按钮状态
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+    
+    // 更新界面显示
+    updateModeDisplay();
+    updateProviderByCurrentMode();
+}
 
-            // 加载翻译场景
-            const scenariosResponse = await fetch('/api/translation/scenarios');
-            if (scenariosResponse.ok) {
-                const scenariosData = await scenariosResponse.json();
-                populateScenarioSelects(scenariosData.scenarios);
-            }
-
-            // 加载翻译提供商状态
-            const providerResponse = await fetch('/api/translation/provider');
-            if (providerResponse.ok) {
-                const providerData = await providerResponse.json();
-                updateProviderStatus(providerData.provider);
-            }
-        } catch (error) {
-            console.error('加载翻译配置失败:', error);
-            showToast('加载翻译配置失败', 'warning');
+// 更新模式显示
+function updateModeDisplay() {
+    const languageControls = document.getElementById('language-controls');
+    const imageUploadArea = document.getElementById('image-upload-area');
+    const documentUploadArea = document.getElementById('document-upload-area');
+    const textInputArea = document.getElementById('text-input-area');
+    const domainSelection = document.getElementById('domain-selection');
+    const processBtn = document.getElementById('process-btn');
+    const fileUploadBtn = document.getElementById('file-upload');
+    
+    // 重置显示
+    languageControls.classList.remove('d-none');
+    imageUploadArea.classList.add('d-none');
+    documentUploadArea.classList.add('d-none');
+    textInputArea.classList.remove('d-none');
+    domainSelection.classList.add('d-none');
+    fileUploadBtn.classList.remove('d-none');
+    
+    const modeConfig = {
+        'translate': {
+            title: '开始翻译',
+            icon: 'fas fa-language',
+            placeholder: '输入需要翻译的文本内容...',
+            showLanguages: true,
+            hideFileUpload: true
+        },
+        'document_translate': {
+            title: '文档翻译',
+            icon: 'fas fa-file-alt',
+            placeholder: '上传文档进行翻译...',
+            showLanguages: true,
+            showDocumentUpload: true
+        },
+        'image_translate': {
+            title: '图片翻译',
+            icon: 'fas fa-image',
+            placeholder: '上传包含文字的图片进行识别翻译...',
+            showLanguages: true,
+            showImageUpload: true
+        },
+        'domain_translate': {
+            title: '领域翻译',
+            icon: 'fas fa-graduation-cap',
+            placeholder: '输入专业领域文本进行翻译...',
+            showLanguages: true,
+            showDomainSelection: true
+        },
+        'ai_translate': {
+            title: 'AI翻译',
+            icon: 'fas fa-brain',
+            placeholder: '输入文本，AI将提供智能翻译...',
+            showLanguages: true
+        },
+        'grammar_check': {
+            title: '语法检查',
+            icon: 'fas fa-spell-check',
+            placeholder: '输入文本进行语法检查和纠错...',
+            showLanguages: false
+        },
+        'summary': {
+            title: '智能总结',
+            icon: 'fas fa-compress-alt',
+            placeholder: '输入长文本进行智能总结...',
+            showLanguages: false
+        },
+        'rewrite': {
+            title: '文段改写',
+            icon: 'fas fa-edit',
+            placeholder: '输入文本进行改写优化...',
+            showLanguages: false
+        }
+    };
+    
+    const config = modeConfig[currentMode];
+    if (config) {
+        // 更新处理按钮
+        processBtn.innerHTML = `<i class="${config.icon} me-2"></i>${config.title}`;
+        
+        // 更新输入框placeholder
+        document.getElementById('input-text').placeholder = config.placeholder;
+        
+        // 控制语言选择显示
+        if (!config.showLanguages) {
+            languageControls.classList.add('d-none');
+        }
+        
+        // 控制图片上传显示
+        if (config.showImageUpload) {
+            imageUploadArea.classList.remove('d-none');
+            textInputArea.classList.add('d-none');
+        }
+        
+        // 控制文档上传显示
+        if (config.showDocumentUpload) {
+            documentUploadArea.classList.remove('d-none');
+            textInputArea.classList.add('d-none');
+        }
+        
+        // 控制领域选择显示
+        if (config.showDomainSelection) {
+            domainSelection.classList.remove('d-none');
+        }
+        
+        // 控制上传文件按钮显示
+        if (config.hideFileUpload) {
+            fileUploadBtn.classList.add('d-none');
         }
     }
+}
 
-    // 更新翻译提供商状态显示
-    function updateProviderStatus(provider) {
-        const statusElement = document.getElementById('provider-status');
-        if (!statusElement) return;
-        
-        if (provider.current_provider === 'dify') {
-            statusElement.innerHTML = '<i class="fas fa-robot me-1"></i>DIFY AI';
-            statusElement.className = 'badge bg-success ms-1';
-        } else if (provider.current_provider === 'baidu') {
+// 根据当前模式更新服务提供商显示
+function updateProviderByCurrentMode() {
+    const statusElement = document.getElementById('provider-status');
+    if (!statusElement) return;
+    
+    switch(currentMode) {
+        case 'translate':
+        case 'image_translate':
+        case 'document_translate':
+        case 'domain_translate':
             statusElement.innerHTML = '<i class="fas fa-globe me-1"></i>百度翻译';
-            statusElement.className = 'badge bg-primary ms-1';
-        }
-        
-        statusElement.title = provider.note || '智能翻译服务';
-    }
-
-    // 填充语言选择器
-    function populateLanguageSelects(languages) {
-        const selects = [
-            'from-language', 
-            'to-language', 
-            'domain-from-language',
-            'domain-to-language',
-            'image-from-language',
-            'image-to-language',
-            'api-from-language',
-            'api-to-language',
-            'complete-from-language', 
-            'complete-to-language'
-        ];
-
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            const currentValue = select.value;
+            statusElement.className = 'badge bg-primary';
+            statusElement.title = '百度翻译API服务 - 专业翻译引擎';
+            break;
             
-            // 清空现有选项（除了默认选项）
-            select.innerHTML = '';
+        case 'ai_translate':
+            statusElement.innerHTML = '<i class="fas fa-brain me-1"></i>DeepSeek AI';
+            statusElement.className = 'badge bg-info';
+            statusElement.title = 'DeepSeek智能翻译 - 通过Dify调用';
+            break;
             
-            // 添加语言选项
-            Object.entries(languages).forEach(([code, name]) => {
-                const option = document.createElement('option');
-                option.value = code;
-                option.textContent = name;
-                
-                // 保持之前的选择或设置默认值
-                if (code === currentValue || 
-                    (selectId.includes('from') && code === 'auto') ||
-                    (selectId.includes('to') && code === 'zh')) {
-                    option.selected = true;
-                }
-                
-                select.appendChild(option);
-            });
-        });
+        default:
+            statusElement.innerHTML = '<i class="fas fa-robot me-1"></i>AI智能处理';
+            statusElement.className = 'badge bg-success';
+            statusElement.title = 'AI智能处理服务 - 语法检查、总结、改写';
     }
+}
 
-    // 填充场景选择器
-    function populateScenarioSelects(scenarios) {
-        const selects = ['translation-scenario', 'complete-scenario'];
-
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            const currentValue = select.value;
-            
-            // 清空现有选项
-            select.innerHTML = '';
-            
-            // 添加场景选项
-            Object.entries(scenarios).forEach(([key, scenario]) => {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = scenario.name;
-                option.setAttribute('data-description', scenario.description);
-                
-                // 保持之前的选择或设置默认值
-                if (key === currentValue || key === 'general') {
-                    option.selected = true;
-                }
-                
-                select.appendChild(option);
-            });
-        });
-
-        // 更新场景描述
-        updateScenarioDescription();
-        updateCompleteScenarioDescription();
+// 其他功能函数...
+function updateCharCount() {
+    const text = document.getElementById('input-text').value;
+    const count = text.length;
+    const counter = document.getElementById('char-count');
+    
+    counter.textContent = count;
+    
+    if (count > 4500) {
+        counter.className = 'text-danger fw-bold';
+    } else if (count > 3000) {
+        counter.className = 'text-warning fw-bold';
+    } else {
+        counter.className = 'text-muted';
     }
+}
 
-    // 更新翻译场景描述
-    function updateScenarioDescription() {
-        const select = document.getElementById('translation-scenario');
-        const selectedOption = select.options[select.selectedIndex];
-        const description = selectedOption.getAttribute('data-description') || '';
-        document.getElementById('scenario-description').textContent = description;
+function swapLanguages() {
+    const fromLang = document.getElementById('from-language');
+    const toLang = document.getElementById('to-language');
+    
+    if (fromLang.value !== 'auto') {
+        const temp = fromLang.value;
+        fromLang.value = toLang.value;
+        toLang.value = temp;
     }
+}
 
-    // 更新完整处理场景描述
-    function updateCompleteScenarioDescription() {
-        const select = document.getElementById('complete-scenario');
-        const selectedOption = select.options[select.selectedIndex];
-        // 这里可以添加完整处理场景描述的更新逻辑
+function clearInput() {
+    document.getElementById('input-text').value = '';
+    updateCharCount();
+    document.getElementById('result-placeholder').classList.remove('d-none');
+    document.getElementById('result-content').classList.add('d-none');
+    document.getElementById('copy-result').classList.add('d-none');
+    document.getElementById('download-result').classList.add('d-none');
+    document.getElementById('clear-result-btn').classList.add('d-none');
+    document.getElementById('result-stats').style.display = 'none';
+}
+
+function clearResult() {
+    document.getElementById('result-placeholder').classList.remove('d-none');
+    document.getElementById('result-content').classList.add('d-none');
+    document.getElementById('copy-result').classList.add('d-none');
+    document.getElementById('download-result').classList.add('d-none');
+    document.getElementById('clear-result-btn').classList.add('d-none');
+    document.getElementById('result-stats').style.display = 'none';
+    
+    // 清空结果文本
+    const resultText = document.querySelector('#result-content .result-text');
+    if (resultText) {
+        resultText.textContent = '';
     }
+    
+    showToast('结果已清空', 'success');
+}
 
-    // 处理图片上传
-    function handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (file) {
-            // 检查文件大小（4MB限制）
-            if (file.size > 4 * 1024 * 1024) {
-                showToast('图片大小不能超过4MB', 'error');
-                event.target.value = '';
-                return;
-            }
-            
-            // 检查文件类型
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp'];
-            if (!allowedTypes.includes(file.type)) {
-                showToast('请选择JPG、PNG或BMP格式的图片', 'error');
-                event.target.value = '';
-                return;
-            }
-            
-            // 显示图片预览
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('image-preview').src = e.target.result;
-                document.getElementById('image-preview-container').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            // 隐藏预览
-            document.getElementById('image-preview-container').style.display = 'none';
-        }
+function setQuickText(text) {
+    document.getElementById('input-text').value = text;
+    updateCharCount();
+}
+
+async function pasteText() {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('input-text').value = text;
+        updateCharCount();
+        showToast('文本已粘贴', 'success');
+    } catch (err) {
+        showToast('粘贴失败，请手动粘贴', 'warning');
     }
+}
 
-    // 处理文档
-    async function processDocument() {
-        if (isProcessing) {
-            showToast('正在处理中，请稍候...', 'warning');
+async function copyResult() {
+    const resultText = document.querySelector('#result-content .result-text').textContent;
+    try {
+        await navigator.clipboard.writeText(resultText);
+        showToast('结果已复制到剪贴板', 'success');
+    } catch (err) {
+        showToast('复制失败', 'error');
+    }
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('图片大小不能超过10MB', 'error');
             return;
         }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('image-preview');
+            const img = preview.querySelector('img');
+            img.src = e.target.result;
+            preview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+}
 
-        const content = document.getElementById('input-text').value.trim();
+function removeImage() {
+    document.getElementById('image-upload').value = '';
+    document.getElementById('image-preview').classList.add('d-none');
+}
+
+function handleDocumentUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // 检查文件大小（50MB限制）
+        if (file.size > 50 * 1024 * 1024) {
+            showToast('文档大小不能超过50MB', 'error');
+            return;
+        }
+        
+        // 检查文件格式
+        const allowedTypes = ['doc', 'docx', 'pdf', 'txt', 'html', 'htm', 'xls', 'xlsx', 'ppt', 'pptx', 'xml'];
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        if (!allowedTypes.includes(fileExt)) {
+            showToast('不支持的文件格式', 'error');
+            return;
+        }
+        
+        // 显示文档预览
+        const preview = document.getElementById('document-preview');
+        const nameElement = document.getElementById('document-name');
+        const sizeElement = document.getElementById('document-size');
+        
+        nameElement.textContent = file.name;
+        sizeElement.textContent = `文件大小: ${formatFileSize(file.size)}`;
+        
+        preview.classList.remove('d-none');
+        
+        // 更新上传状态
+        document.getElementById('upload-status').textContent = '准备翻译...';
+        document.getElementById('upload-progress').style.width = '0%';
+    }
+}
+
+function removeDocument() {
+    document.getElementById('document-upload').value = '';
+    document.getElementById('document-preview').classList.add('d-none');
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 处理内容
+async function processContent() {
+    if (isProcessing) return;
+    
+    const content = document.getElementById('input-text').value.trim();
+    
+    // 验证输入
+    if (currentMode === 'image_translate') {
+        const imageInput = document.getElementById('image-upload');
+        if (!imageInput.files[0]) {
+            showToast('请先上传图片', 'warning');
+            return;
+        }
+    } else if (currentMode === 'document_translate') {
+        const documentInput = document.getElementById('document-upload');
+        if (!documentInput.files[0]) {
+            showToast('请先上传文档', 'warning');
+            return;
+        }
+    } else {
         if (!content) {
             showToast('请输入要处理的内容', 'warning');
             return;
         }
+    }
+    
+    isProcessing = true;
+    startTime = Date.now();
+    
+    showProcessingState(true);
+    updateProcessButton(true);
+    
+    try {
+        await sendProcessRequest(content);
+    } catch (error) {
+        console.error('处理失败:', error);
+        showToast(error.message || '处理失败，请重试', 'error');
+    } finally {
+        isProcessing = false;
+        showProcessingState(false);
+        updateProcessButton(false);
+    }
+}
 
-        // 获取当前任务类型
-        const activeTab = document.querySelector('#taskTabs .nav-link.active');
-        const taskType = activeTab.id.replace('-tab', '');
-
-        // 获取配置参数
-        let config = {};
-        if (taskType === 'translate') {
-            config.from_lang = document.getElementById('from-language').value;
-            config.to_lang = document.getElementById('to-language').value;
-            config.scenario = document.getElementById('translation-scenario').value;
-        } else if (taskType === 'domain_translate') {
-            config.from_lang = document.getElementById('domain-from-language').value;
-            config.to_lang = document.getElementById('domain-to-language').value;
-            config.domain = document.getElementById('translation-domain').value;
-        } else if (taskType === 'image_translate') {
-            const imageFile = document.getElementById('image-upload').files[0];
-            if (!imageFile) {
-                showToast('请先上传图片', 'warning');
-                return;
-            }
-            config.from_lang = document.getElementById('image-from-language').value;
-            config.to_lang = document.getElementById('image-to-language').value;
-            config.image_file = imageFile;
-        } else if (taskType === 'api_translate') {
-            config.from_lang = document.getElementById('api-from-language').value;
-            config.to_lang = document.getElementById('api-to-language').value;
-        } else if (taskType === 'grammar_check') {
-            // 语法检查不需要额外配置
-        } else if (taskType === 'summary') {
-            config.summary_length = 200; // 默认总结长度
-        } else if (taskType === 'rewrite') {
-            config.style = document.getElementById('rewrite-style').value;
-        } else if (taskType === 'complete') {
-            config.from_lang = document.getElementById('complete-from-language').value;
-            config.to_lang = document.getElementById('complete-to-language').value;
-            config.scenario = document.getElementById('complete-scenario').value;
-            config.rewrite_style = document.getElementById('complete-style').value;
-            config.summary_length = 200;
+async function sendProcessRequest(content) {
+    let requestType = currentMode;
+    // 文本翻译使用百度API，不需要修改requestType
+    // AI翻译使用Dify API，前端模式是ai_translate，后端期望api_translate
+    if (currentMode === 'ai_translate') requestType = 'api_translate';
+    if (currentMode === 'domain_translate') requestType = 'domain_translate';
+    
+    let response;
+    
+    if (currentMode === 'document_translate') {
+        // 文档翻译使用专门的API
+        const documentInput = document.getElementById('document-upload');
+        if (!documentInput.files[0]) {
+            throw new Error('请先上传文档');
         }
-
-        isProcessing = true;
-        startTime = Date.now();
         
-        // 显示处理状态
-        showProcessingState();
-
-        try {
-            let response;
+        const formData = new FormData();
+        formData.append('file', documentInput.files[0]);
+        formData.append('from_lang', document.getElementById('from-language').value);
+        formData.append('to_lang', document.getElementById('to-language').value);
+        
+        // 更新上传状态
+        document.getElementById('upload-status').textContent = '正在上传翻译...';
+        document.getElementById('upload-progress').style.width = '50%';
+        
+        response = await fetch('/api/translation/document/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) throw new Error('文档上传失败');
+        
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('upload-status').textContent = '翻译任务已提交，正在处理...';
+            document.getElementById('upload-progress').style.width = '100%';
             
-            if (taskType === 'image_translate') {
-                // 图片翻译使用FormData
-                const formData = new FormData();
-                formData.append('type', taskType);
-                formData.append('from_lang', config.from_lang || 'auto');
-                formData.append('to_lang', config.to_lang || 'zh');
-                formData.append('image', config.image_file);
-                
-                response = await fetch('/api/document/process', {
-                    method: 'POST',
-                    body: formData
-                });
-            } else {
-                // 其他翻译类型使用JSON
-                response = await fetch('/api/document/process', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        type: taskType,
-                        content: content,
-                        from_lang: config.from_lang || 'auto',
-                        to_lang: config.to_lang || 'zh',
-                        scenario: config.scenario || 'general',
-                        domain: config.domain || 'academic',
-                        style: config.style || config.rewrite_style || 'formal',
-                        summary_length: config.summary_length || 200
-                    })
-                });
-            }
-
-            if (!response.ok) {
-                throw new Error('处理请求失败');
-            }
-
-            // 处理流式响应
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            let resultText = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop(); // 保留不完整的行
-
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
+            // 显示结果
+            showResult(`文档翻译任务已提交成功！\n\n任务ID: ${result.request_id}\n\n${result.message}\n\n请稍后查询翻译进度。`);
+            return;
+        } else {
+            throw new Error(result.error || '文档翻译失败');
+        }
+    } else if (currentMode === 'image_translate') {
+        // 图片翻译使用FormData
+        const imageInput = document.getElementById('image-upload');
+        if (!imageInput.files[0]) {
+            throw new Error('请先上传图片');
+        }
+        
+        const formData = new FormData();
+        formData.append('type', requestType);
+        formData.append('image', imageInput.files[0]);
+        formData.append('from_lang', document.getElementById('from-language').value);
+        formData.append('to_lang', document.getElementById('to-language').value);
+        if (currentMode === 'domain_translate') {
+            formData.append('domain', document.getElementById('translation-domain').value);
+        }
+        
+        response = await fetch('/api/document/process', {
+            method: 'POST',
+            body: formData
+        });
+    } else {
+        // 其他类型使用JSON
+        const requestData = {
+            type: requestType,
+            content: content,
+            from_lang: document.getElementById('from-language').value,
+            to_lang: document.getElementById('to-language').value
+        };
+        
+        // 只在领域翻译时添加domain参数
+        if (currentMode === 'domain_translate') {
+            requestData.domain = document.getElementById('translation-domain').value;
+        }
+        
+        response = await fetch('/api/document/process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
+    }
+    
+    if (!response.ok) throw new Error('请求失败');
+    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let resultText = '';
+    
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+            if (line.startsWith('data: ')) {
+                try {
+                    const data = JSON.parse(line.slice(6));
+                    
+                    if (data.type === 'end') {
+                        showResult(resultText);
+                        return;
+                    } else if (data.type === 'image_translation_result' && data.content) {
+                        // 处理图片翻译结果
+                        if (data.content.success) {
+                            const translatedTexts = data.content.translated_texts || [];
+                            const originalTexts = data.content.original_texts || [];
                             
-                            if (data.type === 'message') {
-                                // 兼容旧格式
-                                resultText = data.full_content;
-                                updateResult(resultText);
-                            } else if (data.type === 'translation_result') {
-                                // 翻译结果
-                                resultText = data.content;
-                                updateTranslationResult(data);
-                            } else if (data.type === 'grammar_result') {
-                                // 语法检查结果
-                                updateGrammarResult(data.content);
-                            } else if (data.type === 'summary_result') {
-                                // 总结结果
-                                updateSummaryResult(data.content);
-                            } else if (data.type === 'rewrite_result') {
-                                // 改写结果
-                                updateRewriteResult(data.content);
-                            } else if (data.type === 'processing_step') {
-                                // 完整处理步骤
-                                updateProcessingStep(data);
-                            } else if (data.type === 'end') {
-                                showResultState(resultText);
-                            } else if (data.error) {
-                                throw new Error(data.error);
+                            let displayText = '';
+                            if (translatedTexts.length > 0) {
+                                displayText = '图片翻译结果：\n\n';
+                                for (let i = 0; i < Math.max(originalTexts.length, translatedTexts.length); i++) {
+                                    if (originalTexts[i] && translatedTexts[i]) {
+                                        displayText += `原文：${originalTexts[i]}\n`;
+                                        displayText += `译文：${translatedTexts[i]}\n\n`;
+                                    }
+                                }
+                            } else {
+                                displayText = '未能识别图片中的文字内容';
                             }
-                        } catch (e) {
-                            console.error('解析响应数据失败:', e);
+                            resultText = displayText;
+                            updateResult(resultText);
+                        } else {
+                            throw new Error(data.content.error || '图片翻译失败');
                         }
+                    } else if (data.content) {
+                        resultText += data.content;
+                        updateResult(resultText);
+                    } else if (data.error) {
+                        throw new Error(data.error);
+                    }
+                } catch (e) {
+                    if (e.message !== 'Unexpected end of JSON input') {
+                        console.error('解析响应失败:', e);
                     }
                 }
             }
-
-        } catch (error) {
-            showToast(`处理失败: ${error.message}`, 'error');
-            showPlaceholderState();
-        } finally {
-            isProcessing = false;
         }
     }
+}
 
-    // 显示处理状态
-    function showProcessingState() {
-        document.getElementById('placeholder').classList.add('d-none');
-        document.getElementById('result-content').classList.add('d-none');
-        document.getElementById('processing').classList.remove('d-none');
-        document.getElementById('process-btn').disabled = true;
+function showProcessingState(show) {
+    const placeholder = document.getElementById('result-placeholder');
+    const loading = document.getElementById('loading-state');
+    const content = document.getElementById('result-content');
+    
+    if (show) {
+        placeholder.classList.add('d-none');
+        loading.classList.remove('d-none');
+        content.classList.add('d-none');
+    } else {
+        loading.classList.add('d-none');
     }
+}
 
-    // 显示结果状态
-    function showResultState(text) {
-        document.getElementById('processing').classList.add('d-none');
-        document.getElementById('result-content').classList.remove('d-none');
-        document.getElementById('process-btn').disabled = false;
-
-        // 更新统计信息
-        const processTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        document.getElementById('result-chars').textContent = text.length;
-        document.getElementById('process-time').textContent = processTime;
-    }
-
-    // 显示占位符状态
-    function showPlaceholderState() {
-        document.getElementById('processing').classList.add('d-none');
-        document.getElementById('result-content').classList.add('d-none');
-        document.getElementById('placeholder').classList.remove('d-none');
-        document.getElementById('process-btn').disabled = false;
-    }
-
-    // 更新结果内容
-    function updateResult(text) {
-        document.getElementById('result-text').textContent = text;
-    }
-
-    // 更新翻译结果
-    function updateTranslationResult(data) {
-        const resultDiv = document.getElementById('result-text');
-        resultDiv.innerHTML = `
-            <div class="translation-result">
-                <div class="mb-3">
-                    <h6><i class="fas fa-language me-2"></i>翻译结果</h6>
-                    <div class="border rounded p-3 bg-light">${data.content}</div>
-                </div>
-                <div class="row mt-3 text-center">
-                    <div class="col-4">
-                        <small class="text-muted">源语言</small><br>
-                        <span class="badge bg-info">${data.from_lang}</span>
-                    </div>
-                    <div class="col-4">
-                        <small class="text-muted">目标语言</small><br>
-                        <span class="badge bg-success">${data.to_lang}</span>
-                    </div>
-                    <div class="col-4">
-                        <small class="text-muted">字符数</small><br>
-                        <span class="fw-bold">${data.content.length}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // 更新语法检查结果
-    function updateGrammarResult(result) {
-        const resultDiv = document.getElementById('result-text');
-        if (result.success) {
-            let suggestionsHtml = '';
-            if (result.suggestions && result.suggestions.length > 0) {
-                suggestionsHtml = result.suggestions.map(s => `<li>${s}</li>`).join('');
-                suggestionsHtml = `<ul class="mt-2">${suggestionsHtml}</ul>`;
-            } else {
-                suggestionsHtml = '<p class="text-success mt-2">未发现语法问题 ✓</p>';
-            }
-
-            resultDiv.innerHTML = `
-                <div class="grammar-result">
-                    <h6><i class="fas fa-spell-check me-2"></i>语法检查结果</h6>
-                    <div class="mb-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="me-2">语法评分:</span>
-                            <div class="progress flex-grow-1 me-2" style="height: 20px;">
-                                <div class="progress-bar bg-${result.grammar_score >= 80 ? 'success' : result.grammar_score >= 60 ? 'warning' : 'danger'}" 
-                                     style="width: ${result.grammar_score}%">${result.grammar_score}分</div>
-                            </div>
-                        </div>
-                        <div>
-                            <strong>改进建议:</strong>
-                            ${suggestionsHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger">语法检查失败: ${result.error}</div>`;
-        }
-    }
-
-    // 更新总结结果
-    function updateSummaryResult(result) {
-        const resultDiv = document.getElementById('result-text');
-        if (result.success) {
-            resultDiv.innerHTML = `
-                <div class="summary-result">
-                    <h6><i class="fas fa-compress-alt me-2"></i>总结结果</h6>
-                    <div class="border rounded p-3 bg-light mb-3">${result.summary}</div>
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <small class="text-muted">原文长度</small><br>
-                            <span class="fw-bold">${result.original_length}</span>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted">总结长度</small><br>
-                            <span class="fw-bold">${result.summary_length}</span>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted">压缩比</small><br>
-                            <span class="fw-bold">${(result.compression_ratio * 100).toFixed(1)}%</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger">总结失败: ${result.error}</div>`;
-        }
-    }
-
-    // 更新改写结果
-    function updateRewriteResult(result) {
-        const resultDiv = document.getElementById('result-text');
-        if (result.success) {
-            let improvementsHtml = '';
-            if (result.improvements && result.improvements.length > 0) {
-                improvementsHtml = result.improvements.map(i => `<li>${i}</li>`).join('');
-                improvementsHtml = `<ul class="mt-2">${improvementsHtml}</ul>`;
-            } else {
-                improvementsHtml = '<p class="text-muted mt-2">未发现需要改进的地方</p>';
-            }
-
-            resultDiv.innerHTML = `
-                <div class="rewrite-result">
-                    <h6><i class="fas fa-edit me-2"></i>改写结果</h6>
-                    <div class="mb-3">
-                        <div class="mb-2">
-                            <small class="text-muted">原文:</small>
-                            <div class="border rounded p-2 bg-light">${result.original_text}</div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">改写:</small>
-                            <div class="border rounded p-2 bg-success-subtle">${result.rewritten_text}</div>
-                        </div>
-                        <div>
-                            <strong>改进内容 (${result.improvements.length}处):</strong>
-                            ${improvementsHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger">改写失败: ${result.error}</div>`;
-        }
-    }
-
-    // 更新完整处理步骤
-    function updateProcessingStep(data) {
-        const resultDiv = document.getElementById('result-text');
-        const stepName = data.step_name_cn;
-        const success = data.success;
-        const content = data.content;
-
-        // 如果是第一步，初始化结果容器
-        if (data.step === 'translation') {
-            resultDiv.innerHTML = `
-                <div class="complete-processing">
-                    <h6><i class="fas fa-magic me-2"></i>完整处理结果</h6>
-                    <div id="processing-steps"></div>
-                </div>
-            `;
-        }
-
-        const stepsContainer = document.getElementById('processing-steps');
-        const stepDiv = document.createElement('div');
-        stepDiv.className = 'processing-step mb-3';
+function updateResult(text) {
+    const resultContent = document.getElementById('result-content');
+    const resultText = resultContent.querySelector('.result-text');
+    
+    resultText.textContent = text;
+    
+    if (resultContent.classList.contains('d-none')) {
+        document.getElementById('result-placeholder').classList.add('d-none');
+        document.getElementById('loading-state').classList.add('d-none');
+        resultContent.classList.remove('d-none');
         
-        if (success) {
-            stepDiv.innerHTML = `
-                <div class="d-flex align-items-center mb-2">
-                    <i class="fas fa-check-circle text-success me-2"></i>
-                    <strong>${stepName}</strong>
-                </div>
-                <div class="ps-4">
-                    ${getStepResultHtml(data.step, content)}
-                </div>
-            `;
-        } else {
-            stepDiv.innerHTML = `
-                <div class="d-flex align-items-center mb-2">
-                    <i class="fas fa-times-circle text-danger me-2"></i>
-                    <strong>${stepName}</strong>
-                </div>
-                <div class="ps-4 text-danger">
-                    错误: ${content.error}
-                </div>
-            `;
-        }
-
-        stepsContainer.appendChild(stepDiv);
+        document.getElementById('copy-result').classList.remove('d-none');
+        document.getElementById('download-result').classList.remove('d-none');
+        document.getElementById('clear-result-btn').classList.remove('d-none');
     }
+}
 
-    // 获取步骤结果HTML
-    function getStepResultHtml(step, content) {
-        switch (step) {
-            case 'translation':
-                return `<div class="border rounded p-2 bg-light">${content.translated_text}</div>`;
-            case 'grammar_check':
-                return `<div>语法评分: ${content.grammar_score}分, 建议: ${content.suggestions.length}条</div>`;
-            case 'summary':
-                return `<div class="border rounded p-2 bg-info-subtle">${content.summary}</div>`;
-            case 'rewrite':
-                return `<div class="border rounded p-2 bg-success-subtle">${content.rewritten_text}</div>`;
-            default:
-                return `<div>${JSON.stringify(content, null, 2)}</div>`;
-        }
+function showResult(text) {
+    updateResult(text);
+    
+    const processTime = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
+    const charCount = text.length;
+    const serviceUsed = getServiceName();
+    
+    document.getElementById('process-time').textContent = processTime;
+    document.getElementById('result-chars').textContent = charCount;
+    document.getElementById('service-used').textContent = serviceUsed;
+    
+    // 显示结果统计区域
+    document.getElementById('result-stats').style.display = 'block';
+}
+
+function getServiceName() {
+    const statusElement = document.getElementById('provider-status');
+    return statusElement.textContent.trim();
+}
+
+function updateProcessButton(processing) {
+    const btn = document.getElementById('process-btn');
+    
+    if (processing) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>处理中...';
+    } else {
+        btn.disabled = false;
+        updateModeDisplay();
     }
+}
 
-    // 复制结果
-    async function copyResult() {
-        const resultText = document.getElementById('result-text').textContent;
-        if (!resultText) {
-            showToast('没有可复制的内容', 'warning');
-            return;
+async function loadTranslationConfig() {
+    try {
+        const languagesResponse = await fetch('/api/translation/languages');
+        if (languagesResponse.ok) {
+            const languagesData = await languagesResponse.json();
+            populateLanguageSelects(languagesData.languages);
         }
+        
 
-        try {
-            await navigator.clipboard.writeText(resultText);
-            showToast('结果已复制到剪贴板', 'success');
-        } catch (err) {
-            showToast('复制失败', 'error');
-        }
+        
+        updateProviderByCurrentMode();
+        
+    } catch (error) {
+        console.error('加载配置失败:', error);
     }
+}
 
-    // 清空输入
-    function clearInput() {
-        if (confirm('确定要清空输入内容吗？')) {
-            document.getElementById('input-text').value = '';
-            updateCharCount();
-            showPlaceholderState();
+function populateLanguageSelects(languages) {
+    const fromSelect = document.getElementById('from-language');
+    const toSelect = document.getElementById('to-language');
+    
+    fromSelect.innerHTML = '<option value="auto">自动检测语言</option>';
+    toSelect.innerHTML = '';
+    
+    Object.entries(languages).forEach(([code, name]) => {
+        if (code !== 'auto') {
+            const toOption = document.createElement('option');
+            toOption.value = code;
+            toOption.textContent = name;
+            if (code === 'zh') toOption.selected = true;
+            toSelect.appendChild(toOption);
+            
+            const fromOption = document.createElement('option');
+            fromOption.value = code;
+            fromOption.textContent = name;
+            fromSelect.appendChild(fromOption);
         }
-    }
+    });
+}
+
+
+
+function showToast(message, type = 'info') {
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const toast = document.createElement('div');
+    toast.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2);';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+            ${message}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
 </script>
-
-<style>
-    .border-dashed {
-        border-style: dashed !important;
-    }
-    
-    .border-2 {
-        border-width: 2px !important;
-    }
-    
-    #output-area {
-        min-height: 500px;
-    }
-    
-    .nav-tabs .nav-link.active {
-        background-color: #007bff;
-        color: white !important;
-        border-color: #007bff;
-    }
-    
-    .progress {
-        height: 6px;
-    }
-    
-    .border-end {
-        border-right: 1px solid #dee2e6;
-    }
-    
-    @media (max-width: 768px) {
-        .border-end {
-            border-right: none;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-        }
-    }
-</style>
-{% endblock %} 
+{% endblock %}
