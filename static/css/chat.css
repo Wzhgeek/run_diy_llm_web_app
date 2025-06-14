@@ -3145,3 +3145,224 @@ body.sidebar-resizing .sidebar-resizer-line {
         display: none !important;
     }
 }
+
+/* 功能切换按钮样式 */
+.feature-toggle-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 12px;
+}
+
+.feature-btn-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.feature-toggle-btn {
+    position: relative;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--sidebar-text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.feature-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(44, 90, 160, 0.15);
+}
+
+.feature-toggle-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), #1864ab);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 16px rgba(44, 90, 160, 0.3);
+}
+
+.feature-toggle-btn.active:hover {
+    background: linear-gradient(135deg, #1864ab, var(--primary-color));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(44, 90, 160, 0.4);
+}
+
+.feature-toggle-btn i {
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+.feature-toggle-btn span {
+    font-size: 12px;
+}
+
+.feature-help-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    cursor: help;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.feature-help-icon i {
+    font-size: 10px;
+    color: var(--sidebar-text-secondary);
+    transition: all 0.2s ease;
+}
+
+.feature-help-icon:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.feature-help-icon:hover i {
+    color: var(--primary-color);
+}
+
+/* 深色模式下的功能切换按钮样式 */
+[data-theme="dark"] .feature-toggle-buttons {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .feature-toggle-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: var(--border-color);
+    color: var(--sidebar-text-secondary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .feature-toggle-btn:hover {
+    background: rgba(51, 65, 85, 0.9);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .feature-toggle-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.3);
+}
+
+[data-theme="dark"] .feature-toggle-btn.active:hover {
+    background: linear-gradient(135deg, #3b82f6, var(--primary-color));
+    box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+}
+
+[data-theme="dark"] .feature-help-icon i {
+    color: var(--sidebar-text-secondary);
+}
+
+[data-theme="dark"] .feature-help-icon:hover i {
+    color: var(--primary-color);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .feature-toggle-buttons {
+        gap: 6px;
+        padding: 6px 0;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .feature-btn-group {
+        flex: 0 0 calc(50% - 3px);
+        margin-bottom: 4px;
+    }
+    
+    .feature-toggle-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+        flex: 1;
+    }
+    
+    .feature-toggle-btn span {
+        font-size: 11px;
+    }
+    
+    .feature-toggle-btn i {
+        font-size: 11px;
+    }
+    
+    .feature-help-icon {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .feature-help-icon i {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .feature-toggle-buttons {
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: center;
+    }
+    
+    .feature-btn-group {
+        flex: 0 0 calc(50% - 2px);
+        margin-bottom: 4px;
+    }
+    
+    .feature-toggle-btn {
+        padding: 6px 12px;
+        border-radius: 16px;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .feature-toggle-btn span {
+        font-size: 10px;
+    }
+    
+    .feature-toggle-btn i {
+        font-size: 10px;
+        margin-right: 2px;
+    }
+    
+    .feature-help-icon {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .feature-help-icon i {
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 360px) {
+    .feature-btn-group {
+        flex: 0 0 calc(25% - 3px);
+    }
+    
+    .feature-toggle-btn span {
+        display: none;
+    }
+    
+    .feature-toggle-btn i {
+        margin-right: 0;
+    }
+    
+    .feature-help-icon {
+        display: none;
+    }
+}

@@ -183,6 +183,46 @@
                     
             <!-- 输入框区域 -->
             <div class="input-container">
+                <!-- 功能切换按钮 -->
+                <div class="feature-toggle-buttons mb-2">
+                    <div class="feature-btn-group">
+                        <button class="btn btn-sm btn-outline-secondary feature-toggle-btn" id="webSearchToggle" onclick="toggleWebSearch()" title="启用网络搜索">
+                            <i class="fas fa-globe"></i>
+                            <span class="ms-1">网络搜索</span>
+                        </button>
+                        <div class="feature-help-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="开启可以搜索最新信息">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                    </div>
+                    <div class="feature-btn-group">
+                        <button class="btn btn-sm btn-outline-secondary feature-toggle-btn" id="codeModeToggle" onclick="toggleCodeMode()" title="启用代码模式">
+                            <i class="fas fa-code"></i>
+                            <span class="ms-1">代码模式</span>
+                        </button>
+                        <div class="feature-help-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="更好理解和生成代码">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                    </div>
+                    <div class="feature-btn-group">
+                        <button class="btn btn-sm btn-outline-secondary feature-toggle-btn" id="agentModeToggle" onclick="toggleAgentMode()" title="启用Agent模式">
+                            <i class="fas fa-robot"></i>
+                            <span class="ms-1">Agent模式</span>
+                        </button>
+                        <div class="feature-help-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="AI自主探索，不可与网络搜索、代码模式同时开启">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                    </div>
+                    <div class="feature-btn-group">
+                        <button class="btn btn-sm btn-outline-secondary feature-toggle-btn" id="dataReportToggle" onclick="toggleDataReport()" title="启用数据报表">
+                            <i class="fas fa-chart-bar"></i>
+                            <span class="ms-1">数据报表</span>
+                        </button>
+                        <div class="feature-help-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="侧栏生成报表，上传图片和Agent模式不支持">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="input-group">
                     <button class="btn btn-outline-secondary" type="button" onclick="triggerFileUpload('file')" title="上传文件">
                         <i class="fas fa-paperclip"></i>

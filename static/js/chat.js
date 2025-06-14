@@ -8,11 +8,21 @@ let currentTask = null;
 let uploadedFile = null;
 let conversationToDelete = null;
 let conversationToRename = null;
+let webSearchEnabled = false;  // 网络搜索功能状态
+let codeModeEnabled = false;   // 代码模式功能状态
+let agentModeEnabled = false;  // Agent模式功能状态
+let dataReportEnabled = false; // 数据报表功能状态
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     initializeChat();
     loadConversations();
+    // 延迟执行以确保DOM元素已加载
+    setTimeout(() => {
+        resetFeatureToggleButtons();
+        // 初始化Bootstrap tooltips
+        initializeTooltips();
+    }, 100);
 });
 
 // 初始化聊天
@@ -473,10 +483,20 @@ async function sendMessage() {
             requestData.conversation_id = currentConversationId;
         }
         
+        // 初始化inputs对象
+        if (!requestData.inputs) {
+            requestData.inputs = {};
+        }
+        
+        // 添加功能切换参数（始终包含，启用时为1，未启用时为0）
+        requestData.inputs.enable_web_search = webSearchEnabled ? 1 : 0;
+        requestData.inputs.enable_code = codeModeEnabled ? 1 : 0;
+        requestData.inputs.enable_agent_mode = agentModeEnabled ? 1 : 0;
+        requestData.inputs.enable_data_report = dataReportEnabled ? 1 : 0;
+        
         // 根据文件类型添加inputs（按照新的格式）
         if (currentFileInfo) {
             const fileType = getFileType(currentFileInfo.mime_type || currentFileInfo.type);
-            requestData.inputs = {};
             
             if (fileType === 'image') {
                 requestData.inputs.input_image = {
@@ -2384,4 +2404,155 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-} 
+}
+
+// 功能切换按钮相关函数
+function toggleWebSearch() {
+    // 检查Agent模式是否已启用
+    if (!webSearchEnabled && agentModeEnabled) {
+        showToast('Agent模式已启用，无法同时启用网络搜索', 'warning');
+        return;
+    }
+    
+    webSearchEnabled = !webSearchEnabled;
+    const button = document.getElementById('webSearchToggle');
+    
+    if (webSearchEnabled) {
+        button.classList.add('active');
+        button.title = '关闭网络搜索';
+        console.log('✅ 网络搜索功能已启用');
+        showToast('网络搜索功能已启用', 'success');
+    } else {
+        button.classList.remove('active');
+        button.title = '启用网络搜索';
+        console.log('❌ 网络搜索功能已关闭');
+        showToast('网络搜索功能已关闭', 'info');
+    }
+}
+
+function toggleCodeMode() {
+    // 检查Agent模式是否已启用
+    if (!codeModeEnabled && agentModeEnabled) {
+        showToast('Agent模式已启用，无法同时启用代码模式', 'warning');
+        return;
+    }
+    
+    codeModeEnabled = !codeModeEnabled;
+    const button = document.getElementById('codeModeToggle');
+    
+    if (codeModeEnabled) {
+        button.classList.add('active');
+        button.title = '关闭代码模式';
+        console.log('✅ 代码模式已启用');
+        showToast('代码模式已启用', 'success');
+    } else {
+        button.classList.remove('active');
+        button.title = '启用代码模式';
+        console.log('❌ 代码模式已关闭');
+        showToast('代码模式已关闭', 'info');
+    }
+}
+
+function toggleAgentMode() {
+    agentModeEnabled = !agentModeEnabled;
+    const button = document.getElementById('agentModeToggle');
+    
+    if (agentModeEnabled) {
+        // 启用Agent模式时，自动禁用网络搜索和代码模式
+        if (webSearchEnabled) {
+            webSearchEnabled = false;
+            const webSearchButton = document.getElementById('webSearchToggle');
+            webSearchButton.classList.remove('active');
+            webSearchButton.title = '启用网络搜索';
+            console.log('❌ 网络搜索功能已自动关闭（因为启用了Agent模式）');
+        }
+        
+        if (codeModeEnabled) {
+            codeModeEnabled = false;
+            const codeModeButton = document.getElementById('codeModeToggle');
+            codeModeButton.classList.remove('active');
+            codeModeButton.title = '启用代码模式';
+            console.log('❌ 代码模式已自动关闭（因为启用了Agent模式）');
+        }
+        
+        button.classList.add('active');
+        button.title = '关闭Agent模式';
+        console.log('✅ Agent模式已启用');
+        showToast('Agent模式已启用，网络搜索和代码模式已自动关闭', 'success');
+    } else {
+        button.classList.remove('active');
+        button.title = '启用Agent模式';
+        console.log('❌ Agent模式已关闭');
+        showToast('Agent模式已关闭', 'info');
+    }
+}
+
+function toggleDataReport() {
+    dataReportEnabled = !dataReportEnabled;
+    const button = document.getElementById('dataReportToggle');
+    
+    if (dataReportEnabled) {
+        button.classList.add('active');
+        button.title = '关闭数据报表';
+        console.log('✅ 数据报表已启用');
+        showToast('数据报表已启用', 'success');
+    } else {
+        button.classList.remove('active');
+        button.title = '启用数据报表';
+        console.log('❌ 数据报表已关闭');
+        showToast('数据报表已关闭', 'info');
+    }
+}
+
+// 重置功能切换按钮状态（页面刷新时调用）
+function resetFeatureToggleButtons() {
+    webSearchEnabled = false;
+    codeModeEnabled = false;
+    agentModeEnabled = false;
+    dataReportEnabled = false;
+    
+    const webSearchButton = document.getElementById('webSearchToggle');
+    const codeModeButton = document.getElementById('codeModeToggle');
+    const agentModeButton = document.getElementById('agentModeToggle');
+    const dataReportButton = document.getElementById('dataReportToggle');
+    
+    if (webSearchButton) {
+        webSearchButton.classList.remove('active');
+        webSearchButton.title = '启用网络搜索';
+    }
+    
+    if (codeModeButton) {
+        codeModeButton.classList.remove('active');
+        codeModeButton.title = '启用代码模式';
+    }
+    
+    if (agentModeButton) {
+        agentModeButton.classList.remove('active');
+        agentModeButton.title = '启用Agent模式';
+    }
+    
+    if (dataReportButton) {
+        dataReportButton.classList.remove('active');
+        dataReportButton.title = '启用数据报表';
+    }
+    
+    console.log('🔄 功能切换按钮状态已重置');
+}
+
+// 初始化Bootstrap tooltips
+function initializeTooltips() {
+    // 检查Bootstrap是否已加载
+    if (typeof bootstrap !== 'undefined') {
+        // 初始化所有tooltip
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                delay: { show: 500, hide: 100 }
+            });
+        });
+        console.log('✅ Bootstrap tooltips 初始化完成');
+    } else {
+        console.warn('⚠️ Bootstrap 未加载，无法初始化 tooltips');
+    }
+}
+
