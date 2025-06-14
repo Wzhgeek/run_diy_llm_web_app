@@ -23,6 +23,9 @@ function initializeChat() {
     
     // 初始化markdown渲染
     initializeMarkdown();
+    
+    // 初始化侧边栏拖拽调整
+    initializeSidebarResize();
 }
 
 // 初始化Markdown渲染
@@ -51,7 +54,143 @@ function initializeMarkdown() {
 
 // 初始化侧边栏拖拽调节
 function initializeSidebarResize() {
-    // 使用Bootstrap响应式布局，不需要手动调节功能
+    console.log('🔧 初始化侧边栏拖拽调节功能...');
+    
+    const sidebarResizer = document.getElementById('sidebarResizer');
+    const sidebarPanel = document.getElementById('sidebarPanel');
+    const chatPanel = document.getElementById('chatPanel');
+    
+    if (!sidebarResizer || !sidebarPanel || !chatPanel) {
+        console.warn('侧边栏拖拽：关键DOM元素不存在');
+        return;
+    }
+    
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    const minWidth = 250; // 最小宽度
+    const maxWidth = 600; // 最大宽度
+    
+    // 获取当前侧边栏宽度（从localStorage或默认值）
+    function getCurrentSidebarWidth() {
+        const saved = localStorage.getItem('sidebarWidth');
+        return saved ? parseInt(saved) : 320; // 默认320px
+    }
+    
+    // 设置侧边栏宽度
+    function setSidebarWidth(width) {
+        const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, width));
+        const percentage = (constrainedWidth / window.innerWidth) * 100;
+        
+        // 更新DOM样式
+        sidebarPanel.style.width = `${constrainedWidth}px`;
+        sidebarPanel.style.flexBasis = `${constrainedWidth}px`;
+        sidebarPanel.style.minWidth = `${constrainedWidth}px`;
+        sidebarPanel.style.maxWidth = `${constrainedWidth}px`;
+        
+        // 更新聊天面板
+        chatPanel.style.width = `calc(100% - ${constrainedWidth}px)`;
+        chatPanel.style.flexBasis = `calc(100% - ${constrainedWidth}px)`;
+        
+        // 保存到localStorage
+        localStorage.setItem('sidebarWidth', constrainedWidth.toString());
+        
+        return constrainedWidth;
+    }
+    
+    // 创建拖拽遮罩
+    function createResizeOverlay() {
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-resize-overlay';
+        overlay.id = 'sidebarResizeOverlay';
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+    
+    // 移除拖拽遮罩
+    function removeResizeOverlay() {
+        const overlay = document.getElementById('sidebarResizeOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+    
+    // 开始拖拽
+    function startResize(e) {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = getCurrentSidebarWidth();
+        
+        // 添加视觉反馈
+        sidebarResizer.classList.add('dragging');
+        document.body.classList.add('sidebar-resizing');
+        
+        // 创建遮罩
+        const overlay = createResizeOverlay();
+        
+        // 绑定事件
+        overlay.addEventListener('mousemove', handleResize);
+        overlay.addEventListener('mouseup', stopResize);
+        
+        console.log('🎯 开始拖拽调整侧边栏宽度', { startX, startWidth });
+    }
+    
+    // 处理拖拽
+    function handleResize(e) {
+        if (!isResizing) return;
+        
+        const deltaX = e.clientX - startX;
+        const newWidth = startWidth + deltaX;
+        setSidebarWidth(newWidth);
+    }
+    
+    // 结束拖拽
+    function stopResize() {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        
+        // 移除视觉反馈
+        sidebarResizer.classList.remove('dragging');
+        document.body.classList.remove('sidebar-resizing');
+        
+        // 移除遮罩
+        removeResizeOverlay();
+        
+        console.log('✅ 拖拽调整完成，当前宽度：', getCurrentSidebarWidth());
+    }
+    
+    // 绑定事件
+    sidebarResizer.addEventListener('mousedown', startResize);
+    
+    // 双击重置宽度
+    sidebarResizer.addEventListener('dblclick', () => {
+        setSidebarWidth(320); // 重置为默认宽度
+        console.log('🔄 重置侧边栏宽度为默认值');
+    });
+    
+    // 页面加载时应用保存的宽度
+    const savedWidth = getCurrentSidebarWidth();
+    setSidebarWidth(savedWidth);
+    
+    // 窗口大小改变时重新调整
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) {
+            // 移动端时重置样式
+            sidebarPanel.style.width = '';
+            sidebarPanel.style.flexBasis = '';
+            sidebarPanel.style.minWidth = '';
+            sidebarPanel.style.maxWidth = '';
+            chatPanel.style.width = '';
+            chatPanel.style.flexBasis = '';
+        } else {
+            // 桌面端时应用保存的宽度
+            setSidebarWidth(getCurrentSidebarWidth());
+        }
+    });
+    
+    console.log('✅ 侧边栏拖拽调节功能初始化完成');
 }
 
 // 隐藏侧边栏
@@ -401,6 +540,16 @@ async function handleStreamResponse(response, existingMessageElement = null) {
     let fullResponse = '';
     let taskId = null;
     
+    // 思考过程状态跟踪
+    let thinkingState = {
+        isInThinking: false,
+        thinkingContent: '',
+        thinkingId: null,
+        displayContent: '',  // 累积的显示内容
+        completedThinking: [],  // 已完成的思考过程
+        activeThinking: null  // 正在进行的思考过程
+    };
+    
     // 显示停止按钮
     showStopButton();
     
@@ -444,10 +593,21 @@ async function handleStreamResponse(response, existingMessageElement = null) {
                                 }
                             }
                             
+                            // 处理流式思考过程
+                            const newDisplayContent = processStreamThinking(data.answer, thinkingState);
+                            if (newDisplayContent) {
+                                thinkingState.displayContent += newDisplayContent;
+                            }
+                            
                             fullResponse += data.answer;
-                            updateMessageContent(assistantMessageElement, fullResponse);
+                            
+                            // 更新显示内容
+                            updateMessageContentWithThinking(assistantMessageElement, thinkingState);
                             
                         } else if (data.event === 'message_end') {
+                            // 处理任何剩余的思考过程
+                            finalizeStreamThinking(assistantMessageElement, thinkingState);
+                            
                             if (assistantMessageElement) {
                                 // 从数据中获取messageId
                                 const messageId = data.id || data.message_id;
@@ -495,6 +655,169 @@ async function handleStreamResponse(response, existingMessageElement = null) {
         if (assistantMessageElement) {
             finalizeMessage(assistantMessageElement);
         }
+    }
+}
+
+// 处理流式思考过程
+function processStreamThinking(newContent, thinkingState) {
+    let displayContent = '';
+    let contentToProcess = newContent;
+    
+    while (contentToProcess.length > 0) {
+        if (!thinkingState.isInThinking) {
+            // 查找思考开始标签
+            const thinkStartIndex = contentToProcess.indexOf('<think>');
+            if (thinkStartIndex !== -1) {
+                // 添加思考开始之前的内容到显示内容
+                displayContent += contentToProcess.substring(0, thinkStartIndex);
+                
+                // 进入思考模式，立即创建思考过程容器
+                thinkingState.isInThinking = true;
+                thinkingState.thinkingContent = '';
+                thinkingState.thinkingId = `thinking-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                
+                // 添加到正在进行的思考过程（用于实时显示）
+                thinkingState.activeThinking = {
+                    id: thinkingState.thinkingId,
+                    content: ''
+                };
+                
+                // 继续处理剩余内容
+                contentToProcess = contentToProcess.substring(thinkStartIndex + 7); // 7 = '<think>'.length
+            } else {
+                // 没有思考开始标签，全部添加到显示内容
+                displayContent += contentToProcess;
+                contentToProcess = '';
+            }
+        } else {
+            // 在思考过程中，查找思考结束标签
+            const thinkEndIndex = contentToProcess.indexOf('</think>');
+            if (thinkEndIndex !== -1) {
+                // 添加到思考内容（结束标签之前的内容）
+                const finalThinkingContent = contentToProcess.substring(0, thinkEndIndex);
+                thinkingState.thinkingContent += finalThinkingContent;
+                
+                // 更新正在进行的思考过程
+                if (thinkingState.activeThinking) {
+                    thinkingState.activeThinking.content = thinkingState.thinkingContent;
+                }
+                
+                // 完成思考过程，移动到已完成列表
+                thinkingState.completedThinking.push({
+                    id: thinkingState.thinkingId,
+                    content: thinkingState.thinkingContent
+                });
+                
+                // 退出思考模式，清理状态
+                thinkingState.isInThinking = false;
+                thinkingState.thinkingContent = '';
+                thinkingState.thinkingId = null;
+                thinkingState.activeThinking = null;
+                
+                // 继续处理剩余内容
+                contentToProcess = contentToProcess.substring(thinkEndIndex + 8); // 8 = '</think>'.length
+            } else {
+                // 没有思考结束标签，全部添加到思考内容（流式更新）
+                thinkingState.thinkingContent += contentToProcess;
+                
+                // 实时更新正在进行的思考过程
+                if (thinkingState.activeThinking) {
+                    thinkingState.activeThinking.content = thinkingState.thinkingContent;
+                }
+                
+                contentToProcess = '';
+            }
+        }
+    }
+    
+    return displayContent;
+}
+
+// 更新消息内容并处理思考过程
+function updateMessageContentWithThinking(messageElement, thinkingState) {
+    const textElement = messageElement.querySelector('.message-text');
+    const typingIndicator = messageElement.querySelector('.typing-indicator');
+    
+    if (textElement) {
+        // 构建显示内容
+        let displayHtml = '';
+        
+        // 添加所有已完成的思考过程
+        thinkingState.completedThinking.forEach(thinking => {
+            displayHtml += createThinkingHTML(thinking.id, thinking.content);
+        });
+        
+        // 添加正在进行的思考过程（如果存在）
+        if (thinkingState.activeThinking) {
+            displayHtml += createThinkingHTML(
+                thinkingState.activeThinking.id, 
+                thinkingState.activeThinking.content,
+                true  // 标记为正在进行中
+            );
+        }
+        
+        // 添加正常内容（经过Markdown渲染）
+        if (thinkingState.displayContent) {
+            displayHtml += renderMarkdown(thinkingState.displayContent);
+        }
+        
+        textElement.innerHTML = displayHtml;
+        
+        // 触发代码块的语法高亮
+        if (typeof hljs !== 'undefined') {
+            const codeBlocks = textElement.querySelectorAll('pre code');
+            codeBlocks.forEach(block => {
+                hljs.highlightElement(block);
+            });
+        }
+    }
+    
+    if (typingIndicator && (thinkingState.displayContent || thinkingState.activeThinking)) {
+        typingIndicator.style.display = 'inline';
+    }
+    
+    // 滚动到底部
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// 创建思考过程HTML结构
+function createThinkingHTML(thinkingId, thinkingContent, isActive = false) {
+    // 如果是正在进行的思考过程，添加特殊样式和打字机效果
+    const activeClass = isActive ? ' thinking-active' : '';
+    const typingIndicator = isActive ? '<span class="thinking-typing">▋</span>' : '';
+    
+    return `
+        <div class="thinking-container${activeClass}" data-thinking-id="${thinkingId}">
+            <div class="thinking-header" onclick="toggleThinking('${thinkingId}')">
+                <div class="thinking-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="thinking-title">思考过程${isActive ? ' (正在思考...)' : ''}</div>
+                <div class="thinking-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="thinking-content" id="${thinkingId}">
+                <div class="thinking-text">${thinkingContent.trim()}${typingIndicator}</div>
+            </div>
+        </div>
+    `;
+}
+
+// 完成流式思考过程处理
+function finalizeStreamThinking(messageElement, thinkingState) {
+    if (thinkingState.isInThinking && thinkingState.thinkingContent) {
+        // 如果还在思考过程中但消息已结束，强制完成思考过程
+        thinkingState.completedThinking.push({
+            id: thinkingState.thinkingId || `thinking-final-${Date.now()}`,
+            content: thinkingState.thinkingContent
+        });
+        thinkingState.isInThinking = false;
+        thinkingState.activeThinking = null;
+        
+        // 更新最终显示
+        updateMessageContentWithThinking(messageElement, thinkingState);
     }
 }
 
@@ -722,9 +1045,66 @@ function renderMarkdown(content) {
     }
 }
 
-// 格式化消息内容
+// 解析思考过程内容
+function parseThinkingContent(content) {
+    // 使用正则表达式查找 <think>...</think> 标签
+    const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
+    let parsedContent = content;
+    let thinkingId = 0;
+    
+    // 替换所有的 <think> 标签为特殊的HTML结构
+    parsedContent = parsedContent.replace(thinkRegex, (match, thinkContent) => {
+        thinkingId++;
+        const uniqueId = `thinking-${Date.now()}-${thinkingId}`;
+        
+        return `
+            <div class="thinking-container" data-thinking-id="${uniqueId}">
+                <div class="thinking-header" onclick="toggleThinking('${uniqueId}')">
+                    <div class="thinking-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="thinking-title">思考过程</div>
+                    <div class="thinking-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="thinking-content" id="${uniqueId}">
+                    <div class="thinking-text">${thinkContent.trim()}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    return parsedContent;
+}
+
+// 切换思考过程的显示/隐藏
+function toggleThinking(thinkingId) {
+    const container = document.querySelector(`[data-thinking-id="${thinkingId}"]`);
+    const content = document.getElementById(thinkingId);
+    const toggle = container.querySelector('.thinking-toggle i');
+    
+    if (content.classList.contains('collapsed')) {
+        // 展开
+        content.classList.remove('collapsed');
+        toggle.classList.remove('fa-chevron-right');
+        toggle.classList.add('fa-chevron-down');
+        container.classList.remove('collapsed');
+    } else {
+        // 折叠
+        content.classList.add('collapsed');
+        toggle.classList.remove('fa-chevron-down');
+        toggle.classList.add('fa-chevron-right');
+        container.classList.add('collapsed');
+    }
+}
+
 function formatMessageContent(content) {
-    return renderMarkdown(content);
+    // 对于历史消息，仍然使用完整的思考过程解析
+    // 首先解析思考过程内容
+    const contentWithThinking = parseThinkingContent(content);
+    // 然后进行Markdown渲染
+    return renderMarkdown(contentWithThinking);
 }
 
 // 测试markdown渲染（用于调试）

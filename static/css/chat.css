@@ -769,6 +769,7 @@
     height: 100% !important;
     max-height: 100%;
     margin: 0;
+    flex-wrap: nowrap; /* 防止换行，确保拖拽布局正常 */
 }
 
 .col-md-3,
@@ -776,6 +777,16 @@
     height: 100%;
     max-height: 100%;
     overflow: hidden;
+    transition: width 0.1s ease; /* 添加平滑过渡效果 */
+}
+
+/* 确保拖拽时列不会换行 */
+.col-md-3 {
+    flex: 0 0 auto; /* 固定宽度，不自动伸缩 */
+}
+
+.col-md-9 {
+    flex: 1 1 auto; /* 自动填充剩余空间 */
 }
 
 /* 左侧对话历史面板容器美化 */
@@ -2726,5 +2737,411 @@
     .message-text th,
     .message-text td {
         padding: 0.3em 0.5em;
+    }
+}
+
+/* ==================== 思考过程样式 ==================== */
+
+/* 思考过程容器 */
+.thinking-container {
+    margin: 12px 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.thinking-container:hover {
+    border-color: #d1d5db;
+}
+
+/* 思考过程头部 */
+.thinking-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.thinking-header:hover {
+    background: #e5e7eb;
+}
+
+/* 思考过程图标 */
+.thinking-icon {
+    margin-right: 8px;
+    font-size: 14px;
+    color: #6b7280;
+    width: 20px;
+    text-align: center;
+}
+
+/* 思考过程标题 */
+.thinking-title {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin: 0;
+}
+
+/* 展开/折叠图标 */
+.thinking-toggle {
+    margin-left: 8px;
+    color: #9ca3af;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.thinking-toggle i {
+    transition: transform 0.2s ease;
+}
+
+/* 思考过程内容 */
+.thinking-content {
+    max-height: 300px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.thinking-content.collapsed {
+    max-height: 0;
+}
+
+/* 思考过程文本 */
+.thinking-text {
+    padding: 12px;
+    background: #ffffff;
+    color: #4b5563;
+    font-size: 12px;
+    line-height: 1.5;
+    font-style: italic;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* 折叠状态样式 */
+.thinking-container.collapsed .thinking-header {
+    border-bottom: none;
+}
+
+/* ==================== 流式思考过程样式 ==================== */
+
+/* 正在进行的思考过程 - 简化版本 */
+.thinking-container.thinking-active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.thinking-container.thinking-active .thinking-header {
+    background: #dbeafe;
+}
+
+.thinking-container.thinking-active .thinking-icon {
+    color: #3b82f6;
+}
+
+.thinking-container.thinking-active .thinking-title {
+    color: #1e40af;
+    font-weight: 600;
+}
+
+/* 简单的打字机效果 */
+.thinking-typing {
+    color: #3b82f6;
+    font-weight: normal;
+    animation: simpleBlink 1.2s infinite;
+    margin-left: 1px;
+}
+
+@keyframes simpleBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* 正在思考时的文本区域 */
+.thinking-container.thinking-active .thinking-text {
+    background: #ffffff;
+    color: #374151;
+    border-left: 2px solid #3b82f6;
+    padding-left: 14px;
+}
+
+/* ==================== 深色主题下的简化思考过程 ==================== */
+
+[data-theme="dark"] .thinking-container {
+    border-color: #4b5563;
+    background: #1f2937;
+}
+
+[data-theme="dark"] .thinking-container:hover {
+    border-color: #6b7280;
+}
+
+[data-theme="dark"] .thinking-header {
+    background: #374151;
+    border-bottom-color: #4b5563;
+}
+
+[data-theme="dark"] .thinking-header:hover {
+    background: #4b5563;
+}
+
+[data-theme="dark"] .thinking-icon {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .thinking-title {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .thinking-toggle {
+    color: #6b7280;
+}
+
+[data-theme="dark"] .thinking-text {
+    background: #111827;
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .thinking-container.thinking-active {
+    border-color: #60a5fa;
+    background: #1e3a8a;
+}
+
+[data-theme="dark"] .thinking-container.thinking-active .thinking-header {
+    background: #1e40af;
+}
+
+[data-theme="dark"] .thinking-container.thinking-active .thinking-icon {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .thinking-container.thinking-active .thinking-title {
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .thinking-typing {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .thinking-container.thinking-active .thinking-text {
+    background: #111827;
+    color: #e5e7eb;
+    border-left-color: #60a5fa;
+}
+
+/* ==================== 可拖拽分隔条样式 ==================== */
+
+/* 分隔条容器 */
+.sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px; /* 位于面板右边缘 */
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background: transparent;
+    border-radius: 3px;
+}
+
+/* 分隔条可视线条 */
+.sidebar-resizer-line {
+    width: 2px;
+    height: 40px;
+    background: var(--border-color);
+    border-radius: 2px;
+    opacity: 0.3;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* 分隔条线条的小圆点装饰 */
+.sidebar-resizer-line::before,
+.sidebar-resizer-line::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.sidebar-resizer-line::before {
+    top: -6px;
+}
+
+.sidebar-resizer-line::after {
+    bottom: -6px;
+}
+
+/* 悬浮状态 */
+.sidebar-resizer:hover {
+    background: rgba(44, 90, 160, 0.05);
+}
+
+.sidebar-resizer:hover .sidebar-resizer-line {
+    opacity: 1;
+    background: var(--primary-color);
+    height: 60px;
+    width: 3px;
+    box-shadow: 0 2px 8px rgba(44, 90, 160, 0.3);
+}
+
+.sidebar-resizer:hover .sidebar-resizer-line::before,
+.sidebar-resizer:hover .sidebar-resizer-line::after {
+    opacity: 1;
+    background: var(--primary-color);
+}
+
+/* 拖拽状态 */
+.sidebar-resizer.dragging {
+    background: rgba(44, 90, 160, 0.1);
+}
+
+.sidebar-resizer.dragging .sidebar-resizer-line {
+    opacity: 1;
+    background: var(--primary-color);
+    height: 80px;
+    width: 4px;
+    box-shadow: 0 4px 16px rgba(44, 90, 160, 0.4);
+}
+
+.sidebar-resizer.dragging .sidebar-resizer-line::before,
+.sidebar-resizer.dragging .sidebar-resizer-line::after {
+    opacity: 1;
+    background: var(--primary-color);
+    width: 6px;
+    height: 6px;
+}
+
+/* 拖拽时的全屏遮罩 */
+.sidebar-resize-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    cursor: col-resize;
+    z-index: 9999;
+    background: transparent;
+    user-select: none;
+}
+
+/* 确保分隔条在面板容器内 */
+.col-md-3.p-0 {
+    position: relative;
+}
+
+/* 拖拽时禁用文本选择 */
+body.sidebar-resizing {
+    user-select: none;
+    cursor: col-resize;
+}
+
+body.sidebar-resizing * {
+    user-select: none;
+    pointer-events: none;
+}
+
+body.sidebar-resizing .sidebar-resizer,
+body.sidebar-resizing .sidebar-resize-overlay {
+    pointer-events: auto;
+}
+
+/* 拖拽时的动画效果 */
+body.sidebar-resizing .sidebar-resizer-line {
+    animation: resizePulse 0.8s ease-in-out infinite;
+}
+
+@keyframes resizePulse {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(44, 90, 160, 0.4);
+    }
+    50% {
+        box-shadow: 0 6px 24px rgba(44, 90, 160, 0.6);
+    }
+}
+
+/* ==================== 深色主题下的分隔条样式 ==================== */
+
+[data-theme="dark"] .sidebar-resizer:hover {
+    background: rgba(96, 165, 250, 0.08);
+}
+
+[data-theme="dark"] .sidebar-resizer:hover .sidebar-resizer-line {
+    background: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
+}
+
+[data-theme="dark"] .sidebar-resizer:hover .sidebar-resizer-line::before,
+[data-theme="dark"] .sidebar-resizer:hover .sidebar-resizer-line::after {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] .sidebar-resizer.dragging {
+    background: rgba(96, 165, 250, 0.15);
+}
+
+[data-theme="dark"] .sidebar-resizer.dragging .sidebar-resizer-line {
+    background: var(--primary-color);
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.5);
+}
+
+[data-theme="dark"] .sidebar-resizer.dragging .sidebar-resizer-line::before,
+[data-theme="dark"] .sidebar-resizer.dragging .sidebar-resizer-line::after {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] body.sidebar-resizing .sidebar-resizer-line {
+    animation: resizePulseDark 0.8s ease-in-out infinite;
+}
+
+@keyframes resizePulseDark {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(96, 165, 250, 0.5);
+    }
+    50% {
+        box-shadow: 0 6px 24px rgba(96, 165, 250, 0.7);
+    }
+}
+
+/* ==================== 响应式设计 ==================== */
+
+/* 在移动端隐藏分隔条 */
+@media (max-width: 768px) {
+    .sidebar-resizer {
+        display: none;
+    }
+    
+    /* 移动端时重置列布局 */
+    .row.h-100 {
+        flex-wrap: wrap;
+    }
+    
+    .col-md-3,
+    .col-md-9 {
+        transition: none;
+    }
+}
+
+/* 超小屏幕下完全隐藏 */
+@media (max-width: 480px) {
+    .sidebar-resizer {
+        display: none !important;
     }
 }
