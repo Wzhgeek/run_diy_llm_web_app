@@ -1461,6 +1461,88 @@ def send_message():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/reports', methods=['POST'])
+def save_report():
+    """保存数据报表"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "无效的请求数据"}), 400
+        
+        report_html = data.get('html')
+        filename = data.get('filename')
+        
+        if not report_html or not filename:
+            return jsonify({"error": "缺少必需的参数"}), 400
+        
+        # 确保文件名安全
+        safe_filename = secure_filename(filename)
+        if not safe_filename.endswith('.html'):
+            safe_filename += '.html'
+        
+        # 保存报表文件
+        reports_dir = 'reports'
+        os.makedirs(reports_dir, exist_ok=True)
+        file_path = os.path.join(reports_dir, safe_filename)
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(report_html)
+        
+        return jsonify({
+            "success": True,
+            "filename": safe_filename,
+            "path": file_path,
+            "download_url": url_for('download_report', filename=safe_filename)
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"保存报表失败: {str(e)}"}), 500
+
+@app.route('/api/reports/<filename>')
+def download_report(filename):
+    """下载数据报表"""
+    try:
+        safe_filename = secure_filename(filename)
+        file_path = os.path.join('reports', safe_filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": "报表文件不存在"}), 404
+        
+        from flask import send_file
+        return send_file(file_path, as_attachment=True, download_name=safe_filename)
+        
+    except Exception as e:
+        return jsonify({"error": f"下载报表失败: {str(e)}"}), 500
+
+@app.route('/api/reports', methods=['GET'])
+def list_reports():
+    """获取报表列表"""
+    try:
+        reports_dir = 'reports'
+        if not os.path.exists(reports_dir):
+            return jsonify({"reports": []})
+        
+        reports = []
+        for filename in os.listdir(reports_dir):
+            if filename.endswith('.html'):
+                file_path = os.path.join(reports_dir, filename)
+                stat = os.stat(file_path)
+                reports.append({
+                    "filename": filename,
+                    "size": stat.st_size,
+                    "created_time": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "modified_time": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "download_url": url_for('download_report', filename=filename)
+                })
+        
+        # 按修改时间倒序排列
+        reports.sort(key=lambda x: x['modified_time'], reverse=True)
+        
+        return jsonify({"reports": reports})
+        
+    except Exception as e:
+        return jsonify({"error": f"获取报表列表失败: {str(e)}"}), 500
+
 if __name__ == '__main__':
     # 确保模板目录存在
     os.makedirs('templates', exist_ok=True)

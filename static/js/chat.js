@@ -12,6 +12,8 @@ let webSearchEnabled = false;  // 网络搜索功能状态
 let codeModeEnabled = false;   // 代码模式功能状态
 let agentModeEnabled = false;  // Agent模式功能状态
 let dataReportEnabled = false; // 数据报表功能状态
+let currentReportData = null;  // 当前报表数据
+let currentReportFilename = null; // 当前报表文件名
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -2494,11 +2496,13 @@ function toggleDataReport() {
     if (dataReportEnabled) {
         button.classList.add('active');
         button.title = '关闭数据报表';
+        showReportPanel();
         console.log('✅ 数据报表已启用');
         showToast('数据报表已启用', 'success');
     } else {
         button.classList.remove('active');
         button.title = '启用数据报表';
+        hideReportPanel();
         console.log('❌ 数据报表已关闭');
         showToast('数据报表已关闭', 'info');
     }
@@ -2554,5 +2558,365 @@ function initializeTooltips() {
     } else {
         console.warn('⚠️ Bootstrap 未加载，无法初始化 tooltips');
     }
+}
+
+// 数据报表面板相关函数
+function showReportPanel() {
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.getElementById('chatMain');
+    
+    if (reportPanel && chatMain) {
+        reportPanel.style.display = 'flex';
+        chatMain.classList.add('with-report');
+        console.log('📊 数据报表面板已显示');
+    }
+}
+
+function hideReportPanel() {
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.getElementById('chatMain');
+    
+    if (reportPanel && chatMain) {
+        reportPanel.style.display = 'none';
+        chatMain.classList.remove('with-report');
+        console.log('📊 数据报表面板已隐藏');
+    }
+    
+    // 如果数据报表按钮处于激活状态，也要关闭它
+    if (dataReportEnabled) {
+        dataReportEnabled = false;
+        const button = document.getElementById('dataReportToggle');
+        if (button) {
+            button.classList.remove('active');
+            button.title = '启用数据报表';
+        }
+    }
+}
+
+function refreshReport() {
+    if (currentReportData) {
+        renderReport(currentReportData, currentReportFilename);
+        showToast('报表已刷新', 'success');
+    } else {
+        showToast('暂无报表数据可刷新', 'warning');
+    }
+}
+
+function downloadReport() {
+    if (!currentReportData || !currentReportFilename) {
+        showToast('暂无报表可下载', 'warning');
+        return;
+    }
+    
+    try {
+        // 首先保存到服务器
+        saveReportToServer(currentReportData, currentReportFilename).then(() => {
+            // 创建下载链接
+            const blob = new Blob([currentReportData], { type: 'text/html;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentReportFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            console.log(`📊 报表已下载: ${currentReportFilename}`);
+            showToast(`报表 "${currentReportFilename}" 下载成功`, 'success');
+        }).catch(error => {
+            console.error('报表保存失败:', error);
+            // 即使保存失败，仍然允许下载
+            const blob = new Blob([currentReportData], { type: 'text/html;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentReportFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast('报表已下载（未保存到服务器）', 'warning');
+        });
+    } catch (error) {
+        console.error('报表下载失败:', error);
+        showToast('报表下载失败', 'error');
+    }
+}
+
+function renderReport(reportHtml, filename) {
+    const reportContent = document.getElementById('reportContent');
+    if (!reportContent) return;
+    
+    // 保存报表数据
+    currentReportData = reportHtml;
+    currentReportFilename = filename || `report_${Date.now()}.html`;
+    
+    // 清空现有内容
+    reportContent.innerHTML = '';
+    
+    // 创建iframe来渲染报表
+    const iframe = document.createElement('iframe');
+    iframe.className = 'report-iframe';
+    iframe.srcdoc = reportHtml;
+    
+    reportContent.appendChild(iframe);
+    
+    // 显示下载按钮
+    const downloadBtn = document.getElementById('downloadReportBtn');
+    if (downloadBtn) {
+        downloadBtn.style.display = 'inline-block';
+    }
+    
+    console.log(`📊 报表已渲染: ${currentReportFilename}`);
+}
+
+function displayReportFilePreview(filename, description) {
+    const reportContent = document.getElementById('reportContent');
+    if (!reportContent) return;
+    
+    reportContent.innerHTML = `
+        <div class="report-file-preview">
+            <div class="report-file-icon">
+                <i class="fas fa-file-code"></i>
+            </div>
+            <div class="report-file-name">${filename}</div>
+            <div class="report-file-description">${description}</div>
+            <div class="report-file-actions">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewReportInPanel()" title="在右侧面板查看">
+                    <i class="fas fa-eye me-1"></i>查看报表
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="downloadReport()" title="下载到本地">
+                    <i class="fas fa-download me-1"></i>下载
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function viewReportInPanel() {
+    if (currentReportData) {
+        renderReport(currentReportData, currentReportFilename);
+        showToast('报表已在右侧面板显示', 'success');
+    } else {
+        showToast('报表数据不可用', 'error');
+    }
+}
+
+// 处理AI回复中的报表内容
+function processReportInMessage(messageContent) {
+    // 检查消息中是否包含报表标记
+    const reportPattern = /\[报表文件：(.+?)\]/g;
+    let processedContent = messageContent;
+    let reportFound = false;
+    
+    processedContent = processedContent.replace(reportPattern, (match, filename) => {
+        reportFound = true;
+        return `<div class="message-report-file">
+            <div class="report-file-indicator">
+                <i class="fas fa-file-code"></i>
+                <span>报表文件：${filename}</span>
+                <button class="btn btn-sm btn-link" onclick="viewReportInPanel()" title="在右侧面板查看">
+                    <i class="fas fa-external-link-alt"></i>
+                </button>
+            </div>
+        </div>`;
+    });
+    
+    return { content: processedContent, hasReport: reportFound };
+}
+
+// 模拟接收报表数据的函数（后端集成时替换）
+function receiveReportData(reportHtml, filename, description) {
+    if (dataReportEnabled) {
+        // 渲染报表到右侧面板
+        renderReport(reportHtml, filename);
+        
+        // 在聊天消息中显示文件预览（如果报表面板不可见）
+        if (!document.getElementById('reportPanel').style.display === 'flex') {
+            displayReportFilePreview(filename, description);
+        }
+        
+        showToast(`报表 "${filename}" 已生成`, 'success');
+    }
+}
+
+// 测试数据报表功能（开发用，后期移除）
+function testReportFunction() {
+    if (!dataReportEnabled) {
+        showToast('请先启用数据报表功能', 'warning');
+        return;
+    }
+    
+    // 模拟报表HTML数据
+    const sampleReportHtml = `
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>数据分析报表</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .chart-container { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+            .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .stat-number { font-size: 2em; font-weight: bold; color: #2c5aa0; }
+            .stat-label { color: #666; margin-top: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>数据分析报表</h1>
+            <p>生成时间：${new Date().toLocaleString('zh-CN')}</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">1,234</div>
+                <div class="stat-label">总用户数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">89.5%</div>
+                <div class="stat-label">活跃率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">567</div>
+                <div class="stat-label">新增用户</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">98.2%</div>
+                <div class="stat-label">满意度</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h3>用户增长趋势</h3>
+            <canvas id="growthChart" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h3>功能使用分布</h3>
+            <canvas id="usageChart" width="400" height="200"></canvas>
+        </div>
+        
+        <script>
+            // 用户增长趋势图
+            const growthCtx = document.getElementById('growthChart').getContext('2d');
+            new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '用户数量',
+                        data: [120, 190, 300, 500, 800, 1234],
+                        borderColor: '#2c5aa0',
+                        backgroundColor: 'rgba(44, 90, 160, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            // 功能使用分布图
+            const usageCtx = document.getElementById('usageChart').getContext('2d');
+            new Chart(usageCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['AI对话', '文档处理', '知识库', '数据报表'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: ['#2c5aa0', '#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>`;
+    
+    const filename = `数据分析报表_${new Date().toISOString().slice(0, 10)}.html`;
+    const description = "包含用户统计、增长趋势和功能使用分析的综合数据报表";
+    
+    // 渲染报表
+    receiveReportData(sampleReportHtml, filename, description);
+    
+    // 模拟在聊天消息中显示
+    const messageText = `好的，我已为您收集了最新的数据信息，生成的分析报表如下：\n\n[报表文件：${filename}]\n\n报表包含了详细的用户统计数据、增长趋势分析和功能使用分布情况。您可以在右侧面板查看完整报表，或下载到本地保存。`;
+    
+    // 添加测试消息到聊天区域
+    addMessage('assistant', messageText);
+    
+    console.log('📊 测试报表已生成');
+}
+
+// 在控制台中添加测试提示
+console.log('💡 数据报表测试：启用数据报表功能后，在控制台运行 testReportFunction() 来测试报表生成');
+
+// 与后端API交互的函数
+async function saveReportToServer(reportHtml, filename) {
+    try {
+        const response = await fetch('/api/reports', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                html: reportHtml,
+                filename: filename
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('📊 报表已保存到服务器:', result);
+        return result;
+    } catch (error) {
+        console.error('保存报表到服务器失败:', error);
+        throw error;
+    }
+}
+
+async function loadReportsFromServer() {
+    try {
+        const response = await fetch('/api/reports');
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('📊 从服务器加载报表列表:', result);
+        return result.reports || [];
+    } catch (error) {
+        console.error('从服务器加载报表列表失败:', error);
+        return [];
+    }
+}
+
+function downloadReportFromServer(filename) {
+    const downloadUrl = `/api/reports/${encodeURIComponent(filename)}`;
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    console.log(`📊 从服务器下载报表: ${filename}`);
 }
 

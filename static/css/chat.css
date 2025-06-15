@@ -3366,3 +3366,381 @@ body.sidebar-resizing .sidebar-resizer-line {
         display: none;
     }
 }
+
+/* 数据报表面板样式 */
+.chat-report-container {
+    display: flex;
+    position: relative;
+}
+
+.chat-main {
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.chat-main.with-report {
+    width: 60%;
+    flex: 0 0 60%;
+}
+
+.report-panel {
+    width: 40%;
+    flex: 0 0 40%;
+    background: var(--sidebar-bg);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-hover));
+    backdrop-filter: blur(10px);
+}
+
+.report-title-section h6 {
+    color: var(--sidebar-text);
+    font-weight: 600;
+    margin: 0;
+}
+
+.report-title-section small {
+    color: var(--sidebar-text-secondary);
+    font-size: 12px;
+}
+
+.report-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.report-actions .btn {
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.report-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.report-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    background: var(--content-bg);
+}
+
+.report-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.report-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.report-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.report-content::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-text-secondary);
+}
+
+.report-placeholder {
+    padding: 40px 20px;
+}
+
+.report-placeholder i {
+    opacity: 0.5;
+}
+
+.report-placeholder h5 {
+    color: var(--sidebar-text-secondary);
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.report-placeholder p {
+    color: var(--sidebar-text-secondary);
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.report-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+}
+
+.report-file-preview {
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.report-file-preview:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(44, 90, 160, 0.15);
+}
+
+.report-file-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color), #1864ab);
+    color: white;
+    border-radius: 12px;
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+
+.report-file-name {
+    font-weight: 600;
+    color: var(--sidebar-text);
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.report-file-description {
+    color: var(--sidebar-text-secondary);
+    font-size: 14px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.report-file-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.report-file-actions .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .report-panel {
+    background: var(--sidebar-bg);
+    border-left-color: var(--border-color);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .report-header {
+    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-hover));
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .report-title-section h6 {
+    color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .report-title-section small {
+    color: var(--sidebar-text-secondary);
+}
+
+[data-theme="dark"] .report-content {
+    background: var(--content-bg);
+}
+
+[data-theme="dark"] .report-placeholder h5 {
+    color: var(--sidebar-text-secondary);
+}
+
+[data-theme="dark"] .report-placeholder p {
+    color: var(--sidebar-text-secondary);
+}
+
+[data-theme="dark"] .report-file-preview {
+    background: var(--sidebar-hover);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .report-file-preview:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .report-file-name {
+    color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .report-file-description {
+    color: var(--sidebar-text-secondary);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .chat-main.with-report {
+        width: 55%;
+        flex: 0 0 55%;
+    }
+    
+    .report-panel {
+        width: 45%;
+        flex: 0 0 45%;
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-report-container {
+        flex-direction: column;
+    }
+    
+    .chat-main.with-report {
+        width: 100%;
+        flex: 1;
+        height: 60%;
+    }
+    
+    .report-panel {
+        width: 100%;
+        flex: 0 0 40%;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    [data-theme="dark"] .report-panel {
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .report-header {
+        padding: 12px 16px;
+    }
+    
+    .report-file-preview {
+        margin: 12px;
+        padding: 12px;
+    }
+    
+    .report-file-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    .report-file-name {
+        font-size: 14px;
+    }
+    
+    .report-file-description {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-main.with-report {
+        height: 65%;
+    }
+    
+    .report-panel {
+        flex: 0 0 35%;
+    }
+    
+    .report-header {
+        padding: 10px 12px;
+    }
+    
+    .report-title-section h6 {
+        font-size: 14px;
+    }
+    
+    .report-title-section small {
+        font-size: 11px;
+    }
+    
+    .report-actions .btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    .report-placeholder {
+        padding: 20px 12px;
+    }
+    
+    .report-placeholder i {
+        font-size: 2rem !important;
+    }
+    
+    .report-placeholder h5 {
+        font-size: 16px;
+    }
+    
+    .report-placeholder p {
+        font-size: 12px;
+    }
+}
+
+/* 聊天消息中的报表文件样式 */
+.message-report-file {
+    margin: 12px 0;
+}
+
+.report-file-indicator {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-color), #1864ab);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(44, 90, 160, 0.2);
+    transition: all 0.2s ease;
+}
+
+.report-file-indicator:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+}
+
+.report-file-indicator i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.report-file-indicator span {
+    margin-right: 8px;
+}
+
+.report-file-indicator .btn {
+    padding: 2px 6px;
+    font-size: 11px;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    margin-left: auto;
+}
+
+.report-file-indicator .btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* 深色模式下的报表文件指示器 */
+[data-theme="dark"] .report-file-indicator {
+    background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .report-file-indicator:hover {
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+}
