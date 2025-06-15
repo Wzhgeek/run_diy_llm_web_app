@@ -15,6 +15,13 @@ let dataReportEnabled = false; // 数据报表功能状态
 let currentReportData = null;  // 当前报表数据
 let currentReportFilename = null; // 当前报表文件名
 
+// 报表面板拖拽调整功能
+let reportResizing = false;
+let reportStartX = 0;
+let reportStartWidth = 0;
+let reportMaxWidth = 70; // 最大70%
+let reportMinWidth = 25; // 最小25%
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     initializeChat();
@@ -624,11 +631,16 @@ async function handleStreamResponse(response, existingMessageElement = null) {
                             fullResponse += data.answer;
                             
                             // 更新显示内容
-                            updateMessageContentWithThinking(assistantMessageElement, thinkingState);
+                            updateMessageContentWithThinking(assistantMessageElement, thinkingState.displayContent || '', false);
                             
                         } else if (data.event === 'message_end') {
                             // 处理任何剩余的思考过程
                             finalizeStreamThinking(assistantMessageElement, thinkingState);
+                            
+                            // 最终更新消息，标记为完成状态
+                            if (fullResponse) {
+                                updateMessageContentWithThinking(assistantMessageElement, fullResponse, true);
+                            }
                             
                             if (assistantMessageElement) {
                                 // 从数据中获取messageId
@@ -755,52 +767,165 @@ function processStreamThinking(newContent, thinkingState) {
     return displayContent;
 }
 
-// 更新消息内容并处理思考过程
-function updateMessageContentWithThinking(messageElement, thinkingState) {
-    const textElement = messageElement.querySelector('.message-text');
-    const typingIndicator = messageElement.querySelector('.typing-indicator');
+// 提取HTML报表内容
+function extractHtmlReport(content) {
+    const reportRegex = /<html_report>([\s\S]*?)<\/html_report>/gi;
+    let match;
+    let hasReport = false;
+    let reportContent = '';
+    let reportName = '';
+    let contentWithoutReport = content;
     
-    if (textElement) {
-        // 构建显示内容
-        let displayHtml = '';
+    while ((match = reportRegex.exec(content)) !== null) {
+        hasReport = true;
+        reportContent = match[1].trim();
         
-        // 添加所有已完成的思考过程
-        thinkingState.completedThinking.forEach(thinking => {
-            displayHtml += createThinkingHTML(thinking.id, thinking.content);
-        });
-        
-        // 添加正在进行的思考过程（如果存在）
-        if (thinkingState.activeThinking) {
-            displayHtml += createThinkingHTML(
-                thinkingState.activeThinking.id, 
-                thinkingState.activeThinking.content,
-                true  // 标记为正在进行中
-            );
+        // 尝试从HTML中提取标题作为报表名称
+        const titleMatch = reportContent.match(/<title[^>]*>(.*?)<\/title>/i);
+        if (titleMatch) {
+            reportName = titleMatch[1].trim();
+        } else {
+            // 如果没有title标签，使用默认名称
+            reportName = `数据报表_${new Date().toLocaleString('zh-CN').replace(/[\/\s:]/g, '_')}`;
         }
         
-        // 添加正常内容（经过Markdown渲染）
-        if (thinkingState.displayContent) {
-            displayHtml += renderMarkdown(thinkingState.displayContent);
+        // 从原内容中移除HTML报表标签，替换为文件预览卡片
+        const reportPreview = `[报表文件：${reportName}.html]`;
+        contentWithoutReport = contentWithoutReport.replace(match[0], reportPreview);
+    }
+    
+    return {
+        hasReport,
+        reportContent,
+        reportName,
+        contentWithoutReport
+    };
+}
+
+// 更新消息内容，处理思考过程和HTML报表
+function updateMessageContentWithThinking(messageElement, fullContent, isCompleted = false) {
+    if (!messageElement) return;
+    
+    // 如果消息已完成，直接处理HTML报表
+    if (isCompleted) {
+        const { hasReport, reportContent, reportName, contentWithoutReport } = extractHtmlReport(fullContent);
+        
+        if (hasReport && dataReportEnabled) {
+            // 在右侧面板显示报表
+            renderReport(reportContent, reportName);
+            
+            // 更新报表代码显示
+            updateReportCode(reportContent);
+            
+            // 在消息中显示文件预览并标记为完成
+            const messageContent = messageElement.querySelector('.message-text');
+            if (messageContent) {
+                messageContent.innerHTML = renderMarkdownWithReportPreview(contentWithoutReport);
+                
+                // 标记报表文件预览为完成状态
+                const reportPreviews = messageContent.querySelectorAll('.report-file-preview');
+                reportPreviews.forEach(preview => {
+                    preview.classList.add('completed');
+                    const status = preview.querySelector('.report-file-status');
+                    if (status) {
+                        status.textContent = '生成完成';
+                    }
+                });
+            }
+        } else {
+            // 普通消息处理
+            const messageContent = messageElement.querySelector('.message-text');
+            if (messageContent) {
+                messageContent.innerHTML = renderMarkdown(fullContent);
+            }
         }
         
-        textElement.innerHTML = displayHtml;
+        return;
+    }
+    
+    // 处理流式内容
+    let processedContent = fullContent;
+    let reportHtml = '';
+    let isInReportTag = false;
+    
+    // 检测HTML报表标签
+    const reportStartRegex = /<html_report>/gi;
+    const reportEndRegex = /<\/html_report>/gi;
         
-        // 触发代码块的语法高亮
-        if (typeof hljs !== 'undefined') {
-            const codeBlocks = textElement.querySelectorAll('pre code');
-            codeBlocks.forEach(block => {
-                hljs.highlightElement(block);
+    // 查找开始标签
+    const startMatch = reportStartRegex.exec(fullContent);
+    if (startMatch) {
+        isInReportTag = true;
+        // 替换开始标签为文件预览
+        const reportName = `数据报表_${new Date().toLocaleString('zh-CN').replace(/[\/\s:]/g, '_')}`;
+        const reportPreview = createReportFilePreview(reportName + '.html');
+        processedContent = fullContent.substring(0, startMatch.index) + reportPreview;
+        
+        // 提取报表内容开始位置
+        reportHtml = fullContent.substring(startMatch.index + startMatch[0].length);
+    }
+    
+    // 如果在报表标签内，处理报表内容
+    if (isInReportTag) {
+        const endMatch = reportEndRegex.exec(fullContent);
+        if (endMatch) {
+            // 找到结束标签，提取完整报表内容
+            reportHtml = fullContent.substring(startMatch.index + startMatch[0].length, endMatch.index);
+        
+            // 在代码面板中流式显示HTML代码
+            if (dataReportEnabled) {
+                updateReportCodeStream(reportHtml);
+            }
+            
+            // 标记报表为完成
+            setTimeout(() => {
+                const reportPreviews = messageElement.querySelectorAll('.report-file-preview');
+                reportPreviews.forEach(preview => {
+                    preview.classList.add('completed');
+                    const status = preview.querySelector('.report-file-status');
+                    if (status) {
+                        status.textContent = '生成完成';
+                    }
             });
+            }, 100);
+        } else {
+            // 还在报表标签内，在代码面板中流式显示当前内容
+            if (dataReportEnabled && reportHtml) {
+                updateReportCodeStream(reportHtml);
+            }
         }
     }
     
-    if (typingIndicator && (thinkingState.displayContent || thinkingState.activeThinking)) {
-        typingIndicator.style.display = 'inline';
+    // 更新消息显示内容
+    const messageContent = messageElement.querySelector('.message-text');
+    if (messageContent) {
+        messageContent.innerHTML = renderMarkdown(processedContent);
+    }
     }
     
-    // 滚动到底部
-    const messagesContainer = document.getElementById('chatMessages');
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+// 流式更新报表代码显示
+function updateReportCodeStream(htmlCode) {
+    currentReportHtmlCode = htmlCode;
+    const codeText = document.getElementById('reportCodeText');
+    if (codeText) {
+        codeText.textContent = htmlCode;
+        
+        // 如果Prism.js可用，进行语法高亮
+        if (typeof Prism !== 'undefined') {
+            // 重新应用语法高亮
+            Prism.highlightElement(codeText);
+        } else if (typeof hljs !== 'undefined') {
+            // 降级到hljs
+            hljs.highlightElement(codeText);
+        }
+    }
+    
+    // 如果报表面板未显示，自动显示
+    if (dataReportEnabled) {
+        showReportPanel();
+        // 自动切换到代码视图以显示流式代码
+        switchToCode();
+    }
 }
 
 // 创建思考过程HTML结构
@@ -839,7 +964,7 @@ function finalizeStreamThinking(messageElement, thinkingState) {
         thinkingState.activeThinking = null;
         
         // 更新最终显示
-        updateMessageContentWithThinking(messageElement, thinkingState);
+        updateMessageContentWithThinking(messageElement, thinkingState.displayContent || '', true);
     }
 }
 
@@ -1005,7 +1130,7 @@ function finalizeMessage(messageElement, messageId = null) {
 
 // 渲染Markdown内容
 function renderMarkdown(content) {
-    console.log('🔧 渲染Markdown内容:', content.substring(0, 100) + '...');
+    // 渲染Markdown内容
     
     // 检查marked是否已加载
     if (typeof marked === 'undefined') {
@@ -1018,11 +1143,11 @@ function renderMarkdown(content) {
     }
     
     try {
-        console.log('✅ 使用Marked.js渲染...');
+        // 使用Marked.js渲染
         
         // 按照官网文档标准使用marked.parse()
         const htmlContent = marked.parse(content);
-        console.log('✅ Markdown解析成功，HTML长度:', htmlContent.length);
+        // Markdown解析成功
         
         // 如果DOMPurify可用，进行安全清理
         if (typeof DOMPurify !== 'undefined') {
@@ -1065,6 +1190,39 @@ function renderMarkdown(content) {
             .replace(/> (.*?)$/gm, '<blockquote>$1</blockquote>')
             .replace(/\n/g, '<br>');
     }
+}
+
+// 渲染包含报表文件预览的Markdown内容
+function renderMarkdownWithReportPreview(content) {
+    if (!content) return '';
+    
+    // 首先正常渲染Markdown
+    let renderedContent = renderMarkdown(content);
+    
+    // 然后处理报表文件预览标签（在已渲染的HTML中）
+    const reportFileRegex = /\[报表文件：([^\]]+)\]/g;
+    renderedContent = renderedContent.replace(reportFileRegex, (match, filename) => {
+        return createReportFilePreview(filename);
+    });
+    
+    return renderedContent;
+}
+
+// 创建报表文件预览卡片（简约版）
+function createReportFilePreview(filename) {
+    const fileId = `report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `
+        <div class="report-file-preview simple" id="${fileId}">
+            <div class="report-file-icon simple">
+                <div class="simple-loading-dot"></div>
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="report-file-info">
+                <div class="report-file-name">${escapeHtml(filename)}</div>
+                <div class="report-file-status">正在生成中...</div>
+            </div>
+        </div>
+    `;
 }
 
 // 解析思考过程内容
@@ -1125,8 +1283,8 @@ function formatMessageContent(content) {
     // 对于历史消息，仍然使用完整的思考过程解析
     // 首先解析思考过程内容
     const contentWithThinking = parseThinkingContent(content);
-    // 然后进行Markdown渲染
-    return renderMarkdown(contentWithThinking);
+    // 然后进行Markdown渲染，包括报表文件预览
+    return renderMarkdownWithReportPreview(contentWithThinking);
 }
 
 // 测试markdown渲染（用于调试）
@@ -1788,13 +1946,11 @@ function showFilePreview(file) {
         fileIcon.className = 'file-icon fas fa-file-audio text-info';
     } else if (file.type.startsWith('video/')) {
         fileIcon.className = 'file-icon fas fa-file-video text-purple';
-    } else if (file.name.toLowerCase().endsWith('.md') || file.type === 'text/markdown') {
+    } else if (fileName.toLowerCase().endsWith('.md') || file.type === 'text/markdown') {
         fileIcon.className = 'file-icon fab fa-markdown text-info';
-    } else if (file.type.startsWith('text/') || file.name.toLowerCase().endsWith('.txt')) {
-        fileIcon.className = 'file-icon fas fa-file-alt text-secondary';
-    } else if (file.name.toLowerCase().endsWith('.html') || file.type === 'text/html') {
+    } else if (fileName.toLowerCase().endsWith('.html') || file.type === 'text/html') {
         fileIcon.className = 'file-icon fab fa-html5 text-warning';
-    } else if (file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv') {
+    } else if (fileName.toLowerCase().endsWith('.csv') || file.type === 'text/csv') {
         fileIcon.className = 'file-icon fas fa-file-csv text-success';
     } else {
         fileIcon.className = 'file-icon fas fa-file text-muted';
@@ -2406,7 +2562,7 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
+} 
 
 // 功能切换按钮相关函数
 function toggleWebSearch() {
@@ -2560,38 +2716,7 @@ function initializeTooltips() {
     }
 }
 
-// 数据报表面板相关函数
-function showReportPanel() {
-    const reportPanel = document.getElementById('reportPanel');
-    const chatMain = document.getElementById('chatMain');
-    
-    if (reportPanel && chatMain) {
-        reportPanel.style.display = 'flex';
-        chatMain.classList.add('with-report');
-        console.log('📊 数据报表面板已显示');
-    }
-}
-
-function hideReportPanel() {
-    const reportPanel = document.getElementById('reportPanel');
-    const chatMain = document.getElementById('chatMain');
-    
-    if (reportPanel && chatMain) {
-        reportPanel.style.display = 'none';
-        chatMain.classList.remove('with-report');
-        console.log('📊 数据报表面板已隐藏');
-    }
-    
-    // 如果数据报表按钮处于激活状态，也要关闭它
-    if (dataReportEnabled) {
-        dataReportEnabled = false;
-        const button = document.getElementById('dataReportToggle');
-        if (button) {
-            button.classList.remove('active');
-            button.title = '启用数据报表';
-        }
-    }
-}
+// 数据报表面板相关函数（已合并到拖拽功能中）
 
 function refreshReport() {
     if (currentReportData) {
@@ -2645,6 +2770,7 @@ function downloadReport() {
     }
 }
 
+// 更新报表渲染函数
 function renderReport(reportHtml, filename) {
     const reportContent = document.getElementById('reportContent');
     if (!reportContent) return;
@@ -2652,6 +2778,12 @@ function renderReport(reportHtml, filename) {
     // 保存报表数据
     currentReportData = reportHtml;
     currentReportFilename = filename || `report_${Date.now()}.html`;
+    currentReportHtmlCode = reportHtml;
+    
+    // 如果当前在代码模式，更新代码显示
+    if (currentReportTab === 'code') {
+        updateReportCode(reportHtml);
+    }
     
     // 清空现有内容
     reportContent.innerHTML = '';
@@ -2663,13 +2795,8 @@ function renderReport(reportHtml, filename) {
     
     reportContent.appendChild(iframe);
     
-    // 显示下载按钮
-    const downloadBtn = document.getElementById('downloadReportBtn');
-    if (downloadBtn) {
-        downloadBtn.style.display = 'inline-block';
-    }
-    
     console.log(`📊 报表已渲染: ${currentReportFilename}`);
+    showToast('报表生成完成', 'success');
 }
 
 function displayReportFilePreview(filename, description) {
@@ -2919,4 +3046,944 @@ function downloadReportFromServer(filename) {
     document.body.removeChild(a);
     console.log(`📊 从服务器下载报表: ${filename}`);
 }
+
+// 测试HTML报表检测功能
+function testHtmlReportDetection() {
+    console.log('🧪 开始测试HTML报表检测功能...');
+    
+    // 模拟包含HTML报表标签的流式回答内容
+    const testContent = `这是一个测试回答，下面生成一个数据报表：
+
+<html_report>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>用户数据统计报表</title>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .chart-container { width: 100%; height: 400px; margin: 20px 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-number { font-size: 2em; font-weight: bold; margin-bottom: 5px; }
+        .stat-label { font-size: 0.9em; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 用户数据统计报表</h1>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">1,234</div>
+                <div class="stat-label">总用户数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">89%</div>
+                <div class="stat-label">活跃率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">567</div>
+                <div class="stat-label">新增用户</div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="userChart"></canvas>
+        </div>
+    </div>
+    <script>
+        const ctx = document.getElementById('userChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                datasets: [{
+                    label: '用户增长',
+                    data: [65, 78, 95, 120, 145, 178],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '用户增长趋势'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+</html_report>
+
+以上是生成的用户数据统计报表，可以查看用户增长趋势和关键指标。`;
+
+    // 测试HTML报表检测
+    const reportResult = extractHtmlReport(testContent);
+    
+    console.log('📊 检测结果:', {
+        hasReport: reportResult.hasReport,
+        reportName: reportResult.reportName,
+        reportHtmlLength: reportResult.reportHtml.length,
+        cleanContentLength: reportResult.cleanContent.length
+    });
+    
+    if (reportResult.hasReport) {
+        console.log('✅ HTML报表检测成功！');
+        console.log('📝 报表名称:', reportResult.reportName);
+        console.log('🧹 清理后内容:', reportResult.cleanContent);
+        
+        // 如果数据报表功能已启用，测试渲染
+        if (dataReportEnabled) {
+            console.log('🎨 测试报表渲染...');
+            renderReport(reportResult.reportHtml, reportResult.reportName);
+            console.log('✅ 报表渲染完成！');
+        } else {
+            console.log('ℹ️ 数据报表功能未启用，跳过渲染测试');
+        }
+        
+        // 测试报表文件预览卡片生成
+        const previewHtml = createReportFilePreview(reportResult.reportName + '.html');
+        console.log('🎯 报表文件预览HTML:', previewHtml);
+    } else {
+        console.log('❌ 未检测到HTML报表标签');
+    }
+    
+    return reportResult;
+}
+
+// 在控制台添加测试提示
+console.log('💡 提示：可以在控制台运行 testHtmlReportDetection() 来测试HTML报表检测功能');
+
+// 在控制台添加测试提示
+console.log('💡 提示：可以在控制台运行 testHtmlReportDetection() 来测试HTML报表检测功能');
+
+// 诊断报表面板显示问题的函数
+function diagnoseReportPanel() {
+    console.log('🔍 开始诊断报表面板显示问题...');
+    
+    // 检查HTML元素是否存在
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.getElementById('chatMain');
+    const chatReportContainer = document.querySelector('.chat-report-container');
+    const dataReportToggle = document.getElementById('dataReportToggle');
+    
+    console.log('📋 HTML元素检查:');
+    console.log('  reportPanel存在:', !!reportPanel);
+    console.log('  chatMain存在:', !!chatMain);
+    console.log('  chatReportContainer存在:', !!chatReportContainer);
+    console.log('  dataReportToggle存在:', !!dataReportToggle);
+    
+    if (reportPanel) {
+        console.log('📊 报表面板状态:');
+        console.log('  display样式:', window.getComputedStyle(reportPanel).display);
+        console.log('  visibility样式:', window.getComputedStyle(reportPanel).visibility);
+        console.log('  width样式:', window.getComputedStyle(reportPanel).width);
+        console.log('  height样式:', window.getComputedStyle(reportPanel).height);
+        console.log('  position样式:', window.getComputedStyle(reportPanel).position);
+        console.log('  z-index样式:', window.getComputedStyle(reportPanel).zIndex);
+    }
+    
+    if (chatMain) {
+        console.log('💬 聊天主区域状态:');
+        console.log('  是否有with-report类:', chatMain.classList.contains('with-report'));
+        console.log('  width样式:', window.getComputedStyle(chatMain).width);
+        console.log('  flex样式:', window.getComputedStyle(chatMain).flex);
+    }
+    
+    if (chatReportContainer) {
+        console.log('📦 聊天报表容器状态:');
+        console.log('  display样式:', window.getComputedStyle(chatReportContainer).display);
+        console.log('  flex-direction样式:', window.getComputedStyle(chatReportContainer).flexDirection);
+        console.log('  children数量:', chatReportContainer.children.length);
+        console.log('  children:', Array.from(chatReportContainer.children).map(child => child.id || child.className));
+    }
+    
+    console.log('🎛️ 功能状态:');
+    console.log('  dataReportEnabled:', dataReportEnabled);
+    console.log('  按钮激活状态:', dataReportToggle?.classList.contains('active'));
+    
+    // 尝试强制显示报表面板
+    console.log('🔧 尝试强制显示报表面板...');
+    if (reportPanel) {
+        reportPanel.style.display = 'flex';
+        reportPanel.style.width = '40%';
+        reportPanel.style.background = 'red'; // 临时设置红色背景便于查看
+        console.log('✅ 已强制设置报表面板为可见状态');
+    }
+    
+    if (chatMain) {
+        chatMain.classList.add('with-report');
+        chatMain.style.width = '60%';
+        console.log('✅ 已强制设置聊天主区域为报表模式');
+    }
+    
+    console.log('🎯 诊断完成！如果报表面板仍然不可见，可能是CSS层级问题');
+}
+
+// 在控制台添加诊断提示
+console.log('🔧 提示：可以在控制台运行 diagnoseReportPanel() 来诊断报表面板显示问题');
+
+// 在控制台添加诊断提示
+console.log('🔧 提示：可以在控制台运行 diagnoseReportPanel() 来诊断报表面板显示问题');
+
+// 简单测试报表面板显示的函数
+function testReportPanelDisplay() {
+    console.log('🧪 开始测试报表面板显示...');
+    
+    // 直接启用数据报表功能
+    dataReportEnabled = true;
+    const button = document.getElementById('dataReportToggle');
+    if (button) {
+        button.classList.add('active');
+        button.title = '关闭数据报表';
+    }
+    
+    // 强制显示报表面板
+    showReportPanel();
+    
+    // 等待DOM更新后再测试
+    setTimeout(() => {
+        const reportPanel = document.getElementById('reportPanel');
+        const chatMain = document.getElementById('chatMain');
+        
+        console.log('📊 测试结果:');
+        console.log('  报表面板可见性:', reportPanel ? window.getComputedStyle(reportPanel).display : '元素不存在');
+        console.log('  聊天区域有报表类:', chatMain ? chatMain.classList.contains('with-report') : '元素不存在');
+        
+        // 添加测试内容
+        if (reportPanel) {
+            const reportContent = document.getElementById('reportContent');
+            if (reportContent && reportContent.innerHTML.includes('report-welcome')) {
+                console.log('✅ 报表面板已显示并包含默认内容');
+            } else {
+                console.log('⚠️ 报表面板显示但内容异常');
+            }
+        } else {
+            console.log('❌ 报表面板未找到');
+        }
+        
+        // 测试切换功能
+        console.log('🔄 测试切换功能...');
+        setTimeout(() => {
+            switchToCode();
+            console.log('✅ 切换到HTML代码模式');
+            setTimeout(() => {
+                switchToPreview();
+                console.log('✅ 切换回预览模式');
+            }, 1000);
+        }, 500);
+        
+        // 生成测试报表
+        testReportFunction();
+    }, 100);
+    
+    console.log('✅ 测试报表面板显示完成');
+}
+
+// 在控制台添加测试提示
+console.log('🎯 提示：可以在控制台运行 testReportPanelDisplay() 来快速测试报表面板显示');
+
+// 报表面板切换功能
+let currentReportTab = 'preview'; // 'preview' 或 'code'
+let currentReportHtmlCode = ''; // 存储当前报表的HTML代码
+
+// 切换到预览模式
+function switchToPreview() {
+    // 显示预览内容
+    const reportContent = document.getElementById('reportContent');
+    if (reportContent) {
+        reportContent.style.display = 'block';
+    }
+    
+    // 隐藏HTML代码内容
+    const reportCodeContent = document.getElementById('reportCodeContent');
+    if (reportCodeContent) {
+        reportCodeContent.style.display = 'none';
+    }
+    
+    // 更新按钮状态
+    const previewTab = document.getElementById('previewTab');
+    const codeTab = document.getElementById('codeTab');
+    
+    if (previewTab && codeTab) {
+        previewTab.classList.add('active');
+        previewTab.classList.remove('btn-outline-primary');
+        previewTab.classList.add('btn-primary');
+        
+        codeTab.classList.remove('active');
+        codeTab.classList.add('btn-outline-primary');
+        codeTab.classList.remove('btn-primary');
+    }
+}
+
+// 切换到HTML代码页面
+function switchToCode() {
+    // 隐藏预览内容
+    const reportContent = document.getElementById('reportContent');
+    if (reportContent) {
+        reportContent.style.display = 'none';
+    }
+    
+    // 显示HTML代码内容
+    const reportCodeContent = document.getElementById('reportCodeContent');
+    if (reportCodeContent) {
+        reportCodeContent.style.display = 'block';
+    }
+    
+    // 更新按钮状态
+    const previewTab = document.getElementById('previewTab');
+    const codeTab = document.getElementById('codeTab');
+    
+    if (previewTab && codeTab) {
+        previewTab.classList.remove('active');
+        previewTab.classList.add('btn-outline-primary');
+        previewTab.classList.remove('btn-primary');
+        
+        codeTab.classList.add('active');
+        codeTab.classList.remove('btn-outline-primary');
+        codeTab.classList.add('btn-primary');
+    }
+    
+    // 如果有代码内容，重新进行语法高亮
+    const codeElement = document.getElementById('reportCodeText');
+    if (codeElement && typeof hljs !== 'undefined') {
+        hljs.highlightElement(codeElement);
+    }
+}
+
+// 更新HTML代码显示
+function updateReportCode(htmlCode) {
+    currentReportHtmlCode = htmlCode;
+    const codeText = document.getElementById('reportCodeText');
+    if (codeText) {
+        codeText.textContent = htmlCode;
+        
+        // 如果Prism.js可用，进行语法高亮
+        if (typeof Prism !== 'undefined') {
+            // 重新应用语法高亮
+            Prism.highlightElement(codeText);
+        } else if (typeof hljs !== 'undefined') {
+            // 降级到hljs
+            hljs.highlightElement(codeText);
+        }
+    }
+}
+
+// 复制报表代码
+function copyReportCode() {
+    if (!currentReportHtmlCode) {
+        showToast('暂无HTML代码可复制', 'warning');
+        return;
+    }
+    
+    try {
+        navigator.clipboard.writeText(currentReportHtmlCode).then(() => {
+            showToast('HTML代码已复制到剪贴板', 'success');
+        }).catch(() => {
+            // 降级到传统复制方法
+            fallbackCopyTextToClipboard(currentReportHtmlCode);
+            showToast('HTML代码已复制到剪贴板', 'success');
+        });
+    } catch (error) {
+        console.error('复制失败:', error);
+        showToast('复制失败', 'error');
+    }
+}
+
+// 更新报表文件状态
+function updateReportFileStatus(status) {
+    const reportFilePreviews = document.querySelectorAll('.report-file-status');
+    reportFilePreviews.forEach(statusElement => {
+        statusElement.textContent = status;
+        if (status === '生成完成') {
+            statusElement.style.color = 'var(--success-color, #28a745)';
+        }
+    });
+}
+
+// 初始化报表面板拖拽功能
+function initReportResize() {
+    const reportResizer = document.getElementById('reportResizer');
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.querySelector('.chat-main');
+    const overlay = document.getElementById('reportResizeOverlay');
+    
+    if (!reportResizer || !reportPanel || !chatMain || !overlay) return;
+    
+    // 鼠标按下事件
+    reportResizer.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // 只响应左键
+        
+        reportResizing = true;
+        reportStartX = e.clientX;
+        reportStartWidth = reportPanel.offsetWidth;
+        
+        // 添加拖拽状态类
+        reportResizer.classList.add('dragging');
+        document.body.classList.add('report-resizing');
+        overlay.style.display = 'block';
+        
+        // 防止选择文本
+        e.preventDefault();
+        
+        console.log('🎯 开始拖拽报表面板', { startX: reportStartX, startWidth: reportStartWidth });
+    });
+    
+    // 鼠标移动事件
+    document.addEventListener('mousemove', (e) => {
+        if (!reportResizing) return;
+        
+        const deltaX = reportStartX - e.clientX; // 注意方向，向左拖拽增加宽度
+        const newWidth = reportStartWidth + deltaX;
+        const windowWidth = window.innerWidth;
+        const maxWidthPx = windowWidth * (reportMaxWidth / 100);
+        const minWidthPx = windowWidth * (reportMinWidth / 100);
+        
+        // 限制宽度范围
+        const constrainedWidth = Math.max(minWidthPx, Math.min(maxWidthPx, newWidth));
+        const widthPercent = (constrainedWidth / windowWidth) * 100;
+        const chatPercent = 100 - widthPercent;
+        
+        // 应用新宽度
+        reportPanel.style.width = `${widthPercent}%`;
+        reportPanel.style.flex = `0 0 ${widthPercent}%`;
+        chatMain.style.width = `${chatPercent}%`;
+        chatMain.style.flex = `0 0 ${chatPercent}%`;
+        
+        // 更新最大宽度约束
+        reportPanel.style.maxWidth = `${widthPercent}vw`;
+        chatMain.style.maxWidth = `${chatPercent}vw`;
+        
+        console.log('📏 调整报表面板宽度', { 
+            width: `${widthPercent.toFixed(1)}%`, 
+            chat: `${chatPercent.toFixed(1)}%` 
+        });
+    });
+    
+    // 鼠标释放事件
+    document.addEventListener('mouseup', () => {
+        if (!reportResizing) return;
+        
+        reportResizing = false;
+        
+        // 移除拖拽状态类
+        reportResizer.classList.remove('dragging');
+        document.body.classList.remove('report-resizing');
+        overlay.style.display = 'none';
+        
+        // 保存当前宽度到localStorage
+        const currentWidth = reportPanel.style.width;
+        if (currentWidth) {
+            localStorage.setItem('reportPanelWidth', currentWidth);
+        }
+        
+        console.log('✅ 结束拖拽报表面板');
+    });
+    
+    // 窗口大小改变时重新计算
+    window.addEventListener('resize', () => {
+        if (reportPanel.style.display !== 'none') {
+            const savedWidth = localStorage.getItem('reportPanelWidth');
+            if (savedWidth) {
+                restoreReportPanelWidth(savedWidth);
+            }
+        }
+    });
+}
+
+// 恢复报表面板宽度
+function restoreReportPanelWidth(widthPercent) {
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.querySelector('.chat-main');
+    
+    if (!reportPanel || !chatMain) return;
+    
+    const percent = parseFloat(widthPercent);
+    const chatPercent = 100 - percent;
+    
+    reportPanel.style.width = `${percent}%`;
+    reportPanel.style.flex = `0 0 ${percent}%`;
+    chatMain.style.width = `${chatPercent}%`;
+    chatMain.style.flex = `0 0 ${chatPercent}%`;
+    
+    reportPanel.style.maxWidth = `${percent}vw`;
+    chatMain.style.maxWidth = `${chatPercent}vw`;
+}
+
+// 显示报表面板时初始化拖拽功能
+function showReportPanel() {
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.querySelector('.chat-main');
+    
+    if (reportPanel && chatMain) {
+        reportPanel.style.display = 'flex';
+        chatMain.classList.add('with-report');
+        
+        // 恢复保存的宽度
+        const savedWidth = localStorage.getItem('reportPanelWidth');
+        if (savedWidth) {
+            restoreReportPanelWidth(savedWidth);
+        }
+        
+        // 初始化拖拽功能
+        setTimeout(() => {
+            initReportResize();
+        }, 100);
+        
+        console.log('📊 显示报表面板');
+    }
+}
+
+// 隐藏报表面板
+function hideReportPanel() {
+    const reportPanel = document.getElementById('reportPanel');
+    const chatMain = document.querySelector('.chat-main');
+    
+    if (reportPanel && chatMain) {
+        reportPanel.style.display = 'none';
+        chatMain.classList.remove('with-report');
+        
+        // 重置宽度
+        chatMain.style.width = '';
+        chatMain.style.flex = '';
+        chatMain.style.maxWidth = '';
+        
+        console.log('❌ 隐藏报表面板');
+    }
+    
+    // 如果数据报表按钮处于激活状态，也要关闭它
+    if (dataReportEnabled) {
+        dataReportEnabled = false;
+        const button = document.getElementById('dataReportToggle');
+        if (button) {
+            button.classList.remove('active');
+            button.title = '启用数据报表';
+        }
+    }
+}
+
+// 测试Prism.js语法高亮功能
+function testPrismHighlight() {
+    console.log('🎨 测试Prism.js语法高亮...');
+    
+    const testHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试报表</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h2>销售数据图表</h2>
+        <canvas id="myChart"></canvas>
+    </div>
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['一月', '二月', '三月', '四月', '五月', '六月'],
+                datasets: [{
+                    label: '销售额 (万元)',
+                    data: [12, 19, 3, 5, 2, 3],
+                    backgroundColor: ['rgba(54, 162, 235, 0.6)'],
+                    borderColor: ['rgba(54, 162, 235, 1)'],
+                    borderWidth: 1
+                }]
+            }
+        });
+    </script>
+</body>
+</html>`;
+    
+    // 更新代码显示
+    updateReportCode(testHtml);
+    
+    // 显示报表面板并切换到代码视图
+    if (!dataReportEnabled) {
+        toggleDataReport();
+    }
+    
+    setTimeout(() => {
+        switchToCode();
+        console.log('✅ Prism.js语法高亮测试完成！请查看报表面板的HTML代码显示效果');
+        
+        // 检查Prism.js是否正常工作
+        const codeElement = document.getElementById('reportCodeText');
+        if (codeElement && typeof Prism !== 'undefined') {
+            console.log('🎯 Prism.js已加载，代码高亮应该生效');
+            
+            // 检查是否有语法高亮的token元素
+            setTimeout(() => {
+                const tokens = codeElement.querySelectorAll('.token');
+                if (tokens.length > 0) {
+                    console.log(`🌈 发现 ${tokens.length} 个语法高亮token，高亮功能正常工作`);
+                } else {
+                    console.warn('⚠️ 未发现语法高亮token，可能需要检查配置');
+                }
+            }, 500);
+        } else {
+            console.warn('⚠️ Prism.js未加载或报表代码元素不存在');
+        }
+    }, 1000);
+}
+
+// 测试紧凑代码显示效果
+function testCompactCodeDisplay() {
+    console.log('🎨 测试紧凑代码显示效果...');
+    
+    const compactHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紧凑代码测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .chart { background: #f8f9fa; padding: 20px; border-radius: 8px; }
+        h1 { color: #333; text-align: center; }
+        p { line-height: 1.6; color: #666; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { 
+            padding: 8px 12px; 
+            border: 1px solid #ddd; 
+            text-align: left; 
+        }
+        .data-table th { background: #007bff; color: white; }
+        .highlight { background: #fff3cd; padding: 2px 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>数据分析报表</h1>
+        <div class="chart">
+            <h2>销售趋势图</h2>
+            <p>这里显示<span class="highlight">销售数据</span>的趋势分析</p>
+            <table class="data-table">
+                <thead>
+                    <tr><th>月份</th><th>销售额</th><th>增长率</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1月</td><td>¥50,000</td><td>+5%</td></tr>
+                    <tr><td>2月</td><td>¥55,000</td><td>+10%</td></tr>
+                    <tr><td>3月</td><td>¥60,000</td><td>+9%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        console.log('报表加载完成');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM加载完成，开始初始化图表...');
+        });
+    </script>
+</body>
+</html>`;
+    
+    // 更新代码显示
+    updateReportCode(compactHtml);
+    
+    // 如果报表面板未显示，自动显示
+    if (!dataReportEnabled) {
+        toggleDataReport();
+    }
+    
+    // 切换到代码视图
+    switchToCode();
+    
+    console.log('✅ 紧凑代码显示测试完成');
+    console.log('📝 特点：');
+    console.log('  - 12px字体，1.4行高');
+    console.log('  - 40px行号宽度，10px内边距');
+    console.log('  - 8px圆角，紧凑布局');
+    console.log('  - 支持水平和垂直滚动');
+    console.log('  - 类似聊天区域的固定窗口设计');
+}
+
+// 测试报表文件预览显示
+function testReportFilePreview() {
+    console.log('🧪 测试报表文件预览显示...');
+    
+    // 创建测试文件预览
+    const testFilename = '销售数据分析报表.html';
+    const previewHtml = createReportFilePreview(testFilename);
+    
+    console.log('📄 生成的HTML:', previewHtml);
+    
+    // 如果报表面板未显示，自动显示
+    if (!dataReportEnabled) {
+        toggleDataReport();
+    }
+    
+    // 在聊天区域添加测试消息
+    const testMessage = `
+        <div class="message-report-file">
+            <p>AI正在为您生成数据报表...</p>
+            ${previewHtml}
+        </div>
+    `;
+    
+    // 添加到聊天消息中
+    const messageElement = addMessage('assistant', testMessage, 'test-report-preview');
+    
+    // 2秒后更新状态为完成
+    setTimeout(() => {
+        const previewElement = document.querySelector('.report-file-preview.simple');
+        if (previewElement) {
+            previewElement.classList.add('completed');
+            const statusElement = previewElement.querySelector('.report-file-status');
+            if (statusElement) {
+                statusElement.textContent = '生成完成';
+            }
+            console.log('✅ 报表状态已更新为完成');
+        }
+    }, 2000);
+    
+    console.log('✅ 报表文件预览测试完成');
+    console.log('📝 检查项目：');
+    console.log('  - 文件名是否显示：', testFilename);
+    console.log('  - 状态文字是否显示："正在生成中..."');
+    console.log('  - 图标是否正确显示');
+    console.log('  - 加载动画是否工作');
+    console.log('  - 2秒后状态是否更新为"生成完成"');
+}
+
+// 诊断报表文件预览样式问题
+function diagnoseReportFilePreview() {
+    // 查找所有报表文件预览元素
+    const previews = document.querySelectorAll('.report-file-preview.simple');
+    
+    previews.forEach((preview, index) => {
+        const nameElement = preview.querySelector('.report-file-name');
+        const statusElement = preview.querySelector('.report-file-status');
+        
+        if (nameElement) {
+            // 强制修复样式
+            nameElement.style.setProperty('color', '#333333', 'important');
+            nameElement.style.setProperty('opacity', '1', 'important');
+            nameElement.style.setProperty('visibility', 'visible', 'important');
+            nameElement.style.setProperty('display', 'block', 'important');
+            nameElement.style.setProperty('background', 'transparent', 'important');
+            nameElement.style.setProperty('text-shadow', 'none', 'important');
+            nameElement.style.setProperty('filter', 'none', 'important');
+            
+            // 深色模式检查
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDarkMode) {
+                nameElement.style.setProperty('color', '#f1f5f9', 'important');
+            }
+        }
+        
+        if (statusElement) {
+            // 强制修复样式
+            statusElement.style.setProperty('color', '#666666', 'important');
+            statusElement.style.setProperty('opacity', '1', 'important');
+            statusElement.style.setProperty('visibility', 'visible', 'important');
+            statusElement.style.setProperty('display', 'block', 'important');
+            statusElement.style.setProperty('background', 'transparent', 'important');
+            statusElement.style.setProperty('text-shadow', 'none', 'important');
+            statusElement.style.setProperty('filter', 'none', 'important');
+            
+            // 深色模式检查
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDarkMode) {
+                statusElement.style.setProperty('color', '#94a3b8', 'important');
+            }
+            
+            // 检查是否为完成状态
+            if (preview.classList.contains('completed')) {
+                const completedColor = isDarkMode ? '#4ade80' : '#28a745';
+                statusElement.style.setProperty('color', completedColor, 'important');
+            }
+        }
+        
+    });
+    
+    // 检查CSS变量和主题
+    const rootStyles = window.getComputedStyle(document.documentElement);
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    
+    return {
+        previewCount: previews.length,
+        theme: currentTheme,
+        cssVariables: {
+            sidebarText: rootStyles.getPropertyValue('--sidebar-text'),
+            sidebarTextSecondary: rootStyles.getPropertyValue('--sidebar-text-secondary'),
+            primaryColor: rootStyles.getPropertyValue('--primary-color'),
+            borderColor: rootStyles.getPropertyValue('--border-color')
+        }
+    };
+}
+
+// 自动修复报表文件预览文字显示问题
+function autoFixReportFilePreview() {
+    // 自动修复报表文件预览文字显示问题
+    
+    // 定义修复函数
+    function fixPreviewElements() {
+        const previews = document.querySelectorAll('.report-file-preview.simple');
+        let fixedCount = 0;
+        
+        previews.forEach(preview => {
+            const nameElement = preview.querySelector('.report-file-name');
+            const statusElement = preview.querySelector('.report-file-status');
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            if (nameElement) {
+                // 强制设置文件名样式
+                nameElement.style.setProperty('color', isDarkMode ? '#f1f5f9' : '#333333', 'important');
+                nameElement.style.setProperty('opacity', '1', 'important');
+                nameElement.style.setProperty('visibility', 'visible', 'important');
+                nameElement.style.setProperty('display', 'block', 'important');
+                nameElement.style.setProperty('background', 'transparent', 'important');
+                nameElement.style.setProperty('text-shadow', 'none', 'important');
+                nameElement.style.setProperty('filter', 'none', 'important');
+                fixedCount++;
+            }
+            
+            if (statusElement) {
+                // 强制设置状态样式
+                let statusColor = isDarkMode ? '#94a3b8' : '#666666';
+                if (preview.classList.contains('completed')) {
+                    statusColor = isDarkMode ? '#4ade80' : '#28a745';
+                }
+                
+                statusElement.style.setProperty('color', statusColor, 'important');
+                statusElement.style.setProperty('opacity', '1', 'important');
+                statusElement.style.setProperty('visibility', 'visible', 'important');
+                statusElement.style.setProperty('display', 'block', 'important');
+                statusElement.style.setProperty('background', 'transparent', 'important');
+                statusElement.style.setProperty('text-shadow', 'none', 'important');
+                statusElement.style.setProperty('filter', 'none', 'important');
+                fixedCount++;
+            }
+        });
+        
+        // 修复完成
+        
+        return fixedCount;
+    }
+    
+    // 立即执行一次修复
+    fixPreviewElements();
+    
+    // 监听主题变化
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                // 主题变化，重新修复文字显示
+                setTimeout(fixPreviewElements, 100);
+            }
+        });
+    });
+    
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+    
+    // 监听DOM变化，自动修复新添加的预览元素
+    const domObserver = new MutationObserver(function(mutations) {
+        let hasNewPreviews = false;
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (node.classList && node.classList.contains('report-file-preview')) {
+                        hasNewPreviews = true;
+                    } else if (node.querySelector && node.querySelector('.report-file-preview.simple')) {
+                        hasNewPreviews = true;
+                    }
+                }
+            });
+        });
+        
+        if (hasNewPreviews) {
+            // 检测到新的报表预览元素，自动修复
+            setTimeout(fixPreviewElements, 100);
+        }
+    });
+    
+    domObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // 自动修复功能已启动
+}
+
+// 页面加载完成后启动自动修复
+document.addEventListener('DOMContentLoaded', function() {
+    // 延迟启动，确保所有样式都已加载
+    setTimeout(autoFixReportFilePreview, 1000);
+});
+
+// 如果页面已经加载完成，立即启动
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(autoFixReportFilePreview, 100);
+}
+
+// 测试报表文件预览HTML渲染
+function testReportFilePreviewRendering() {
+    console.log('🧪 测试报表文件预览HTML渲染...');
+    
+    // 测试内容
+    const testContent = '这是一个测试消息 [报表文件：406编号含义分析报告.html] 请查看报表。';
+    
+    console.log('📝 原始内容:', testContent);
+    
+    // 使用renderMarkdownWithReportPreview函数
+    const renderedHtml = renderMarkdownWithReportPreview(testContent);
+    
+    console.log('🎯 渲染后的HTML:', renderedHtml);
+    
+    // 检查是否包含正确的HTML结构
+    const hasReportPreview = renderedHtml.includes('report-file-preview simple');
+    const hasFileName = renderedHtml.includes('406编号含义分析报告.html');
+    const hasStatus = renderedHtml.includes('正在生成中...');
+    
+    console.log('✅ 检查结果:');
+    console.log('  - 包含报表预览结构:', hasReportPreview);
+    console.log('  - 包含文件名:', hasFileName);
+    console.log('  - 包含状态信息:', hasStatus);
+    
+    if (hasReportPreview && hasFileName && hasStatus) {
+        console.log('🎉 HTML渲染测试通过！');
+    } else {
+        console.log('❌ HTML渲染测试失败！');
+    }
+    
+    return {
+        originalContent: testContent,
+        renderedHtml: renderedHtml,
+        hasReportPreview: hasReportPreview,
+        hasFileName: hasFileName,
+        hasStatus: hasStatus
+    };
+}
+
 

@@ -8,6 +8,212 @@
     overflow: hidden;
 }
 
+/* Prism.js 语法高亮自定义样式 */
+.code-editor {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color, #e5e5e5);
+    background: var(--sidebar-bg, #ffffff);
+}
+
+/* 报表代码编辑器 - 紧凑设计 */
+.report-code-content .code-editor pre[class*="language-"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    overflow: auto !important;
+    height: 100% !important;
+    max-height: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid var(--border-color, #e5e5e5) !important;
+    background: var(--sidebar-bg, #ffffff) !important;
+    display: block !important;
+    position: relative !important;
+}
+
+.report-code-content .code-editor code[class*="language-"] {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+    font-weight: 400 !important;
+    text-shadow: none !important;
+    padding: 10px !important;
+    display: block !important;
+    background: transparent !important;
+    white-space: pre !important;
+    overflow: visible !important;
+    min-height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 报表代码行号样式 - 紧凑设计 */
+.report-code-content .line-numbers .line-numbers-rows {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 40px !important;
+    padding: 10px 0 !important;
+    border-right: 1px solid var(--border-color, #e5e5e5) !important;
+    background: linear-gradient(135deg, var(--sidebar-hover, #f8f9fa) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 8px 0 0 8px !important;
+    box-shadow: inset -1px 0 4px rgba(0, 0, 0, 0.05) !important;
+    z-index: 2 !important;
+}
+
+.report-code-content .line-numbers-rows > span {
+    display: block !important;
+    padding-right: 6px !important;
+    text-align: right !important;
+    user-select: none !important;
+    position: relative !important;
+}
+
+.report-code-content .line-numbers-rows > span::before {
+    color: var(--sidebar-text-secondary, #8892b0) !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    opacity: 0.7 !important;
+    transition: all 0.2s ease !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
+}
+
+.report-code-content .line-numbers-rows > span:hover::before {
+    opacity: 1 !important;
+    color: var(--primary-color, #2c5aa0) !important;
+}
+
+/* 报表代码内容区域调整 */
+.report-code-content .line-numbers code[class*="language-"] {
+    padding-left: 50px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* 报表代码滚动条样式优化 */
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-thumb {
+    background: var(--border-color, #e5e5e5);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-text-secondary, #666666);
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* 深色模式报表代码滚动条 */
+[data-theme="dark"] .report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+
+[data-theme="dark"] .report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-text-secondary);
+}
+
+/* 深色模式下的报表代码样式 */
+[data-theme="dark"] .report-code-content .code-editor {
+    background: var(--sidebar-bg, #1e293b);
+    border-color: var(--border-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .report-code-content .code-editor pre[class*="language-"] {
+    background: var(--sidebar-bg, #1e293b) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .report-code-content .code-editor code[class*="language-"] {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .report-code-content .line-numbers .line-numbers-rows {
+    background: linear-gradient(135deg, var(--sidebar-hover, #334155) 0%, rgba(30, 41, 59, 0.9) 100%) !important;
+    border-right-color: var(--border-color) !important;
+    box-shadow: inset -1px 0 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .report-code-content .line-numbers-rows > span::before {
+    color: var(--sidebar-text-secondary, #64748b) !important;
+}
+
+[data-theme="dark"] .report-code-content .line-numbers-rows > span:hover::before {
+    color: var(--primary-color, #60a5fa) !important;
+}
+
+/* 代码高亮颜色优化 */
+[data-theme="dark"] .token.comment,
+[data-theme="dark"] .token.prolog,
+[data-theme="dark"] .token.doctype,
+[data-theme="dark"] .token.cdata {
+    color: #6a9955 !important;
+}
+
+[data-theme="dark"] .token.punctuation {
+    color: #d4d4d4 !important;
+}
+
+[data-theme="dark"] .token.property,
+[data-theme="dark"] .token.tag,
+[data-theme="dark"] .token.constant,
+[data-theme="dark"] .token.symbol,
+[data-theme="dark"] .token.deleted {
+    color: #569cd6 !important;
+}
+
+[data-theme="dark"] .token.boolean,
+[data-theme="dark"] .token.number {
+    color: #b5cea8 !important;
+}
+
+[data-theme="dark"] .token.selector,
+[data-theme="dark"] .token.attr-name,
+[data-theme="dark"] .token.string,
+[data-theme="dark"] .token.char,
+[data-theme="dark"] .token.builtin,
+[data-theme="dark"] .token.inserted {
+    color: #ce9178 !important;
+}
+
+[data-theme="dark"] .token.operator,
+[data-theme="dark"] .token.entity,
+[data-theme="dark"] .token.url,
+[data-theme="dark"] .language-css .token.string,
+[data-theme="dark"] .style .token.string {
+    color: #d4d4d4 !important;
+}
+
+[data-theme="dark"] .token.atrule,
+[data-theme="dark"] .token.attr-value,
+[data-theme="dark"] .token.keyword {
+    color: #c586c0 !important;
+}
+
+[data-theme="dark"] .token.function,
+[data-theme="dark"] .token.class-name {
+    color: #dcdcaa !important;
+}
+
+[data-theme="dark"] .token.regex,
+[data-theme="dark"] .token.important,
+[data-theme="dark"] .token.variable {
+    color: #d16969 !important;
+}
+
 /* CSS变量定义 */
 :root {
     --primary-color: #2c5aa0;
@@ -3381,18 +3587,30 @@ body.sidebar-resizing .sidebar-resizer-line {
 .chat-main.with-report {
     width: 60%;
     flex: 0 0 60%;
+    max-width: calc(60vw - 16px);
+    margin-right: 0;
 }
 
 .report-panel {
     width: 40%;
     flex: 0 0 40%;
     background: var(--sidebar-bg);
-    border-left: 1px solid var(--border-color);
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     position: relative;
     transition: all 0.3s ease;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+    border-radius: 20px;
+    margin: 16px 16px 16px 0;
+    overflow: hidden;
+    max-width: calc(40vw - 16px);
+    backdrop-filter: blur(10px);
+}
+
+.report-panel:hover {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12), 0 6px 24px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
 }
 
 .report-header {
@@ -3400,6 +3618,7 @@ body.sidebar-resizing .sidebar-resizer-line {
     border-bottom: 1px solid var(--border-color);
     background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-hover));
     backdrop-filter: blur(10px);
+    border-radius: 20px 20px 0 0;
 }
 
 .report-title-section h6 {
@@ -3435,6 +3654,7 @@ body.sidebar-resizing .sidebar-resizer-line {
     overflow-y: auto;
     padding: 0;
     background: var(--content-bg);
+    border-radius: 0 0 20px 20px;
 }
 
 .report-content::-webkit-scrollbar {
@@ -3455,23 +3675,125 @@ body.sidebar-resizing .sidebar-resizer-line {
 }
 
 .report-placeholder {
-    padding: 40px 20px;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.report-placeholder i {
-    opacity: 0.5;
+.report-welcome {
+    text-align: center;
+    padding: 40px 30px;
+    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-hover));
+    border-radius: 16px;
+    margin: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
 }
 
-.report-placeholder h5 {
-    color: var(--sidebar-text-secondary);
-    font-weight: 500;
+.report-welcome-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-color), #1864ab);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 24px rgba(44, 90, 160, 0.3);
+}
+
+.report-welcome-icon i {
+    font-size: 32px;
+    color: white;
+}
+
+.report-welcome-title {
+    color: var(--sidebar-text);
+    font-weight: 600;
     margin-bottom: 8px;
+    font-size: 18px;
 }
 
-.report-placeholder p {
+.report-welcome-desc {
     color: var(--sidebar-text-secondary);
     font-size: 14px;
-    opacity: 0.8;
+    margin-bottom: 24px;
+    opacity: 0.9;
+}
+
+.report-features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+}
+
+.feature-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.feature-item i {
+    color: var(--primary-color);
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.feature-item span {
+    color: var(--sidebar-text);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.report-status {
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sidebar-text-secondary);
+    font-size: 13px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .report-iframe {
@@ -3482,56 +3804,559 @@ body.sidebar-resizing .sidebar-resizer-line {
 }
 
 .report-file-preview {
-    background: var(--sidebar-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 16px;
-    margin: 16px;
+    display: flex;
+    align-items: center;
+    padding: 18px 20px;
+    margin: 12px 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(168, 85, 247, 0.02));
+    border: 1px solid rgba(99, 102, 241, 0.08);
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
     position: relative;
-    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.report-file-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    transition: left 0.5s ease;
+}
+
+.report-file-preview:hover::before {
+    left: 100%;
 }
 
 .report-file-preview:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(44, 90, 160, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.12);
 }
 
-.report-file-icon {
-    display: inline-flex;
+.report-file-preview .report-file-icon {
+    width: 52px;
+    height: 52px;
+    margin-right: 16px;
+    position: relative;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary-color), #1864ab);
-    color: white;
-    border-radius: 12px;
-    font-size: 20px;
-    margin-bottom: 12px;
 }
 
-.report-file-name {
+.report-file-preview .icon-inner {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.report-file-preview:hover .icon-inner {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+}
+
+.report-file-preview .icon-inner i {
+    font-size: 18px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.report-file-preview .loading-ring {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    border: 2px solid transparent;
+    border-top: 2px solid rgba(99, 102, 241, 0.4);
+    border-right: 2px solid rgba(99, 102, 241, 0.2);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+    z-index: 1;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.report-file-preview.completed .loading-ring {
+    animation: none;
+    border: 2px solid rgba(34, 197, 94, 0.2);
+    transition: all 0.3s ease;
+}
+
+.report-file-preview.completed .icon-inner {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.report-file-preview .report-file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.report-file-preview .report-file-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-primary, #1f2937);
+    margin-bottom: 4px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-file-preview .report-file-desc {
+    font-size: 13px;
+    color: var(--text-secondary, #6b7280);
+    opacity: 0.85;
+    line-height: 1.2;
+    margin-bottom: 3px;
+}
+
+.report-file-preview .report-file-status {
+    font-size: 12px;
+    color: #6366f1;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.report-file-preview.completed .report-file-status {
+    color: #22c55e;
+}
+
+.report-file-preview .report-file-status::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.report-file-preview.completed .report-file-status::before {
+    animation: none;
+    background: #22c55e;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .report-file-preview {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(168, 85, 247, 0.03));
+    border-color: rgba(99, 102, 241, 0.12);
+}
+
+[data-theme="dark"] .report-file-preview:hover {
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.18);
+}
+
+[data-theme="dark"] .report-file-preview .icon-inner {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .report-file-preview:hover .icon-inner {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-name {
+    color: var(--text-primary, #f9fafb);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-desc {
+    color: var(--text-secondary, #9ca3af);
+}
+
+[data-theme="dark"] .report-file-preview.completed .icon-inner {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+/* 手机端适配 */
+@media (max-width: 480px) {
+    .report-file-preview {
+        padding: 14px 16px;
+        border-radius: 14px;
+    }
+    
+    .report-file-preview .report-file-icon {
+        width: 46px;
+        height: 46px;
+        margin-right: 14px;
+    }
+    
+    .report-file-preview .icon-inner {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .report-file-preview .loading-ring {
+        width: 46px;
+        height: 46px;
+    }
+    
+    .report-file-preview .icon-inner i {
+        font-size: 16px;
+    }
+    
+    .report-file-preview .report-file-name {
+        font-size: 14px;
+    }
+    
+    .report-file-preview .report-file-desc {
+        font-size: 12px;
+    }
+    
+    .report-file-preview .report-file-status {
+        font-size: 11px;
+    }
+}
+
+/* 报表面板切换标签 */
+.report-tabs {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+.report-tabs .btn-group {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.report-tabs .btn {
+    flex: 1;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text-secondary);
+    transition: all 0.2s ease;
+}
+
+.report-tabs .btn:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text);
+}
+
+.report-tabs .btn.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
+}
+
+.report-tabs .btn.active:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* HTML代码区域 */
+.report-code-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--sidebar-bg);
+    border-radius: 0 0 20px 20px;
+    /* 下边圆润 */
+    margin: 16px; /* 添加外边距，让圆角更明显 */
+    min-height: 84px; /* 固定最小高度，与顶部头部区域保持一致 */
+
+
+
+}
+
+.code-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--sidebar-hover);
+}
+
+.code-title {
+    font-size: 14px;
     font-weight: 600;
     color: var(--sidebar-text);
-    margin-bottom: 4px;
-    font-size: 16px;
 }
 
-.report-file-description {
-    color: var(--sidebar-text-secondary);
-    font-size: 14px;
-    margin-bottom: 12px;
-    line-height: 1.4;
-}
-
-.report-file-actions {
+.report-code-content .code-editor {
+    flex: 1;
+    overflow: hidden;
+    padding: 0;
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 12px;
+    position: relative;
 }
 
-.report-file-actions .btn {
-    padding: 6px 12px;
-    font-size: 12px;
-    border-radius: 6px;
+.report-code-content .code-editor pre {
+    margin: 0;
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 200px;
+    white-space: pre;
+    position: relative;
+}
+
+.code-editor pre::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.code-editor pre::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.code-editor pre::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.code-editor pre::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-text-secondary);
+}
+
+.code-editor pre::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.code-editor code {
+    background: transparent;
+    color: var(--sidebar-text);
+    padding: 0;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    white-space: pre;
+    word-break: normal;
+    display: block;
+    width: fit-content;
+    min-width: 100%;
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .report-file-preview {
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.12), rgba(25, 118, 210, 0.06));
+    border-color: rgba(66, 165, 245, 0.2);
+}
+
+[data-theme="dark"] .report-file-preview:hover {
+    box-shadow: 0 8px 25px rgba(66, 165, 245, 0.15);
+    border-color: rgba(66, 165, 245, 0.35);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-icon {
+    background: linear-gradient(135deg, var(--primary-color), #2196f3);
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.4);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-name {
+    color: var(--message-text);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-desc {
+    color: var(--message-text-secondary);
+}
+
+[data-theme="dark"] .report-tabs {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .report-tabs .btn {
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text-secondary);
+}
+
+[data-theme="dark"] .report-tabs .btn:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .report-tabs .btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+[data-theme="dark"] .report-code-content {
+    background: var(--sidebar-bg);
+}
+
+[data-theme="dark"] .code-header {
+    background: var(--sidebar-hover);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .code-title {
+    color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .report-code-content .code-editor pre {
+    background: transparent;
+}
+
+[data-theme="dark"] .report-code-content .code-editor code {
+    color: var(--sidebar-text);
+}
+
+/* 手机端适配 - 报表文件预览 */
+@media (max-width: 480px) {
+    .report-file-preview {
+        padding: 12px 16px;
+    }
+    
+    .report-file-preview .report-file-icon {
+        width: 42px;
+        height: 42px;
+        margin-right: 14px;
+    }
+    
+    .report-file-preview .report-file-icon i {
+        font-size: 18px;
+    }
+    
+    .report-file-preview .report-file-name {
+        font-size: 14px;
+    }
+    
+    .report-file-preview .report-file-desc {
+        font-size: 12px;
+    }
+    
+    .report-tabs .btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .code-header {
+        padding: 10px 12px;
+    }
+    
+    .report-code-content .code-editor pre {
+        min-height: 150px;
+    }
+    
+    .report-code-content .code-editor pre[class*="language-"] {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+    
+    .report-code-content .code-editor code[class*="language-"] {
+        padding: 8px !important;
+        font-size: 11px !important;
+    }
+    
+    .report-code-content .line-numbers .line-numbers-rows {
+        width: 35px !important;
+        padding: 8px 0 !important;
+    }
+    
+    .report-code-content .line-numbers-rows > span {
+        padding-right: 4px !important;
+    }
+    
+    .report-code-content .line-numbers-rows > span::before {
+        font-size: 9px !important;
+    }
+    
+    .report-code-content .line-numbers code[class*="language-"] {
+        padding-left: 43px !important;
+    }
+    
+    .line-numbers-rows > span::before {
+        font-size: 12px !important;
+    }
+}
+
+/* 平板端优化 */
+@media (max-width: 768px) and (min-width: 481px) {
+    .report-code-content .code-editor {
+        border-radius: 8px;
+    }
+    
+    .report-code-content .code-editor pre[class*="language-"] {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+    
+    .report-code-content .line-numbers .line-numbers-rows {
+        width: 38px !important;
+        border-radius: 8px 0 0 8px !important;
+        padding: 9px 0 !important;
+    }
+    
+    .report-code-content .line-numbers-rows > span {
+        padding-right: 5px !important;
+    }
+    
+    .report-code-content .line-numbers-rows > span::before {
+        font-size: 9px !important;
+    }
+    
+    .report-code-content .line-numbers code[class*="language-"] {
+        padding-left: 47px !important;
+    }
+    
+    .report-code-content .code-editor code[class*="language-"] {
+        padding: 9px !important;
+        font-size: 11px !important;
+    }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 360px) {
+    .report-code-content .line-numbers .line-numbers-rows {
+        width: 32px !important;
+        padding: 7px 0 !important;
+    }
+    
+    .report-code-content .line-numbers-rows > span {
+        padding-right: 3px !important;
+    }
+    
+    .report-code-content .line-numbers code[class*="language-"] {
+        padding-left: 40px !important;
+    }
+    
+    .report-code-content .code-editor code[class*="language-"] {
+        padding: 7px !important;
+        font-size: 10px !important;
+    }
+    
+    .report-code-content .code-editor pre[class*="language-"] {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .report-code-content .line-numbers-rows > span::before {
+        font-size: 8px !important;
+    }
 }
 
 /* 深色模式适配 */
@@ -3558,11 +4383,48 @@ body.sidebar-resizing .sidebar-resizer-line {
     background: var(--content-bg);
 }
 
-[data-theme="dark"] .report-placeholder h5 {
+[data-theme="dark"] .report-welcome {
+    background: linear-gradient(135deg, var(--sidebar-bg), var(--sidebar-hover));
+    border-color: var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .report-welcome-icon {
+    background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+    box-shadow: 0 8px 24px rgba(96, 165, 250, 0.3);
+}
+
+[data-theme="dark"] .report-welcome-title {
+    color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .report-welcome-desc {
     color: var(--sidebar-text-secondary);
 }
 
-[data-theme="dark"] .report-placeholder p {
+[data-theme="dark"] .feature-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .feature-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .feature-item i {
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .feature-item span {
+    color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .report-status {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .status-indicator {
     color: var(--sidebar-text-secondary);
 }
 
@@ -3743,4 +4605,620 @@ body.sidebar-resizing .sidebar-resizer-line {
 
 [data-theme="dark"] .report-file-indicator:hover {
     box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+}
+
+/* 聊天消息中的报表文件预览卡片 */
+.report-file-preview {
+    /* display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 8px 0;
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.1), rgba(25, 118, 210, 0.05));
+    border: 1px solid rgba(66, 165, 245, 0.2);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px); */
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;  /* 减少上下 padding */
+    background: var(--sidebar-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;  /* 稍微减小圆角 */
+    margin: 4px 0;      /* 减少外边距 */
+    max-width: 280px;
+    transition: all 0.2s ease;
+    height: 48px;       /* 固定高度（可选） */
+    box-sizing: border-box; /* 确保 padding 不影响总高度 */
+    
+}
+
+.report-file-preview:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.15);
+    border-color: rgba(66, 165, 245, 0.3);
+}
+
+.report-file-preview .report-file-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), #1565c0);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
+}
+
+.report-file-preview .report-file-icon i {
+    font-size: 12px;
+    color: white;
+}
+
+.report-file-preview .report-file-info {
+    flex: 1;
+}
+
+.report-file-preview .report-file-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--message-text);
+    /* margin-bottom: 2px; */
+}
+
+.report-file-preview .report-file-desc {
+    font-size: 12px;
+    color: var(--message-text-secondary);
+    opacity: 0.8;
+}
+
+.report-file-preview .report-file-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.report-file-preview .report-file-actions .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.report-file-preview .report-file-actions .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* 深色模式下的报表文件预览卡片 */
+[data-theme="dark"] .report-file-preview {
+    background: linear-gradient(135deg, rgba(66, 165, 245, 0.15), rgba(25, 118, 210, 0.1));
+    border-color: rgba(66, 165, 245, 0.25);
+}
+
+[data-theme="dark"] .report-file-preview:hover {
+    box-shadow: 0 4px 12px rgba(66, 165, 245, 0.2);
+    border-color: rgba(66, 165, 245, 0.4);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-icon {
+    background: linear-gradient(135deg, var(--primary-color), #2196f3);
+    box-shadow: 0 2px 8px rgba(66, 165, 245, 0.4);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-name {
+    color: var(--message-text);
+}
+
+[data-theme="dark"] .report-file-preview .report-file-desc {
+    color: var(--message-text-secondary);
+}
+
+/* 手机端适配 - 报表文件预览 */
+@media (max-width: 480px) {
+    .report-file-preview {
+        padding: 10px 12px;
+    }
+    
+    .report-file-preview .report-file-icon {
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+    }
+    
+    .report-file-preview .report-file-icon i {
+        font-size: 16px;
+    }
+    
+    .report-file-preview .report-file-name {
+        font-size: 13px;
+    }
+    
+    .report-file-preview .report-file-desc {
+        font-size: 11px;
+    }
+    
+    .report-file-preview .report-file-actions .btn {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+}
+
+/* 简约版报表文件预览样式 */
+.report-file-preview.simple {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;  /* 减少上下 padding */
+    background: var(--sidebar-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;  /* 稍微减小圆角 */
+    margin: 4px 0;      /* 减少外边距 */
+    max-width: 280px;
+    transition: all 0.2s ease;
+    height: 68px;       /* 固定高度（可选） */
+    box-sizing: border-box; /* 确保 padding 不影响总高度 */
+}
+
+.report-file-icon.simple {
+    margin-right: 10px;
+    font-size: 16px;    /* 减小图标大小 */
+    color: var(--text-muted);
+}
+
+/* 这些样式已经在 .report-file-preview.simple 中定义，删除重复定义 */
+
+.report-file-preview.simple:hover {
+    background: var(--sidebar-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-file-preview.simple .report-file-icon.simple {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.report-file-preview.simple .report-file-icon.simple i {
+    color: var(--primary-color);
+    font-size: 14px;
+    z-index: 2;
+}
+
+.report-file-preview.simple .simple-loading-dot {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    top: 1px;
+    right: 1px;
+    animation: simplePulse 1.5s ease-in-out infinite;
+}
+
+.report-file-preview.simple.completed .simple-loading-dot {
+    animation: none;
+    background: #28a745;
+}
+
+.report-file-preview.simple .report-file-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px; /* 关键调整：控制文件名和状态的间距 */
+}
+
+.report-file-preview.simple .report-file-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sidebar-text, #3d3c3c);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.1; /* 减小行高（原1.2） */
+}
+
+.report-file-preview.simple .report-file-status {
+    font-size: 11px; /* 保持原大小或改用0.6875rem */
+    color: var(--sidebar-text-secondary, #666);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.1; /* 与文件名保持一致 */
+    padding-top: 0; /* 确保无额外间距 */
+}
+
+.report-file-preview.simple.completed .report-file-status {
+    color: #28a745; /* 成功状态颜色 */
+}
+
+/* 动画优化：减少性能开销 */
+@keyframes simplePulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05); /* 减少缩放幅度，更平滑 */
+    }
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .report-file-preview.simple {
+    background: var(--sidebar-hover);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple:hover {
+    background: var(--sidebar-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple .report-file-name {
+    color: var(--sidebar-text, #f1f5f9) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+[data-theme="dark"] .report-file-preview.simple .report-file-status {
+    color: var(--sidebar-text-secondary, #94a3b8) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+[data-theme="dark"] .report-file-preview.simple.completed .report-file-status {
+    color: #4ade80;
+}
+
+[data-theme="dark"] .report-file-preview.simple .report-file-icon.simple i {
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple .simple-loading-dot {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple.completed .simple-loading-dot {
+    background: #4ade80;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .report-file-preview.simple {
+        height: 32px;
+        padding: 6px 10px;
+        margin: 3px 0;
+        max-width: 240px;
+    }
+    
+    .report-file-preview.simple .report-file-icon.simple {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+    }
+    
+    .report-file-preview.simple .report-file-icon.simple i {
+        font-size: 12px;
+    }
+    
+    .report-file-preview.simple .report-file-name {
+        font-size: 12px;
+    }
+    
+    .report-file-preview.simple .report-file-status {
+        font-size: 10px;
+    }
+    
+    .report-file-preview.simple .simple-loading-dot {
+        width: 2px;
+        height: 2px;
+        top: 0px;
+        right: 0px;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-file-preview.simple {
+        height: 30px;
+        padding: 5px 8px;
+        margin: 2px 0;
+        max-width: 200px;
+        border-radius: 4px;
+    }
+    
+    .report-file-preview.simple .report-file-icon.simple {
+        width: 16px;
+        height: 16px;
+        margin-right: 6px;
+    }
+    
+    .report-file-preview.simple .report-file-icon.simple i {
+        font-size: 11px;
+    }
+    
+    .report-file-preview.simple .report-file-name {
+        font-size: 11px;
+    }
+    
+    .report-file-preview.simple .report-file-status {
+        font-size: 9px;
+    }
+}
+
+/* 报表面板拖拽手柄样式 */
+.report-resizer {
+    position: absolute;
+    left: -2px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    z-index: 1000;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.report-resizer-line {
+    width: 2px;
+    height: 40px;
+    background: var(--border-color);
+    border-radius: 2px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.report-resizer-line::before,
+.report-resizer-line::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 1px;
+    left: 0;
+    transition: all 0.2s ease;
+}
+
+.report-resizer-line::before {
+    top: -10px;
+}
+
+.report-resizer-line::after {
+    bottom: -10px;
+}
+
+.report-resizer:hover {
+    width: 6px;
+    left: -3px;
+}
+
+.report-resizer:hover .report-resizer-line {
+    background: var(--primary-color);
+    height: 60px;
+}
+
+.report-resizer:hover .report-resizer-line::before,
+.report-resizer:hover .report-resizer-line::after {
+    background: var(--primary-color);
+    height: 8px;
+}
+
+/* 拖拽时的遮罩层 */
+.report-resize-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    cursor: col-resize;
+    display: none;
+}
+
+/* 报表面板拖拽时的全局样式 */ 
+body.report-resizing {
+    cursor: col-resize !important;
+}
+
+body.report-resizing * {
+    pointer-events: none !important;
+}
+
+body.report-resizing .report-resizer,
+body.report-resizing .report-resize-overlay {
+    pointer-events: auto !important;
+}
+
+body.report-resizing .report-resizer-line {
+    background: var(--primary-color) !important;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+}
+
+/* 深色模式下的拖拽手柄 */
+[data-theme="dark"] .report-resizer:hover {
+    background: rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark"] .report-resizer:hover .report-resizer-line {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] .report-resizer:hover .report-resizer-line::before,
+[data-theme="dark"] .report-resizer:hover .report-resizer-line::after {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] .report-resizer.dragging {
+    background: rgba(96, 165, 250, 0.15);
+}
+
+[data-theme="dark"] .report-resizer.dragging .report-resizer-line {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] .report-resizer.dragging .report-resizer-line::before,
+[data-theme="dark"] .report-resizer.dragging .report-resizer-line::after {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] body.report-resizing .report-resizer-line {
+    background: var(--primary-color) !important;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.5) !important;
+}
+
+/* 移动端隐藏拖拽手柄 */
+@media (max-width: 768px) {
+    .report-resizer {
+        display: none;
+    }
+}
+
+.report-resizer.dragging {
+    width: 6px;
+    left: -3px;
+}
+
+.report-resizer.dragging .report-resizer-line {
+    background: var(--primary-color);
+    height: 60px;
+    animation: resizePulse 1s infinite;
+}
+
+.report-resizer.dragging .report-resizer-line::before,
+.report-resizer.dragging .report-resizer-line::after {
+    background: var(--primary-color);
+    height: 8px;
+}
+
+/* 移动端报表面板边距调整 */
+@media (max-width: 768px) {
+    .report-panel {
+        margin: 0 16px 16px 16px !important;
+        max-width: calc(100vw - 32px) !important;
+        border-radius: 20px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-panel {
+        margin: 0 12px 12px 12px !important;
+        max-width: calc(100vw - 24px) !important;
+    }
+}
+
+/* 强化简约版报表文件预览样式 - 确保文字可见 */
+.report-file-preview.simple .report-file-name {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #333333 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    line-height: 1.2 !important;
+    /* 强制设置颜色，避免继承问题 */
+    background: transparent !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+.report-file-preview.simple .report-file-status {
+    font-size: 11px !important;
+    color: #666666 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    line-height: 1.2 !important;
+    /* 强制设置颜色，避免继承问题 */
+    background: transparent !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+.report-file-preview.simple.completed .report-file-status {
+    color: #28a745 !important;
+}
+
+@keyframes simplePulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* 深色模式适配 - 强化版本 */
+[data-theme="dark"] .report-file-preview.simple {
+    background: var(--sidebar-hover);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple:hover {
+    background: var(--sidebar-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple .report-file-name {
+    color: #f1f5f9 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    line-height: 1.2 !important;
+    /* 强制设置颜色，避免继承问题 */
+    background: transparent !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+[data-theme="dark"] .report-file-preview.simple .report-file-status {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    line-height: 1.2 !important;
+    /* 强制设置颜色，避免继承问题 */
+    background: transparent !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+[data-theme="dark"] .report-file-preview.simple.completed .report-file-status {
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .report-file-preview.simple .report-file-icon.simple i {
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple .simple-loading-dot {
+    background: var(--primary-color);
+}
+
+[data-theme="dark"] .report-file-preview.simple.completed .simple-loading-dot {
+    background: #4ade80;
 }

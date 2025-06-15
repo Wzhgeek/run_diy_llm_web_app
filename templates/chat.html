@@ -7,6 +7,10 @@
 {% block extra_head %}
 <!-- 引入聊天页面专用CSS -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+
+<!-- 引入Prism.js语法高亮CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
 {% endblock %}
 
 {% block content %}
@@ -248,11 +252,14 @@
                 </div>
             </div>
         </div>
-                    </div>
                 </div>
                 
                 <!-- 数据报表面板 -->
-                <div class="report-panel h-100" id="reportPanel" style="display: none;">
+                <div class="report-panel h-100" id="reportPanel" style="display: none; padding-bottom: 20px;">
+                    <!-- 拖拽手柄 -->
+                    <div class="report-resizer" id="reportResizer">
+                        <div class="report-resizer-line"></div>
+                    </div>
                     <div class="report-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="report-title-section">
@@ -265,22 +272,76 @@
                                 <button class="btn btn-sm btn-outline-secondary" onclick="refreshReport()" title="刷新报表">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="downloadReport()" title="下载报表" id="downloadReportBtn" style="display: none;">
-                                    <i class="fas fa-download"></i>
-                                </button>
                                 <button class="btn btn-sm btn-outline-secondary" onclick="hideReportPanel()" title="隐藏报表面板">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="report-content" id="reportContent">
-                        <div class="report-placeholder">
-                            <div class="text-center py-5">
-                                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                                <h5 class="text-muted">暂无报表数据</h5>
-                                <p class="text-muted">启用数据报表功能后，AI生成的报表将在这里显示</p>
+                        
+                        <!-- 切换按钮组 -->
+                        <div class="report-tabs mt-2">
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary" id="previewTab" onclick="switchToPreview()">
+                                    <i class="fas fa-eye me-1"></i>预览
+                                </button>
+                                <button type="button" class="btn btn-outline-primary active" id="codeTab" onclick="switchToCode()">
+                                    <i class="fas fa-code me-1"></i>HTML代码
+                                </button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 预览内容区域 -->
+                    <div class="report-content" id="reportContent" style="display: none;">
+                        <div class="report-placeholder">
+                            <div class="report-welcome">
+                                <div class="report-welcome-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h6 class="report-welcome-title">数据报表中心</h6>
+                                <p class="report-welcome-desc">AI将为您生成精美的数据可视化报表</p>
+                                
+                                <div class="report-features">
+                                    <div class="feature-item">
+                                        <i class="fas fa-chart-line"></i>
+                                        <span>趋势分析</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-chart-pie"></i>
+                                        <span>数据分布</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-table"></i>
+                                        <span>统计表格</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-eye"></i>
+                                        <span>实时预览</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="report-status">
+                                    <div class="status-indicator">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- HTML代码区域 -->
+                    <div class="report-code-content" id="reportCodeContent">
+                        <div class="code-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="code-title">
+                                    <i class="fas fa-code me-2"></i>HTML源代码
+                                </span>
+                                <button class="btn btn-sm btn-outline-success" onclick="copyReportCode()" title="复制全部代码">
+                                    <i class="fas fa-copy me-1"></i>复制全部
+                                </button>
+                            </div>
+                        </div>
+                        <div class="code-editor">
+                            <pre class="line-numbers"><code id="reportCodeText" class="language-html">等待AI生成HTML报表代码...</code></pre>
                         </div>
                     </div>
                 </div>
@@ -338,10 +399,19 @@
                 </div>
                                         </div>
     </footer>
+    
+    <!-- 报表面板拖拽遮罩层 -->
+    <div class="report-resize-overlay" id="reportResizeOverlay"></div>
                                         </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- 引入Prism.js语法高亮JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/normalize-whitespace/prism-normalize-whitespace.min.js"></script>
+
 <!-- 引入聊天页面专用JavaScript -->
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 <script>
@@ -361,14 +431,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const markedLoaded = typeof marked !== 'undefined';
                 const dompurifyLoaded = typeof DOMPurify !== 'undefined';
                 const hljsLoaded = typeof hljs !== 'undefined';
+                const prismLoaded = typeof Prism !== 'undefined';
                 
                 console.log(`🔍 检查库加载状态 (${attempts}/${maxAttempts}):`, {
                     marked: markedLoaded,
                     DOMPurify: dompurifyLoaded,
-                    hljs: hljsLoaded
+                    hljs: hljsLoaded,
+                    Prism: prismLoaded
                 });
                 
-                if (markedLoaded && dompurifyLoaded && hljsLoaded) {
+                if (markedLoaded && dompurifyLoaded && hljsLoaded && prismLoaded) {
                     console.log('✅ 所有库已加载完成');
                     resolve();
                 } else if (attempts >= maxAttempts) {
@@ -390,8 +462,24 @@ document.addEventListener('DOMContentLoaded', function() {
         loadConversations();
         showWelcomeScreen();
         
-        // 添加测试按钮到控制台
-        console.log('💡 提示：可以在控制台运行 testMarkdownRendering() 来测试markdown渲染');
+        // 初始化Prism.js配置
+        if (typeof Prism !== 'undefined') {
+            Prism.plugins.NormalizeWhitespace.setDefaults({
+                'remove-trailing': true,
+                'remove-indent': true,
+                'left-trim': true,
+                'right-trim': true,
+                'break-lines': 80,
+                'indent': 2,
+                'remove-initial-line-feed': false,
+                'tabs-to-spaces': 4,
+                'spaces-to-tabs': 4
+            });
+            console.log('✅ Prism.js配置完成');
+        }
+        
+        // 初始化完成
+        console.log('✅ 聊天功能初始化完成');
     });
 });
 </script>
