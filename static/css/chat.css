@@ -1520,13 +1520,13 @@
 
 /* 上传功能卡片特殊样式 */
 .example-card.feature-upload {
-    background: linear-gradient(135deg, var(--sidebar-bg), rgba(44, 90, 160, 0.02));
-    border-color: rgba(44, 90, 160, 0.1);
+    background: linear-gradient(135deg, var(--sidebar-bg), rgba(255, 255, 255, 0.02));
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .example-card.feature-upload:hover {
-    background: linear-gradient(135deg, var(--sidebar-hover), rgba(44, 90, 160, 0.05));
-    box-shadow: 0 12px 32px rgba(44, 90, 160, 0.2);
+    background: linear-gradient(135deg, var(--border-color), rgba(255, 255, 255, 0.05));
+    box-shadow: 0 12px 32px rgba(255, 255, 255, 0.1);
 }
 
 /* 文本功能卡片样式 */
@@ -3606,6 +3606,10 @@ body.sidebar-resizing .sidebar-resizer-line {
     overflow: hidden;
     max-width: calc(40vw - 16px);
     backdrop-filter: blur(10px);
+    /* 确保不超出页面高度 */
+    height: calc(100vh - 120px); /* 减去顶部和底部的边距 */
+    max-height: calc(100vh - 120px);
+    min-height: 300px; /* 设置最小高度 */
 }
 
 .report-panel:hover {
@@ -4362,8 +4366,13 @@ body.sidebar-resizing .sidebar-resizer-line {
 /* 深色模式适配 */
 [data-theme="dark"] .report-panel {
     background: var(--sidebar-bg);
-    border-left-color: var(--border-color);
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+    /* 确保深色模式下不超出页面高度 */
+    height: calc(100vh - 120px);
+    max-height: calc(100vh - 120px);
+    min-height: 300px;
+    border-radius: 20px; /* 保持圆润边框 */
 }
 
 [data-theme="dark"] .report-header {
@@ -4476,6 +4485,12 @@ body.sidebar-resizing .sidebar-resizer-line {
         border-left: none;
         border-top: 1px solid var(--border-color);
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        /* 确保移动端不超出页面高度 */
+        height: calc(40vh - 60px);
+        max-height: calc(40vh - 60px);
+        min-height: 200px;
+        margin: 0; /* 移除边距以充分利用空间 */
+        border-radius: 16px 16px 0 0; /* 调整圆角适应移动端 */
     }
     
     [data-theme="dark"] .report-panel {
@@ -4514,6 +4529,11 @@ body.sidebar-resizing .sidebar-resizer-line {
     
     .report-panel {
         flex: 0 0 35%;
+        /* 确保小屏幕不超出页面高度 */
+        height: calc(35vh - 40px);
+        max-height: calc(35vh - 40px);
+        min-height: 180px;
+        border-radius: 12px 12px 0 0; /* 进一步调整圆角 */
     }
     
     .report-header {
@@ -5221,4 +5241,134 @@ body.report-resizing .report-resizer-line {
 
 [data-theme="dark"] .report-file-preview.simple.completed .simple-loading-dot {
     background: #4ade80;
+}
+
+/* 报表代码编辑器 - 优化流式更新版本 */
+.report-code-content .code-editor {
+    border-radius: 16px !important; /* 增加圆润度 */
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color, #e5e5e5);
+    background: var(--sidebar-bg, #ffffff);
+    height: 100% !important; /* 确保高度固定 */
+    max-height: calc(100vh - 200px) !important; /* 防止超出视窗 */
+    min-height: 300px !important; /* 设置最小高度 */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.report-code-content .code-editor pre[class*="language-"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important; /* 内部pre不需要圆角 */
+    font-size: 13px !important; /* 稍微增大字体 */
+    line-height: 1.5 !important; /* 增加行高便于阅读 */
+    overflow: auto !important;
+    height: 100% !important;
+    max-height: none !important;
+    border: none !important; /* 移除内部边框 */
+    background: transparent !important;
+    display: block !important;
+    position: relative !important;
+    flex: 1 !important; /* 填充剩余空间 */
+}
+
+.report-code-content .code-editor code[class*="language-"] {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+    font-weight: 400 !important;
+    text-shadow: none !important;
+    padding: 16px !important; /* 增加内边距 */
+    display: block !important;
+    background: transparent !important;
+    white-space: pre !important;
+    overflow: visible !important;
+    min-height: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 13px !important; /* 与pre保持一致 */
+    line-height: 1.5 !important; /* 与pre保持一致 */
+}
+
+/* 报表代码行号样式 - 修复流式更新问题 */
+.report-code-content .line-numbers .line-numbers-rows {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 50px !important; /* 增加宽度以适应更多行号 */
+    padding: 16px 0 !important; /* 与代码内容对齐 */
+    border-right: 1px solid var(--border-color, #e5e5e5) !important;
+    background: linear-gradient(135deg, var(--sidebar-hover, #f8f9fa) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 16px 0 0 16px !important; /* 与外部容器圆角匹配 */
+    box-shadow: inset -1px 0 4px rgba(0, 0, 0, 0.05) !important;
+    z-index: 2 !important;
+    height: 100% !important; /* 确保高度填满 */
+    overflow: hidden !important; /* 防止溢出 */
+}
+
+.report-code-content .line-numbers-rows > span {
+    display: block !important;
+    padding-right: 8px !important; /* 增加右边距 */
+    text-align: right !important;
+    user-select: none !important;
+    position: relative !important;
+    height: 1.5em !important; /* 固定行高 */
+    line-height: 1.5 !important; /* 与代码行高匹配 */
+}
+
+.report-code-content .line-numbers-rows > span::before {
+    content: counter(linenumber) !important; /* 确保行号正确显示 */
+    counter-increment: linenumber !important;
+    color: var(--sidebar-text-secondary, #8892b0) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    opacity: 0.8 !important;
+    transition: all 0.2s ease !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
+}
+
+.report-code-content .line-numbers-rows > span:hover::before {
+    opacity: 1 !important;
+    color: var(--primary-color, #2c5aa0) !important;
+}
+
+/* 修复行号计数器 */
+.report-code-content .line-numbers pre {
+    counter-reset: linenumber !important;
+}
+
+/* 报表代码内容区域调整 */
+.report-code-content .line-numbers code[class*="language-"] {
+    padding-left: 66px !important; /* 为行号留出空间 */
+    padding-right: 16px !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* 报表代码滚动条样式优化 */
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-thumb {
+    background: var(--border-color, #e5e5e5);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-text-secondary, #666666);
+}
+
+.report-code-content .code-editor pre[class*="language-"]::-webkit-scrollbar-corner {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
 }

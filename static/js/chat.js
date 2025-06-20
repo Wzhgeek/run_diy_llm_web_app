@@ -45,6 +45,9 @@ function initializeChat() {
     
     // 初始化侧边栏拖拽调整
     initializeSidebarResize();
+    
+    // 初始化代码行号修复功能
+    initCodeLineNumbersFix();
 }
 
 // 初始化Markdown渲染
@@ -903,20 +906,74 @@ function updateMessageContentWithThinking(messageElement, fullContent, isComplet
     }
     }
     
-// 流式更新报表代码显示
+// 流式更新报表代码显示 - 优化版本
 function updateReportCodeStream(htmlCode) {
     currentReportHtmlCode = htmlCode;
     const codeText = document.getElementById('reportCodeText');
     if (codeText) {
+        // 更新代码内容
         codeText.textContent = htmlCode;
         
-        // 如果Prism.js可用，进行语法高亮
+        // 确保父元素有正确的class
+        const preElement = codeText.parentElement;
+        if (preElement && preElement.tagName === 'PRE') {
+            preElement.className = 'line-numbers language-html';
+            preElement.style.counterReset = 'linenumber';
+        }
+        
+        // 如果Prism.js可用，进行语法高亮和行号处理
         if (typeof Prism !== 'undefined') {
-            // 重新应用语法高亮
-            Prism.highlightElement(codeText);
+            try {
+                // 移除现有的行号
+                const existingLineNumbers = preElement.querySelector('.line-numbers-rows');
+                if (existingLineNumbers) {
+                    existingLineNumbers.remove();
+                }
+                
+                // 重新应用语法高亮
+                Prism.highlightElement(codeText);
+                
+                // 强制重新生成行号
+                if (Prism.plugins.LineNumbers) {
+                    Prism.plugins.LineNumbers.resize(codeText);
+                }
+                
+                // 应用专门的行号修复
+                setTimeout(() => {
+                    fixCodeLineNumbers();
+                }, 50);
+                
+                // 确保滚动位置在底部（对于流式更新）
+                setTimeout(() => {
+                    const preElement = codeText.parentElement;
+                    if (preElement && preElement.scrollHeight > preElement.clientHeight) {
+                        preElement.scrollTop = preElement.scrollHeight;
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.warn('Prism.js 语法高亮失败:', error);
+                // 如果Prism失败，直接应用行号修复
+                setTimeout(() => {
+                    fixCodeLineNumbers();
+                }, 50);
+            }
         } else if (typeof hljs !== 'undefined') {
             // 降级到hljs
-            hljs.highlightElement(codeText);
+            try {
+                hljs.highlightElement(codeText);
+                // hljs后也应用行号修复
+                setTimeout(() => {
+                    fixCodeLineNumbers();
+                }, 50);
+            } catch (error) {
+                console.warn('hljs 语法高亮失败:', error);
+            }
+        } else {
+            // 没有语法高亮库时，直接应用行号修复
+            setTimeout(() => {
+                fixCodeLineNumbers();
+            }, 50);
         }
     }
     
@@ -3364,15 +3421,61 @@ function updateReportCode(htmlCode) {
     currentReportHtmlCode = htmlCode;
     const codeText = document.getElementById('reportCodeText');
     if (codeText) {
+        // 更新代码内容
         codeText.textContent = htmlCode;
         
-        // 如果Prism.js可用，进行语法高亮
+        // 确保父元素有正确的class
+        const preElement = codeText.parentElement;
+        if (preElement && preElement.tagName === 'PRE') {
+            preElement.className = 'line-numbers language-html';
+            preElement.style.counterReset = 'linenumber';
+        }
+        
+        // 如果Prism.js可用，进行语法高亮和行号处理
         if (typeof Prism !== 'undefined') {
-            // 重新应用语法高亮
-            Prism.highlightElement(codeText);
+            try {
+                // 移除现有的行号
+                const existingLineNumbers = preElement.querySelector('.line-numbers-rows');
+                if (existingLineNumbers) {
+                    existingLineNumbers.remove();
+                }
+                
+                // 重新应用语法高亮
+                Prism.highlightElement(codeText);
+                
+                // 强制重新生成行号
+                if (Prism.plugins.LineNumbers) {
+                    Prism.plugins.LineNumbers.resize(codeText);
+                }
+                
+                // 应用专门的行号修复
+                setTimeout(() => {
+                    fixCodeLineNumbers();
+                }, 50);
+                
+            } catch (error) {
+                console.warn('Prism.js 语法高亮失败:', error);
+                // 如果Prism失败，直接应用行号修复
+                setTimeout(() => {
+                    fixCodeLineNumbers();
+                }, 50);
+            }
         } else if (typeof hljs !== 'undefined') {
             // 降级到hljs
-            hljs.highlightElement(codeText);
+            try {
+                hljs.highlightElement(codeText);
+                // hljs后也应用行号修复
+                setTimeout(() => {
+                    fixCodeLineNumbers();
+                }, 50);
+            } catch (error) {
+                console.warn('hljs 语法高亮失败:', error);
+            }
+        } else {
+            // 没有语法高亮库时，直接应用行号修复
+            setTimeout(() => {
+                fixCodeLineNumbers();
+            }, 50);
         }
     }
 }
@@ -3984,6 +4087,88 @@ function testReportFilePreviewRendering() {
         hasFileName: hasFileName,
         hasStatus: hasStatus
     };
+}
+
+// 修复代码编辑器行号显示 - 专门的行号修复函数
+function fixCodeLineNumbers() {
+    const codeText = document.getElementById('reportCodeText');
+    if (!codeText) return;
+    
+    const preElement = codeText.parentElement;
+    if (!preElement || preElement.tagName !== 'PRE') return;
+    
+    try {
+        // 确保有正确的class和属性
+        preElement.className = 'line-numbers language-html';
+        preElement.setAttribute('data-language', 'html');
+        
+        // 确保code元素有正确的class
+        codeText.className = 'language-html';
+        
+        // 如果Prism.js可用
+        if (typeof Prism !== 'undefined') {
+            // 移除现有的行号容器
+            const existingLineNumbers = preElement.querySelector('.line-numbers-rows');
+            if (existingLineNumbers) {
+                existingLineNumbers.remove();
+            }
+            
+            // 重新计算行数并创建行号
+            const lines = codeText.textContent.split('\n');
+            const lineCount = lines.length;
+            
+            // 创建行号容器
+            const lineNumbersRows = document.createElement('span');
+            lineNumbersRows.className = 'line-numbers-rows';
+            lineNumbersRows.setAttribute('aria-hidden', 'true');
+            
+            // 为每一行创建行号span
+            for (let i = 0; i < lineCount; i++) {
+                const lineSpan = document.createElement('span');
+                lineNumbersRows.appendChild(lineSpan);
+            }
+            
+            // 将行号容器添加到pre元素
+            preElement.appendChild(lineNumbersRows);
+            
+            // 应用语法高亮
+            Prism.highlightElement(codeText);
+            
+            console.log(`✅ 成功修复代码行号，共 ${lineCount} 行`);
+        }
+    } catch (error) {
+        console.error('修复行号时出错:', error);
+    }
+}
+
+// 在页面加载和DOM内容变更时自动修复行号
+function initCodeLineNumbersFix() {
+    // 监听DOM变化，自动修复行号
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                const codeText = document.getElementById('reportCodeText');
+                if (codeText && codeText.textContent.trim()) {
+                    // 延迟执行以确保DOM更新完成
+                    setTimeout(fixCodeLineNumbers, 100);
+                }
+            }
+        });
+    });
+    
+    // 监听报表代码容器的变化
+    const reportCodeContent = document.querySelector('.report-code-content');
+    if (reportCodeContent) {
+        observer.observe(reportCodeContent, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
+    // 页面加载时执行一次
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(fixCodeLineNumbers, 500);
+    });
 }
 
 
