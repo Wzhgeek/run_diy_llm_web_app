@@ -1,0 +1,49 @@
+{
+  "inputs": {
+    "input_text": {"
+    }
+  },
+  "response_mode": "streaming",
+  "user": "case_use"
+}
+files
+: 
+[]
+inputs
+: 
+{input_image: {type: "image", transfer_method: "remote_url",…}}
+input_image
+: 
+{type: "image", transfer_method: "remote_url",…}
+transfer_method
+: 
+"remote_url"
+type
+: 
+"image"
+url
+: 
+"http://silicelement-dcps.oss-cn-hangzhou.aliyuncs.com/yaozhihe/uploads/2025-06/f7c295181031222dee564c6253a4f6b9_20250606104108.jpg"
+query
+: 
+"图中风险有哪些"
+response_mode
+: 
+"streaming"
+user
+: 
+"web-dev-npo"
+
+{
+	"inputs": {
+		"input_image": {
+			"type": "image",
+			"transfer_method": "remote_url",
+			"remote_url": "https://redcap-nplusone.oss-cn-hangzhou.aliyuncs.com/mailing/hidden/3.webp"
+		}
+	},
+	"query": "请帮我找出这张图片中的安全隐患",
+	"user": "web-dev-npo",
+	"response_mode": "streaming",
+	"files": []
+}
