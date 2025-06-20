@@ -1,4 +1,4 @@
-# Logs
+# Vue.js / Node.js 相关
 logs
 *.log
 npm-debug.log*
@@ -28,3 +28,34 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# 系统文件
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+
+# 上传的文件
+uploads/*
+!uploads/.gitkeep
+
+# 配置文件（如果包含敏感信息）
+config_local.py
+commend.txt
+输入格式.txt
+chonggou.txt
+翻译API.txt
+config.py
+marked使用文档.txt
+API-file.txt

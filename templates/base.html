@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI学术研究助手{% endblock %}</title>
+    
+    <!-- TDesign Vue3 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tdesign-vue-next@1.9.0/dist/tdesign.min.css">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 自定义科研紫色主题样式 -->
+    <style>
+        :root {
+            --td-brand-color: #6366f1;
+            --td-brand-color-1: #8b5cf6;
+            --td-brand-color-2: #a855f7;
+            --td-brand-color-3: #c084fc;
+            --td-brand-color-4: #ddd6fe;
+            --td-brand-color-5: #ede9fe;
+            --td-brand-color-6: #f3f4f6;
+            --td-brand-color-7: #fafafa;
+            --td-brand-color-8: #ffffff;
+            --td-brand-color-9: #f8fafc;
+            --td-brand-color-10: #f1f5f9;
+            
+            --academic-purple: #6366f1;
+            --academic-purple-light: #8b5cf6;
+            --academic-purple-lighter: #c084fc;
+            --academic-purple-lightest: #ede9fe;
+            --academic-gray: #64748b;
+            --academic-gray-light: #94a3b8;
+            --academic-gray-lighter: #e2e8f0;
+            --academic-gray-lightest: #f8fafc;
+        }
+        
+        /* 全局基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', sans-serif;
+            background: linear-gradient(135deg, var(--academic-gray-lightest) 0%, #ffffff 100%);
+            min-height: 100vh;
+            color: var(--academic-gray);
+        }
+        
+        /* 应用容器 */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            background: transparent;
+        }
+        
+        /* 侧边栏样式 */
+        .app-sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--academic-purple) 0%, var(--academic-purple-light) 100%);
+            color: white;
+            box-shadow: 4px 0 20px rgba(99, 102, 241, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-menu {
+            padding: 20px 0;
+        }
+        
+        .nav-section {
+            margin-bottom: 24px;
+        }
+        
+        .nav-section-title {
+            padding: 0 20px 8px;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-item {
+            margin-bottom: 4px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 0 24px 24px 0;
+            margin-right: 12px;
+            position: relative;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .nav-badge {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+        }
+        
+        .content-header {
+            background: white;
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--academic-gray-lighter);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--academic-gray);
+            margin: 0;
+        }
+        
+        .page-subtitle {
+            color: var(--academic-gray-light);
+            margin-top: 4px;
+            font-size: 14px;
+        }
+        
+        .content-body {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .app-sidebar {
+                position: fixed;
+                left: -280px;
+                height: 100vh;
+                z-index: 1050;
+            }
+            
+            .app-sidebar.active {
+                left: 0;
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+            
+            .content-header {
+                padding: 16px 20px;
+            }
+            
+            .content-body {
+                padding: 20px;
+            }
+        }
+        
+        /* TDesign组件自定义 */
+        .t-button--variant-base.t-button--theme-primary {
+            background-color: var(--academic-purple);
+            border-color: var(--academic-purple);
+        }
+        
+        .t-button--variant-base.t-button--theme-primary:hover {
+            background-color: var(--academic-purple-light);
+            border-color: var(--academic-purple-light);
+        }
+        
+        .t-input:focus {
+            border-color: var(--academic-purple);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+        
+        /* 科研风格卡片 */
+        .research-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--academic-gray-lighter);
+            transition: all 0.3s ease;
+        }
+        
+        .research-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        /* 移动端侧边栏遮罩 */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+            display: none;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* 顶部导航栏移动端 */
+        .mobile-header {
+            display: none;
+            background: white;
+            padding: 12px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-header {
+                display: flex;
+            }
+        }
+        
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--academic-gray);
+            cursor: pointer;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 侧边栏 -->
+        <nav class="app-sidebar" :class="{ active: sidebarVisible }">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <div class="brand-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <span>AI学术助手</span>
+                </div>
+            </div>
+            
+            <div class="nav-menu">
+                <!-- 核心功能 -->
+                <div class="nav-section">
+                    <div class="nav-section-title">核心功能</div>
+                    <div class="nav-item">
+                        <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span>工作台</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="{{ url_for('chat') }}" class="nav-link {% if request.endpoint == 'chat' %}active{% endif %}">
+                            <i class="nav-icon fas fa-comments"></i>
+                            <span>AI对话</span>
+                            <span class="nav-badge">AI</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="{{ url_for('document') }}" class="nav-link {% if request.endpoint == 'document' %}active{% endif %}">
+                            <i class="nav-icon fas fa-file-alt"></i>
+                            <span>文献处理</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="{{ url_for('knowledge') }}" class="nav-link {% if request.endpoint == 'knowledge' %}active{% endif %}">
+                            <i class="nav-icon fas fa-database"></i>
+                            <span>知识库</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 研究工具 -->
+                <div class="nav-section">
+                    <div class="nav-section-title">研究工具</div>
+                    <div class="nav-item">
+                        <a href="{{ url_for('user_guide') }}" class="nav-link {% if request.endpoint == 'user_guide' %}active{% endif %}">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span>使用文档</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" style="opacity: 0.5;">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span>学术分析</span>
+                            <span class="nav-badge">SOON</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- 移动端遮罩 -->
+        <div class="sidebar-overlay" :class="{ active: sidebarVisible }" @click="toggleSidebar"></div>
+        
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 移动端顶部导航 -->
+            <div class="mobile-header">
+                <button class="mobile-menu-btn" @click="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="page-title">{% block page_title %}{% endblock %}</span>
+                <div></div>
+            </div>
+            
+            <!-- 内容头部 -->
+            <div class="content-header">
+                <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+                {% if self.page_subtitle() %}
+                <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+                {% endif %}
+            </div>
+            
+            <!-- 主要内容 -->
+            <div class="content-body">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <!-- Vue 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.0/dist/vue.global.js"></script>
+    <!-- TDesign Vue3 -->
+    <script src="https://cdn.jsdelivr.net/npm/tdesign-vue-next@1.9.0/dist/tdesign.min.js"></script>
+    
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    sidebarVisible: false
+                }
+            },
+            methods: {
+                toggleSidebar() {
+                    this.sidebarVisible = !this.sidebarVisible;
+                }
+            },
+            mounted() {
+                // 检查屏幕尺寸，桌面端默认显示侧边栏
+                if (window.innerWidth >= 768) {
+                    this.sidebarVisible = false; // 桌面端侧边栏始终显示，不需要控制
+                }
+            }
+        }).use(TDesign).mount('#app');
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
