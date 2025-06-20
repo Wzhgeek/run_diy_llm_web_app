@@ -1,0 +1,97 @@
+// 基础样式
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+               'PingFang SC', 'Hiragino Sans GB', 
+               'Microsoft YaHei', '微软雅黑', sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--academic-gray-light);
+}
+
+// 链接样式
+a {
+  color: var(--td-brand-color);
+  text-decoration: none;
+  transition: color var(--transition-fast) ease;
+
+  &:hover {
+    color: var(--academic-purple-light);
+  }
+}
+
+// 按钮基础样式
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all var(--transition-normal) ease;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// 输入框基础样式
+.input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color var(--transition-fast) ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--td-brand-color);
+  }
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+}
+
+// 卡片基础样式
+.card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-light);
+  transition: box-shadow var(--transition-normal) ease;
+
+  &:hover {
+    box-shadow: var(--shadow-normal);
+  }
+} 
