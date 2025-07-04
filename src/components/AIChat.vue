@@ -1,21 +1,28 @@
 <template>
   <div class="ai-chat-container">
     <!-- 左侧历史会话区域 -->
-    <div class="chat-sidebar">
+    <div :class="['chat-sidebar', { collapsed: sidebarCollapsed }]">
       <div class="sidebar-header">
-        <h3 class="sidebar-title">历史会话</h3>
+        <h3 v-show="!sidebarCollapsed" class="sidebar-title">历史会话</h3>
         <t-button 
+          v-show="!sidebarCollapsed"
           theme="primary" 
           variant="outline" 
           size="small" 
           class="new-chat-btn"
-          @click="startNewConversation">
-          <t-icon name="add" size="16px" />
+          @click="startNewConversation"
+          style="color: white;">
+          <t-icon name="add" size="16px"/>
           新建对话
         </t-button>
+        
+        <!-- 收起状态下的图标 -->
+        <div v-show="sidebarCollapsed" class="collapsed-icon">
+          <t-icon name="chat" size="24px" />
+        </div>
       </div>
       
-      <div class="chat-history">
+      <div v-show="!sidebarCollapsed" class="chat-history">
         <div 
           v-for="conversation in conversations" 
           :key="conversation.id"
@@ -45,58 +52,35 @@
           </div>
         </div>
       </div>
+      
+      <!-- 收起状态下的快捷操作 -->
+      <div v-show="sidebarCollapsed" class="collapsed-actions">
+        <t-button 
+          variant="text" 
+          size="small" 
+          @click="startNewConversation"
+          class="collapsed-btn"
+          title="新建对话">
+          <t-icon name="add" size="16px" />
+        </t-button>
+      </div>
+    </div>
+    
+    <!-- 侧边栏切换按钮 -->
+    <div class="sidebar-toggle">
+      <t-button 
+        variant="outline" 
+        size="small" 
+        @click="toggleSidebar"
+        class="toggle-btn">
+        <t-icon :name="sidebarCollapsed ? 'chevron-right' : 'chevron-left'" size="16px" />
+      </t-button>
     </div>
     
     <!-- 右侧聊天区域 -->
-    <div class="chat-main">
+    <div :class="['chat-main', { 'sidebar-collapsed': sidebarCollapsed }]">
       <!-- 工具栏 -->
-      <div class="chat-toolbar">
-        <div class="feature-toggles">
-          <t-button 
-            variant="text" 
-            size="small" 
-            :class="{ active: features.webSearch }"
-            @click="toggleFeature('webSearch')">
-            <t-icon name="internet" size="16px" />
-            网络搜索
-          </t-button>
-          <t-button 
-            variant="text" 
-            size="small" 
-            :class="{ active: features.codeMode }"
-            @click="toggleFeature('codeMode')">
-            <t-icon name="code" size="16px" />
-            代码模式
-          </t-button>
-          <t-button 
-            variant="text" 
-            size="small" 
-            :class="{ active: features.agentMode }"
-            @click="toggleFeature('agentMode')">
-            <t-icon name="user-setting" size="16px" />
-            Agent模式
-          </t-button>
-          <t-button 
-            variant="text" 
-            size="small" 
-            :class="{ active: features.dataReport }"
-            @click="toggleFeature('dataReport')">
-            <t-icon name="chart-bar" size="16px" />
-            数据报表
-          </t-button>
-        </div>
-        
-        <div class="file-upload-area" v-if="uploadedFile">
-          <div class="file-preview">
-            <t-icon :name="FileHandler.getFileIcon(uploadedFile.type)" size="16px" />
-            <span class="file-name">{{ uploadedFile.name }}</span>
-            <span class="file-size">({{ FileHandler.formatFileSize(uploadedFile.size) }})</span>
-            <t-button variant="text" size="small" @click="clearUploadedFile">
-              <t-icon name="close" size="14px" />
-            </t-button>
-          </div>
-        </div>
-      </div>
+
       
       <!-- 聊天内容区域 -->
       <div class="chat-content">
@@ -311,10 +295,14 @@ export default {
       dataReport: false
     })
 
+    // 侧边栏状态
+    const sidebarCollapsed = ref(false)
+
     // 初始化
     onMounted(async () => {
       await loadConversations()
       loadStoredSettings()
+      loadSidebarState()
       initWelcomeMessage()
     })
 
@@ -335,9 +323,20 @@ export default {
       Object.assign(features, storedFeatures)
     }
 
+    // 加载侧边栏状态
+    const loadSidebarState = () => {
+      const storedSidebarState = StorageManager.getItem('sidebarCollapsed', false)
+      sidebarCollapsed.value = storedSidebarState
+    }
+
     // 保存设置
     const saveSettings = () => {
       StorageManager.setItem('chatFeatures', features)
+    }
+
+    // 保存侧边栏状态
+    const saveSidebarState = () => {
+      StorageManager.setItem('sidebarCollapsed', sidebarCollapsed.value)
     }
 
     // 初始化欢迎消息
@@ -727,7 +726,11 @@ export default {
       textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px'
     }
 
-
+    // 切换侧边栏
+    const toggleSidebar = () => {
+      sidebarCollapsed.value = !sidebarCollapsed.value
+      saveSidebarState()
+    }
 
     return {
       // 响应式数据
@@ -740,22 +743,24 @@ export default {
       uploadProgress,
       uploading,
       features,
+      sidebarCollapsed,
       
-             // 方法
-       inputEnter,
-       handleStop,
-       startNewConversation,
-       loadConversation,
-       handleFileUpload,
-       clearUploadedFile,
-       toggleFeature,
-       copyMessage,
-       regenerateMessage,
-       deleteConversation,
-       renameConversation,
-       handleManualSend,
-       handleKeyPress,
-       handleInput,
+      // 方法
+      inputEnter,
+      handleStop,
+      startNewConversation,
+      loadConversation,
+      handleFileUpload,
+      clearUploadedFile,
+      toggleFeature,
+      copyMessage,
+      regenerateMessage,
+      deleteConversation,
+      renameConversation,
+      handleManualSend,
+      handleKeyPress,
+      handleInput,
+      toggleSidebar,
       
       // 工具函数
       formatTime,
@@ -789,6 +794,12 @@ export default {
   overflow: hidden;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.chat-sidebar.collapsed {
+  width: 60px;
+  min-width: 60px;
 }
 
 .sidebar-header {
@@ -911,7 +922,13 @@ export default {
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   height: 98%;
-  width: 98%;
+  width: calc(100% - 300px - 56px);
+  transition: all 0.3s ease;
+}
+
+.chat-main.sidebar-collapsed {
+  width: calc(100% - 60px - 56px);
+  margin-left: 2px;
 }
 
 .chat-content {
@@ -1206,6 +1223,7 @@ export default {
   padding: 20px 24px;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(10px);
+  border-radius: 16px;
 }
 
 .upload-progress {
@@ -1426,8 +1444,18 @@ export default {
   
   .chat-sidebar {
     width: 100%;
-    height: 95%;
+    height: 200px;
     border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .chat-sidebar.collapsed {
+    height: 60px;
+    width: 100%;
+  }
+  
+  .sidebar-toggle {
+    margin: -20px auto;
   }
   
   .sidebar-header {
@@ -1436,6 +1464,11 @@ export default {
   
   .chat-main {
     border-radius: 16px;
+    width: 100% !important;
+  }
+  
+  .chat-main.sidebar-collapsed {
+    width: 100% !important;
   }
   
   .chat-history {
@@ -1454,5 +1487,70 @@ export default {
     padding: 16px;
     border-radius: 0 0 16px 16px;
   }
+}
+
+/* 侧边栏切换按钮 */
+.sidebar-toggle {
+  position: relative;
+  z-index: 10;
+  margin-left: -8px;
+  margin-right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-btn {
+  background: rgb(242, 237, 247);
+  border-radius: 8px;
+  width: 32px;
+  height: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+}
+
+.toggle-btn:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* 收起状态下的图标 */
+.collapsed-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  width: 100%;
+}
+
+/* 收起状态下的快捷操作 */
+.collapsed-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px;
+  gap: 12px;
+}
+
+.collapsed-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapsed-btn:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border-color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
 }
 </style>
