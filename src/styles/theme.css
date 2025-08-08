@@ -1,0 +1,280 @@
+/* 全局主题样式 */
+
+/* 科研紫主题 */
+.theme-research-purple {
+  --theme-primary: linear-gradient(to right, rgb(168, 85, 247), rgb(139, 92, 246));
+  --theme-primary-rgb: 168, 85, 247;
+  --theme-text-primary: rgb(15, 23, 42);
+  --theme-text-secondary: rgb(147, 51, 234);
+  --theme-background: linear-gradient(to bottom right, rgba(196, 181, 253, 0.8), rgba(196, 181, 253, 0.6), rgba(196, 181, 253, 0.8));
+  --theme-accent: rgba(147, 51, 234, 0.1);
+}
+
+.dark .theme-research-purple {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(196, 181, 253);
+  --theme-background: linear-gradient(to bottom right, rgba(76, 29, 149, 0.4), rgba(67, 56, 202, 0.3), rgba(109, 40, 217, 0.4));
+  --theme-accent: rgba(147, 51, 234, 0.2);
+}
+
+/* 海洋蓝主题 */
+.theme-ocean-blue {
+  --theme-primary: linear-gradient(to right, rgb(59, 130, 246), rgb(34, 211, 238));
+  --theme-primary-rgb: 59, 130, 246;
+  --theme-text-primary: rgb(15, 23, 42);
+  --theme-text-secondary: rgb(37, 99, 235);
+  --theme-background: linear-gradient(to bottom right, rgba(147, 197, 253, 0.8), rgba(125, 211, 252, 0.6), rgba(103, 232, 249, 0.8));
+  --theme-accent: rgba(37, 99, 235, 0.1);
+}
+
+.dark .theme-ocean-blue {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(147, 197, 253);
+  --theme-background: linear-gradient(to bottom right, rgba(30, 58, 138, 0.4), rgba(12, 74, 110, 0.3), rgba(21, 94, 117, 0.4));
+  --theme-accent: rgba(37, 99, 235, 0.2);
+}
+
+/* 科幻绿主题 */
+.theme-cyber-green {
+  --theme-primary: linear-gradient(to right, rgb(16, 185, 129), rgb(20, 184, 166));
+  --theme-primary-rgb: 16, 185, 129;
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(52, 211, 153);
+  --theme-background: linear-gradient(to bottom right, rgba(2, 6, 23, 1), rgba(6, 78, 59, 0.3), rgba(19, 78, 74, 0.3));
+  --theme-accent: rgba(6, 78, 59, 0.4);
+}
+
+.dark .theme-cyber-green {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(110, 231, 183);
+  --theme-background: linear-gradient(to bottom right, rgba(2, 6, 23, 1), rgba(6, 78, 59, 0.4), rgba(19, 78, 74, 0.4));
+  --theme-accent: rgba(6, 78, 59, 0.5);
+}
+
+/* 日落橙主题 */
+.theme-sunset-orange {
+  --theme-primary: linear-gradient(to right, rgb(249, 115, 22), rgb(220, 38, 127));
+  --theme-primary-rgb: 249, 115, 22;
+  --theme-text-primary: rgb(15, 23, 42);
+  --theme-text-secondary: rgb(234, 88, 12);
+  --theme-background: linear-gradient(to bottom right, rgba(254, 215, 170, 0.8), rgba(254, 205, 211, 0.6), rgba(252, 165, 165, 0.8));
+  --theme-accent: rgba(234, 88, 12, 0.1);
+}
+
+.dark .theme-sunset-orange {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(251, 146, 60);
+  --theme-background: linear-gradient(to bottom right, rgba(154, 52, 18, 0.4), rgba(153, 27, 27, 0.3), rgba(157, 23, 77, 0.4));
+  --theme-accent: rgba(234, 88, 12, 0.2);
+}
+
+/* 奶昔粉主题 */
+.theme-milkshake-pink {
+  --theme-primary: linear-gradient(to right, rgb(236, 72, 153), rgb(225, 29, 72));
+  --theme-primary-rgb: 236, 72, 153;
+  --theme-text-primary: rgb(15, 23, 42);
+  --theme-text-secondary: rgb(219, 39, 119);
+  --theme-background: linear-gradient(to bottom right, rgba(252, 231, 243, 0.8), rgba(254, 205, 211, 0.6), rgba(254, 202, 202, 0.8));
+  --theme-accent: rgba(219, 39, 119, 0.1);
+}
+
+.dark .theme-milkshake-pink {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(244, 114, 182);
+  --theme-background: linear-gradient(to bottom right, rgba(131, 24, 67, 0.4), rgba(159, 18, 57, 0.3), rgba(153, 27, 27, 0.4));
+  --theme-accent: rgba(219, 39, 119, 0.2);
+}
+
+/* 森林绿主题 */
+.theme-forest-green {
+  --theme-primary: linear-gradient(to right, rgb(34, 197, 94), rgb(16, 185, 129));
+  --theme-primary-rgb: 34, 197, 94;
+  --theme-text-primary: rgb(15, 23, 42);
+  --theme-text-secondary: rgb(22, 163, 74);
+  --theme-background: linear-gradient(to bottom right, rgba(187, 247, 208, 0.8), rgba(167, 243, 208, 0.6), rgba(153, 246, 228, 0.8));
+  --theme-accent: rgba(22, 163, 74, 0.1);
+}
+
+.dark .theme-forest-green {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(74, 222, 128);
+  --theme-background: linear-gradient(to bottom right, rgba(20, 83, 45, 0.4), rgba(6, 78, 59, 0.3), rgba(19, 78, 74, 0.4));
+  --theme-accent: rgba(22, 163, 74, 0.2);
+}
+
+/* 皇家紫主题 */
+.theme-royal-purple {
+  --theme-primary: linear-gradient(to right, rgb(147, 51, 234), rgb(79, 70, 229));
+  --theme-primary-rgb: 147, 51, 234;
+  --theme-text-primary: rgb(15, 23, 42);
+  --theme-text-secondary: rgb(147, 51, 234);
+  --theme-background: linear-gradient(to bottom right, rgba(196, 181, 253, 0.8), rgba(165, 180, 252, 0.6), rgba(196, 181, 253, 0.8));
+  --theme-accent: rgba(147, 51, 234, 0.1);
+}
+
+.dark .theme-royal-purple {
+  --theme-text-primary: rgb(241, 245, 249);
+  --theme-text-secondary: rgb(196, 181, 253);
+  --theme-background: linear-gradient(to bottom right, rgba(76, 29, 149, 0.4), rgba(67, 56, 202, 0.3), rgba(109, 40, 217, 0.4));
+  --theme-accent: rgba(147, 51, 234, 0.2);
+}
+
+/* 全局动画效果 */
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.02);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* 主题过渡效果 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 文本渐变效果 */
+.text-gradient-theme {
+  background: var(--theme-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 主题阴影效果 */
+.shadow-theme {
+  box-shadow: 0 4px 20px rgba(var(--theme-primary-rgb), 0.15);
+}
+
+.dark .shadow-theme {
+  box-shadow: 0 4px 20px rgba(var(--theme-primary-rgb), 0.3);
+}
+
+/* 主题背景效果 */
+.bg-theme-accent {
+  background-color: var(--theme-accent);
+}
+
+/* 主题边框效果 */
+.border-theme {
+  border-color: rgba(var(--theme-primary-rgb), 0.2);
+}
+
+.dark .border-theme {
+  border-color: rgba(var(--theme-primary-rgb), 0.3);
+}
+
+/* 滚动条主题化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-accent);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--theme-primary-rgb), 0.6);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--theme-primary-rgb), 0.8);
+}
+
+/* 选择文本主题化 */
+::selection {
+  background-color: rgba(var(--theme-primary-rgb), 0.3);
+  color: var(--theme-text-primary);
+}
+
+/* 焦点环主题化 */
+.focus-ring-theme:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb), 0.2);
+}
+
+/* 玻璃拟态效果增强 */
+.glass-effect {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 响应式主题适配 */
+@media (max-width: 768px) {
+  .theme-mobile-optimize {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .shadow-theme {
+    box-shadow: 0 2px 10px rgba(var(--theme-primary-rgb), 0.1);
+  }
+  
+  .dark .shadow-theme {
+    box-shadow: 0 2px 10px rgba(var(--theme-primary-rgb), 0.2);
+  }
+}
+
+/* 主题切换动画 */
+@keyframes theme-transition {
+  0% { opacity: 0.8; }
+  50% { opacity: 0.9; }
+  100% { opacity: 1; }
+}
+
+.theme-transition {
+  animation: theme-transition 0.5s ease-in-out;
+}
+
+/* 深色模式优化 */
+.dark {
+  color-scheme: dark;
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .theme-research-purple {
+    --theme-text-primary: rgb(0, 0, 0);
+    --theme-text-secondary: rgb(76, 29, 149);
+  }
+  
+  .dark .theme-research-purple {
+    --theme-text-primary: rgb(255, 255, 255);
+    --theme-text-secondary: rgb(196, 181, 253);
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+} 
